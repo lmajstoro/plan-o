@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DayCalendar } from "../../components/employee/DayCalendar";
 import { EmployeeAssignmentSheet } from "../../components/employee/EmployeeAssignmentSheet";
+import { ConfirmDialog } from "../../components/ui/Modal";
 import { ChevronLeftIcon, ChevronRightIcon, CheckIcon, LogoutIcon } from "../../components/icons";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
@@ -33,11 +34,12 @@ type SheetState =
 
 export function EmployeeDayPage() {
   const { user, logout } = useAuth();
-  const { db, update } = useDb();
+  const { db, update, reset } = useDb();
   const navigate = useNavigate();
   const [date, setDate] = useState(() => todayKey());
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [error, setError] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
 
   const employee = user ? findEmployeeForUser(db.employees, user) : undefined;
   const current = parseDateKey(date);
@@ -177,6 +179,14 @@ export function EmployeeDayPage() {
     );
   }
 
+  function resetTestData() {
+    reset();
+    setDate(todayKey());
+    setSheet(null);
+    setError("");
+    setResetOpen(false);
+  }
+
   function deleteSheet() {
     if (sheet?.mode !== "edit") return;
     commit(assignments.filter((row) => row.id !== sheet.assignment.id));
@@ -195,7 +205,13 @@ export function EmployeeDayPage() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center justify-between px-4 pb-2">
           <div className="min-w-0">
-            <div className="truncate text-base font-semibold text-slate-900">{employee.name}</div>
+            <button
+              type="button"
+              className="block w-full truncate text-left text-base font-semibold text-slate-900"
+              onClick={() => setResetOpen(true)}
+            >
+              {employee.name}
+            </button>
             <div className="text-xs text-slate-500">{ROLE_LABELS[employee.role]}</div>
           </div>
           <button
@@ -318,6 +334,16 @@ export function EmployeeDayPage() {
           }}
           onSave={saveSheet}
           onDelete={sheet.mode === "edit" ? deleteSheet : undefined}
+        />
+      ) : null}
+
+      {resetOpen ? (
+        <ConfirmDialog
+          title="Poništi testne podatke"
+          message="Ovo vraća demo stanje na ovom uređaju. Lokalne izmjene sati i potvrde nestaju."
+          confirmLabel="Poništi testne podatke"
+          onConfirm={resetTestData}
+          onClose={() => setResetOpen(false)}
         />
       ) : null}
     </div>
