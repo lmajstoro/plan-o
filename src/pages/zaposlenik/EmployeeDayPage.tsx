@@ -273,7 +273,7 @@ export function EmployeeDayPage() {
         canEdit ? (
           <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
             <div className="pointer-events-auto mx-auto max-w-md px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-              <button type="button" className="btn-primary w-full" onClick={confirmHours}>
+              <button type="button" className="btn-success w-full" onClick={confirmHours}>
                 Potvrdi sate
               </button>
             </div>
@@ -288,7 +288,7 @@ export function EmployeeDayPage() {
                     {hourStatus === "uredeni_i_potvrdeni" ? "Sati su uređeni i potvrđeni" : "Sati su potvrđeni"}
                   </p>
                   {editable ? (
-                    <button type="button" className="btn-secondary w-full" onClick={unconfirmHours}>
+                    <button type="button" className="btn-danger w-full" onClick={unconfirmHours}>
                       Poništi potvrdu
                     </button>
                   ) : null}

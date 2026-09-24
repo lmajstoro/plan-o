@@ -13,7 +13,7 @@ import { ArchiveIcon, EditIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import type { WorkOrder, WorkOrderStatus } from "../../types";
 
-const COLORS = ["#2563eb", "#7c3aed", "#0d9488", "#d97706", "#e11d48", "#0284c7", "#65a30d", "#c026d3"];
+const COLORS = ["#2563eb", "#7c3aed", "#0d9488", "#d97706", "#e11d48", "#0284c7", "#c026d3", "#4f46e5"];
 
 type FormState = {
   code: string;
