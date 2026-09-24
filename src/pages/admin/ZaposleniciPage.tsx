@@ -69,7 +69,7 @@ export function ZaposleniciPage() {
       ...current,
       employees: current.employees.filter((row) => row.id !== removeId),
       assignments: current.assignments.filter((row) => row.employeeId !== removeId),
-      dayStatuses: current.dayStatuses.filter((row) => row.employeeId !== removeId),
+      dayStatuses: (current.dayStatuses ?? []).filter((row) => row.employeeId !== removeId),
     }));
     setRemoveId(null);
   }

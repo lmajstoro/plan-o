@@ -34,6 +34,7 @@ export function loadDatabase(): Database {
       throw new Error("invalid");
     }
     if (!hasRecentActuals(parsed) || !hasWorkOrderSchema(parsed)) return writeSeed();
+    if (!Array.isArray(parsed.dayStatuses)) parsed.dayStatuses = [];
     return parsed;
   } catch {
     return writeSeed();

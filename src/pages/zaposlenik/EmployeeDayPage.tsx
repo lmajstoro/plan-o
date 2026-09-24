@@ -2,22 +2,26 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DayCalendar } from "../../components/employee/DayCalendar";
 import { EmployeeAssignmentSheet } from "../../components/employee/EmployeeAssignmentSheet";
-import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../../components/icons";
+import { ChevronLeftIcon, ChevronRightIcon, CheckIcon, LogoutIcon } from "../../components/icons";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
 import { addCalendarDays, formatCroatianDate, formatDateKey, parseDateKey, ROLE_LABELS } from "../../lib/dates";
 import {
   canViewDay,
+  clearDayStatus,
   dayAssignments,
   dayModeLabel,
   dayTone,
   findEmployeeForUser,
+  hourStatusFor,
   isEditableDay,
+  isHoursConfirmed,
   isRestDay,
   maxViewKey,
   minViewKey,
   REST_DAY_MESSAGE,
   todayKey,
+  upsertDayStatus,
 } from "../../lib/employee";
 import { blockEnd, DAY_END, DAY_START, newId, overlapErrorMessage } from "../../lib/gantt";
 import { isArchivedWorkOrder, tasksForWorkOrder } from "../../lib/workOrders";
@@ -40,6 +44,9 @@ export function EmployeeDayPage() {
   const editable = isEditableDay(date);
   const restDay = isRestDay(date);
   const tone = dayTone(date);
+  const hourStatus = employee ? hourStatusFor(db.dayStatuses, employee.id, date) : "nisu_uneseni";
+  const confirmed = isHoursConfirmed(hourStatus);
+  const canEdit = editable && !confirmed;
   const canGoBack = formatDateKey(addCalendarDays(current, -1)) >= minViewKey();
   const canGoForward = formatDateKey(addCalendarDays(current, 1)) <= maxViewKey();
 
@@ -100,6 +107,50 @@ export function EmployeeDayPage() {
     setSheet(null);
     setError("");
     return true;
+  }
+
+  function confirmHours() {
+    if (!employee || !canEdit) return;
+    const hadActuals = db.assignments.some(
+      (row) => row.employeeId === employee.id && row.date === date && row.kind === "actual",
+    );
+    update((currentDb) => {
+      const planned = currentDb.assignments.filter(
+        (row) => row.employeeId === employee.id && row.date === date && row.kind !== "actual",
+      );
+      const assignments = hadActuals
+        ? currentDb.assignments
+        : [
+            ...currentDb.assignments,
+            ...planned.map((row) => ({ ...row, id: newId("asg"), kind: "actual" as const })),
+          ];
+      return {
+        ...currentDb,
+        assignments,
+        dayStatuses: upsertDayStatus(
+          currentDb.dayStatuses,
+          employee.id,
+          date,
+          hadActuals ? "uredeni_i_potvrdeni" : "potvrdeni",
+        ),
+      };
+    });
+    setSheet(null);
+    setError("");
+  }
+
+  function unconfirmHours() {
+    if (!employee || !editable || !confirmed) return;
+    update((currentDb) => ({
+      ...currentDb,
+      assignments:
+        hourStatus === "potvrdeni"
+          ? currentDb.assignments.filter(
+              (row) => !(row.employeeId === employee.id && row.date === date && row.kind === "actual"),
+            )
+          : currentDb.assignments,
+      dayStatuses: clearDayStatus(currentDb.dayStatuses, employee.id, date),
+    }));
   }
 
   function saveSheet(workOrderId: string, taskId: string, startHour: number, durationHours: number) {
@@ -176,15 +227,19 @@ export function EmployeeDayPage() {
           className={`px-4 py-2 text-sm ${
             restDay
               ? "bg-slate-50 text-slate-600"
-              : tone === "live"
-                ? "bg-blue-50 text-blue-900"
-                : tone === "future"
-                  ? "bg-slate-50 text-slate-500"
-                  : "bg-slate-100 text-slate-500"
+              : confirmed
+                ? "bg-emerald-50 text-emerald-800"
+                : tone === "live"
+                  ? "bg-blue-50 text-blue-900"
+                  : tone === "future"
+                    ? "bg-slate-50 text-slate-500"
+                    : "bg-slate-100 text-slate-500"
           }`}
         >
-          {dayModeLabel(date)}
-          {editable ? " · dodirni zadatak ili prazan sat." : null}
+          {confirmed
+            ? "Sati su potvrđeni za ovaj dan."
+            : dayModeLabel(date)}
+          {canEdit ? " · dodirni zadatak ili prazan sat." : null}
         </div>
       </header>
 
@@ -201,6 +256,7 @@ export function EmployeeDayPage() {
               workOrders={db.workOrders}
               tasks={db.tasks}
               tone={tone}
+              locked={confirmed}
               showNow={date === todayKey()}
               onSelectAssignment={(assignment) => {
                 setError("");
@@ -215,7 +271,31 @@ export function EmployeeDayPage() {
         )}
       </div>
 
-      {sheet && editable ? (
+      {!restDay && (canEdit || confirmed || tone === "past") ? (
+        <div className="border-t border-slate-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {canEdit ? (
+            <button type="button" className="btn-primary w-full" onClick={confirmHours}>
+              Potvrdi sate
+            </button>
+          ) : confirmed ? (
+            <div className="space-y-2">
+              <p className="flex items-center justify-center gap-2 text-sm font-medium text-emerald-700">
+                <CheckIcon className="h-4 w-4" />
+                {hourStatus === "uredeni_i_potvrdeni" ? "Sati su uređeni i potvrđeni" : "Sati su potvrđeni"}
+              </p>
+              {editable ? (
+                <button type="button" className="btn-secondary w-full" onClick={unconfirmHours}>
+                  Poništi potvrdu
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-center text-sm text-slate-500">Sati nisu potvrđeni</p>
+          )}
+        </div>
+      ) : null}
+
+      {sheet && canEdit ? (
         <EmployeeAssignmentSheet
           title={sheet.mode === "create" ? "Novi zadatak" : "Uredi zadatak"}
           startHour={sheet.mode === "create" ? sheet.startHour : sheet.assignment.startHour}

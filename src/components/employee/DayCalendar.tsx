@@ -13,6 +13,7 @@ type Props = {
   tasks: Task[];
   tone: "live" | "past" | "future";
   showNow: boolean;
+  locked?: boolean;
   onSelectAssignment: (assignment: Assignment) => void;
   onSelectHour: (hour: number) => void;
 };
@@ -23,6 +24,7 @@ export function DayCalendar({
   tasks,
   tone,
   showNow,
+  locked = false,
   onSelectAssignment,
   onSelectHour,
 }: Props) {
@@ -30,7 +32,7 @@ export function DayCalendar({
   const nowHour = now.getHours() + now.getMinutes() / 60;
   const showNowLine = showNow && nowHour >= DAY_START && nowHour < DAY_END;
   const occupied = occupiedHours(assignments);
-  const readOnly = tone !== "live";
+  const readOnly = tone !== "live" || locked;
   const toneClass =
     tone === "past"
       ? "pointer-events-none select-none opacity-55 grayscale"

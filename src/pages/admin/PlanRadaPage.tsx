@@ -9,6 +9,7 @@ import {
   parseDateKey,
   todayWorkDate,
 } from "../../lib/dates";
+import { isHoursConfirmed } from "../../lib/employee";
 
 const SOPNICA_GROUP_ID = "wg-sopnica";
 const SOPNICA_LOAD_MS = 1000;
@@ -68,6 +69,13 @@ export function PlanRadaPage() {
   }, [allEmployees, groupFilter]);
 
   const dayHasActuals = db.assignments.some((row) => row.date === date && row.kind === "actual");
+  const confirmedEmployeeIds = useMemo(
+    () =>
+      (db.dayStatuses ?? [])
+        .filter((row) => row.date === date && isHoursConfirmed(row.status))
+        .map((row) => row.employeeId),
+    [db.dayStatuses, date],
+  );
 
   function go(delta: number) {
     setDate(formatDateKey(addWorkDays(current, delta)));
@@ -195,6 +203,7 @@ export function PlanRadaPage() {
               tasks={db.tasks}
               workOrders={db.workOrders}
               assignments={db.assignments}
+              confirmedEmployeeIds={confirmedEmployeeIds}
               onCommitEmployeeDay={(employeeId, next) => {
                 update((currentDb) => ({
                   ...currentDb,

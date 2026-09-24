@@ -57,6 +57,7 @@ type Props = {
   workOrders: WorkOrder[];
   assignments: Assignment[];
   copySources: Employee[];
+  confirmedEmployeeIds?: string[];
   onCommitEmployeeDay: (employeeId: string, next: Assignment[]) => void;
 };
 
@@ -67,6 +68,7 @@ export function GanttBoard({
   workOrders,
   assignments,
   copySources,
+  confirmedEmployeeIds = [],
   onCommitEmployeeDay,
 }: Props) {
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -440,6 +442,9 @@ export function GanttBoard({
                     <div className="text-xs text-slate-500">{ROLE_LABELS[employee.role]}</div>
                     <div className="text-xs text-slate-500">
                       {split && planHours !== displayHours ? `${planHours} → ${displayHours} h` : `${displayHours} h`}
+                      {confirmedEmployeeIds.includes(employee.id) ? (
+                        <span className="ml-1 font-semibold text-emerald-700">Potvrđeno</span>
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex shrink-0 gap-0.5">

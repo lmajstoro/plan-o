@@ -1,4 +1,4 @@
-import type { Assignment, Employee, SessionUser } from "../types";
+import type { Assignment, DayStatus, Employee, HourStatus, SessionUser } from "../types";
 import { addWorkDays, calendarToday, formatDateKey, isWeekend, parseDateKey, todayWorkDate } from "./dates";
 
 export const REST_DAY_MESSAGE = "Neradni dan je, odmori :)";
@@ -67,4 +67,28 @@ export function dayModeLabel(dateKey: string): string {
   if (isEditableDay(dateKey)) return "Možeš urediti jučerašnji dan";
   if (dateKey > todayKey()) return "Samo pregled, nadolazeći dan";
   return "Samo pregled, prethodni dan";
+}
+
+export function hourStatusFor(statuses: DayStatus[] | undefined, employeeId: string, date: string): HourStatus {
+  return statuses?.find((row) => row.employeeId === employeeId && row.date === date)?.status ?? "nisu_uneseni";
+}
+
+export function isHoursConfirmed(status: HourStatus): boolean {
+  return status === "potvrdeni" || status === "uredeni_i_potvrdeni";
+}
+
+export function upsertDayStatus(
+  statuses: DayStatus[] | undefined,
+  employeeId: string,
+  date: string,
+  status: HourStatus,
+): DayStatus[] {
+  return [
+    ...(statuses ?? []).filter((row) => !(row.employeeId === employeeId && row.date === date)),
+    { employeeId, date, status },
+  ];
+}
+
+export function clearDayStatus(statuses: DayStatus[] | undefined, employeeId: string, date: string): DayStatus[] {
+  return (statuses ?? []).filter((row) => !(row.employeeId === employeeId && row.date === date));
 }
