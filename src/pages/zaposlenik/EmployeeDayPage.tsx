@@ -285,36 +285,34 @@ export function EmployeeDayPage() {
         )}
       </div>
 
-      {!restDay && !sheet && (canEdit || confirmed || tone === "past") ? (
-        canEdit ? (
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
-            <div className="pointer-events-auto mx-auto max-w-md px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      {!sheet ? (
+        <div className="fixed inset-x-0 bottom-0 z-40">
+          <div className="mx-auto max-w-md rounded-t-xl border-x border-t border-slate-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {restDay ? (
+              <p className="py-1 text-center text-sm text-slate-500">{REST_DAY_MESSAGE}</p>
+            ) : canEdit ? (
               <button type="button" className="btn-success w-full" onClick={confirmHours}>
                 Potvrdi sate
               </button>
-            </div>
+            ) : confirmed ? (
+              <div className="space-y-2">
+                <p className="flex items-center justify-center gap-2 text-sm font-medium text-emerald-700">
+                  <CheckIcon className="h-4 w-4" />
+                  {hourStatus === "uredeni_i_potvrdeni" ? "Sati su uređeni i potvrđeni" : "Sati su potvrđeni"}
+                </p>
+                {editable ? (
+                  <button type="button" className="btn-danger w-full" onClick={unconfirmHours}>
+                    Poništi potvrdu
+                  </button>
+                ) : null}
+              </div>
+            ) : tone === "future" ? (
+              <p className="py-1 text-center text-sm text-slate-500">Samo pregled</p>
+            ) : (
+              <p className="py-1 text-center text-sm text-slate-500">Sati nisu potvrđeni</p>
+            )}
           </div>
-        ) : (
-          <div className="fixed inset-x-0 bottom-0 z-40">
-            <div className="mx-auto max-w-md rounded-t-2xl border-x border-t border-slate-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-              {confirmed ? (
-                <div className="space-y-2">
-                  <p className="flex items-center justify-center gap-2 text-sm font-medium text-emerald-700">
-                    <CheckIcon className="h-4 w-4" />
-                    {hourStatus === "uredeni_i_potvrdeni" ? "Sati su uređeni i potvrđeni" : "Sati su potvrđeni"}
-                  </p>
-                  {editable ? (
-                    <button type="button" className="btn-danger w-full" onClick={unconfirmHours}>
-                      Poništi potvrdu
-                    </button>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="py-1 text-center text-sm text-slate-500">Sati nisu potvrđeni</p>
-              )}
-            </div>
-          </div>
-        )
+        </div>
       ) : null}
 
       {sheet && canEdit ? (
