@@ -92,7 +92,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
       code: "PC-01",
       name: "Pumpa čilera",
       description: "Montaža i servis cirkulacijske pumpe na krugu čilera.",
-      color: "#0d9488",
+      color: "#db2777",
       status: "u_tijeku",
       archived: false,
       taskIds: ["task-mn-01", "task-mn-03", "task-mn-04", "task-sv-03", "task-sv-04", "task-el-01", "task-el-02"],
