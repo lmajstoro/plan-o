@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { useLockPageScroll } from "../../lib/scrollLock";
 import { CloseIcon } from "../icons";
 
 type ModalProps = {
@@ -9,6 +10,7 @@ type ModalProps = {
 };
 
 export function Modal({ title, children, onClose, wide }: ModalProps) {
+  useLockPageScroll();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -18,7 +20,7 @@ export function Modal({ title, children, onClose, wide }: ModalProps) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none p-4">
       <button type="button" className="absolute inset-0 bg-slate-900/40" aria-label="Zatvori" onClick={onClose} />
       <div className={`relative w-full rounded-xl bg-white shadow-xl ${wide ? "max-w-2xl" : "max-w-md"}`}>
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
@@ -27,7 +29,9 @@ export function Modal({ title, children, onClose, wide }: ModalProps) {
             <CloseIcon className="h-5 w-5" />
           </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div className="max-h-[min(80vh,36rem)] overflow-y-auto px-5 py-4" data-allow-scroll>
+          {children}
+        </div>
       </div>
     </div>
   );

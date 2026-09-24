@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CloseIcon } from "../icons";
 import { formatHour } from "../../lib/dates";
 import { DAY_END, DAY_START, hourColumns } from "../../lib/gantt";
+import { useLockPageScroll } from "../../lib/scrollLock";
 import { selectableWorkOrders, tasksForWorkOrder } from "../../lib/workOrders";
 import type { Role, Task, WorkOrder } from "../../types";
 
@@ -34,6 +35,7 @@ export function EmployeeAssignmentSheet({
   onSave,
   onDelete,
 }: Props) {
+  useLockPageScroll();
   const hours = hourColumns();
   const orders = useMemo(() => selectableWorkOrders(workOrders, initialWorkOrderId), [workOrders, initialWorkOrderId]);
   const [workOrderId, setWorkOrderId] = useState(initialWorkOrderId ?? orders[0]?.id ?? "");
@@ -63,9 +65,12 @@ export function EmployeeAssignmentSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden overscroll-none">
       <button type="button" className="absolute inset-0 bg-slate-900/40" aria-label="Zatvori" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-t-2xl bg-white pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl">
+      <div
+        className="relative max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl"
+        data-allow-scroll
+      >
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <h2 className="text-base font-semibold text-slate-900">{title}</h2>
           <button type="button" className="rounded-md p-2 text-slate-500" onClick={onClose}>
