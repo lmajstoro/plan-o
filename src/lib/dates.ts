@@ -55,6 +55,12 @@ export function toWorkDay(date: Date): Date {
   return next;
 }
 
+export function addCalendarDays(date: Date, delta: number): Date {
+  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  next.setDate(next.getDate() + delta);
+  return next;
+}
+
 export function addWorkDays(date: Date, delta: number): Date {
   const next = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const step = delta > 0 ? 1 : -1;
@@ -64,6 +70,11 @@ export function addWorkDays(date: Date, delta: number): Date {
     if (!isWeekend(next)) remaining -= 1;
   }
   return next;
+}
+
+export function calendarToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
 export function formatCroatianDate(date: Date): string {

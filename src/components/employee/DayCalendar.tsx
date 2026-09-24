@@ -60,10 +60,11 @@ export function DayCalendar({
         {HOURS.map((hour) => (
           <div
             key={hour}
-            className="absolute left-0 right-0 border-t border-slate-200"
+            className="absolute left-0 right-0"
             style={{ top: (hour - DAY_START) * HOUR_HEIGHT, height: HOUR_HEIGHT }}
           >
-            <div className="absolute -top-2.5 left-0 w-14 pr-2 text-right text-[11px] text-slate-400">
+            <div className="absolute top-0 border-t border-slate-200" style={{ left: GUTTER, right: 0 }} />
+            <div className="absolute -top-2 left-0 z-10 w-14 bg-white pr-2 text-right text-[11px] leading-none text-slate-400">
               {formatHour(hour)}
             </div>
           </div>

@@ -5,7 +5,7 @@ import { EmployeeAssignmentSheet } from "../../components/employee/EmployeeAssig
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../../components/icons";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
-import { addWorkDays, formatCroatianDate, formatDateKey, parseDateKey, ROLE_LABELS } from "../../lib/dates";
+import { addCalendarDays, formatCroatianDate, formatDateKey, parseDateKey, ROLE_LABELS } from "../../lib/dates";
 import {
   canViewDay,
   dayAssignments,
@@ -13,8 +13,10 @@ import {
   dayTone,
   findEmployeeForUser,
   isEditableDay,
+  isRestDay,
   maxViewKey,
   minViewKey,
+  REST_DAY_MESSAGE,
   todayKey,
 } from "../../lib/employee";
 import { blockEnd, DAY_END, DAY_START, newId } from "../../lib/gantt";
@@ -36,9 +38,10 @@ export function EmployeeDayPage() {
   const employee = user ? findEmployeeForUser(db.employees, user) : undefined;
   const current = parseDateKey(date);
   const editable = isEditableDay(date);
+  const restDay = isRestDay(date);
   const tone = dayTone(date);
-  const canGoBack = formatDateKey(addWorkDays(current, -1)) >= minViewKey();
-  const canGoForward = formatDateKey(addWorkDays(current, 1)) <= maxViewKey();
+  const canGoBack = formatDateKey(addCalendarDays(current, -1)) >= minViewKey();
+  const canGoForward = formatDateKey(addCalendarDays(current, 1)) <= maxViewKey();
 
   const assignments = useMemo(
     () => (employee ? dayAssignments(db.assignments, employee.id, date) : []),
@@ -46,7 +49,7 @@ export function EmployeeDayPage() {
   );
 
   function go(delta: number) {
-    const next = formatDateKey(addWorkDays(current, delta));
+    const next = formatDateKey(addCalendarDays(current, delta));
     if (!canViewDay(next)) return;
     setDate(next);
     setSheet(null);
@@ -174,36 +177,48 @@ export function EmployeeDayPage() {
             <ChevronRightIcon className="h-5 w-5" />
           </button>
         </div>
+
+        <div
+          className={`px-4 py-2 text-sm ${
+            restDay
+              ? "bg-slate-50 text-slate-600"
+              : tone === "live"
+                ? "bg-blue-50 text-blue-900"
+                : tone === "future"
+                  ? "bg-slate-50 text-slate-500"
+                  : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          {dayModeLabel(date)}
+          {editable ? " · dodirni zadatak ili prazan sat." : null}
+        </div>
       </header>
 
-      <div
-        className={`px-4 py-2 text-sm ${
-          tone === "live" ? "bg-blue-50 text-blue-900" : tone === "future" ? "bg-slate-50 text-slate-500" : "bg-slate-100 text-slate-500"
-        }`}
-      >
-        {dayModeLabel(date)}
-        {editable ? " · dodirni zadatak ili prazan sat." : null}
-      </div>
-
       <div className="flex-1 overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {assignments.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-slate-500">Nema zadataka za ovaj dan.</p>
-        ) : null}
-        <DayCalendar
-          assignments={assignments}
-          workOrders={db.workOrders}
-          tasks={db.tasks}
-          tone={tone}
-          showNow={date === todayKey()}
-          onSelectAssignment={(assignment) => {
-            setError("");
-            setSheet({ mode: "edit", assignment });
-          }}
-          onSelectHour={(hour) => {
-            setError("");
-            setSheet({ mode: "create", startHour: hour, durationHours: 1 });
-          }}
-        />
+        {restDay ? (
+          <p className="px-6 py-16 text-center text-base font-medium text-slate-600">{REST_DAY_MESSAGE}</p>
+        ) : (
+          <>
+            {assignments.length === 0 ? (
+              <p className="px-4 py-6 text-center text-sm text-slate-500">Nema zadataka za ovaj dan.</p>
+            ) : null}
+            <DayCalendar
+              assignments={assignments}
+              workOrders={db.workOrders}
+              tasks={db.tasks}
+              tone={tone}
+              showNow={date === todayKey()}
+              onSelectAssignment={(assignment) => {
+                setError("");
+                setSheet({ mode: "edit", assignment });
+              }}
+              onSelectHour={(hour) => {
+                setError("");
+                setSheet({ mode: "create", startHour: hour, durationHours: 1 });
+              }}
+            />
+          </>
+        )}
       </div>
 
       {sheet && editable ? (

@@ -1,5 +1,7 @@
 import type { Assignment, Employee, SessionUser } from "../types";
-import { addWorkDays, formatDateKey, todayWorkDate } from "./dates";
+import { addWorkDays, calendarToday, formatDateKey, isWeekend, parseDateKey, todayWorkDate } from "./dates";
+
+export const REST_DAY_MESSAGE = "Neradni dan je, odmori :)";
 
 export const MAX_FUTURE_WORK_DAYS = 3;
 export const MAX_PAST_WORK_DAYS = 21;
@@ -14,7 +16,7 @@ export function findEmployeeForUser(employees: Employee[], user: SessionUser): E
 }
 
 export function todayKey(): string {
-  return formatDateKey(todayWorkDate());
+  return formatDateKey(calendarToday());
 }
 
 export function yesterdayKey(): string {
@@ -29,8 +31,17 @@ export function maxViewKey(): string {
   return formatDateKey(addWorkDays(todayWorkDate(), MAX_FUTURE_WORK_DAYS));
 }
 
+export function isRestDay(dateKey: string): boolean {
+  return isWeekend(parseDateKey(dateKey));
+}
+
 export function isEditableDay(dateKey: string): boolean {
-  return dateKey === todayKey() || dateKey === yesterdayKey();
+  if (isRestDay(dateKey)) return false;
+  const today = todayKey();
+  if (isRestDay(today)) {
+    return dateKey === formatDateKey(addWorkDays(parseDateKey(today), -1));
+  }
+  return dateKey === today || dateKey === yesterdayKey();
 }
 
 export function dayTone(dateKey: string): "live" | "past" | "future" {
@@ -51,8 +62,9 @@ export function dayAssignments(assignments: Assignment[], employeeId: string, da
 }
 
 export function dayModeLabel(dateKey: string): string {
+  if (isRestDay(dateKey)) return REST_DAY_MESSAGE;
   if (dateKey === todayKey()) return "Možeš urediti današnji dan";
-  if (dateKey === yesterdayKey()) return "Možeš urediti jučerašnji dan";
+  if (isEditableDay(dateKey)) return "Možeš urediti jučerašnji dan";
   if (dateKey > todayKey()) return "Samo pregled, nadolazeći dan";
   return "Samo pregled, prethodni dan";
 }
