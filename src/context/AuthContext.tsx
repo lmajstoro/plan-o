@@ -1,10 +1,10 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { authenticate, clearSession, loadSession, saveSession } from "../auth/session";
-import type { SessionUser } from "../types";
+import type { SessionUser, UserRole } from "../types";
 
 type AuthContextValue = {
   user: SessionUser | null;
-  login: (email: string, password: string) => boolean;
+  login: (role: UserRole) => boolean;
   logout: () => void;
 };
 
@@ -16,8 +16,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      login: (email, password) => {
-        const next = authenticate(email, password);
+      login: (role) => {
+        const next = authenticate(role);
         if (!next) return false;
         saveSession(next);
         setUser(next);

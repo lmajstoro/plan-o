@@ -1,3 +1,5 @@
+import { formatHour } from "./dates";
+
 export const DAY_START = 4;
 export const DAY_END = 23;
 export const CORE_START = 7;
@@ -71,6 +73,31 @@ function hasOverlap<T extends Timed>(blocks: T[]): boolean {
     if (sorted[i].startHour < blockEnd(sorted[i - 1])) return true;
   }
   return false;
+}
+
+function rangeLabel(block: Pick<Timed, "startHour" | "durationHours">): string {
+  return `${formatHour(block.startHour)} - ${formatHour(blockEnd(block))}`;
+}
+
+export function overlapErrorMessage<T extends Timed>(blocks: T[], targetId: string): string | null {
+  const sorted = sortBlocks(blocks);
+  const idx = sorted.findIndex((block) => block.id === targetId);
+  if (idx < 0) return null;
+  const target = sorted[idx];
+  const previous = idx > 0 ? sorted[idx - 1] : null;
+  const next = idx < sorted.length - 1 ? sorted[idx + 1] : null;
+  const hitsPrevious = Boolean(previous && target.startHour < blockEnd(previous));
+  const hitsNext = Boolean(next && next.startHour < blockEnd(target));
+  if (hitsPrevious && hitsNext && previous && next) {
+    return `Zadatak se preklapa s prethodnim zadatkom (${rangeLabel(previous)}) i narednim zadatkom (${rangeLabel(next)}).`;
+  }
+  if (hitsPrevious && previous) {
+    return `Zadatak se preklapa s prethodnim zadatkom (${rangeLabel(previous)}).`;
+  }
+  if (hitsNext && next) {
+    return `Zadatak se preklapa s narednim zadatkom (${rangeLabel(next)}).`;
+  }
+  return null;
 }
 
 export function shiftChain<T extends Timed>(blocks: T[], movedId: string, deltaHours: number): T[] | null {

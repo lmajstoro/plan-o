@@ -19,7 +19,7 @@ import {
   REST_DAY_MESSAGE,
   todayKey,
 } from "../../lib/employee";
-import { blockEnd, DAY_END, DAY_START, newId } from "../../lib/gantt";
+import { blockEnd, DAY_END, DAY_START, newId, overlapErrorMessage } from "../../lib/gantt";
 import { isArchivedWorkOrder, tasksForWorkOrder } from "../../lib/workOrders";
 import type { Assignment } from "../../types";
 
@@ -56,15 +56,7 @@ export function EmployeeDayPage() {
     setError("");
   }
 
-  function overlaps(next: Assignment[]): boolean {
-    const sorted = [...next].sort((a, b) => a.startHour - b.startHour);
-    for (let index = 1; index < sorted.length; index += 1) {
-      if (sorted[index].startHour < blockEnd(sorted[index - 1])) return true;
-    }
-    return false;
-  }
-
-  function commit(next: Assignment[]): boolean {
+  function commit(next: Assignment[], targetId?: string): boolean {
     if (!employee) return false;
     const invalid = next.some(
       (row) => row.startHour < DAY_START || blockEnd(row) > DAY_END || row.durationHours < 1,
@@ -77,13 +69,16 @@ export function EmployeeDayPage() {
       const order = db.workOrders.find((item) => item.id === row.workOrderId);
       return !tasksForWorkOrder(order, db.tasks, employee.role).some((task) => task.id === row.taskId);
     });
-    if (invalid || overlaps(next) || usesArchived || invalidTask) {
+    const overlapText = targetId ? overlapErrorMessage(next, targetId) : null;
+    if (invalid || overlapText || usesArchived || invalidTask) {
       setError(
         usesArchived
           ? "Na arhivirani nalog se ne mogu unositi sati."
           : invalidTask
             ? "Odabrani zadatak nije dostupan na tom nalogu."
-            : "Vrijeme se preklapa ili izlazi iz radnog dana.",
+            : overlapText
+              ? overlapText
+              : "Zadatak izlazi iz radnog dana.",
       );
       return false;
     }
@@ -110,25 +105,24 @@ export function EmployeeDayPage() {
   function saveSheet(workOrderId: string, taskId: string, startHour: number, durationHours: number) {
     if (!sheet) return;
     if (sheet.mode === "create") {
-      commit([
-        ...assignments,
-        {
-          id: newId("asg"),
-          employeeId: employee?.id ?? "",
-          date,
-          workOrderId,
-          taskId,
-          startHour,
-          durationHours,
-          kind: "actual",
-        },
-      ]);
+      const created = {
+        id: newId("asg"),
+        employeeId: employee?.id ?? "",
+        date,
+        workOrderId,
+        taskId,
+        startHour,
+        durationHours,
+        kind: "actual" as const,
+      };
+      commit([...assignments, created], created.id);
       return;
     }
     commit(
       assignments.map((row) =>
         row.id === sheet.assignment.id ? { ...row, workOrderId, taskId, startHour, durationHours } : row,
       ),
+      sheet.assignment.id,
     );
   }
 

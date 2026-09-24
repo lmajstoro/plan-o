@@ -1,21 +1,19 @@
 import { FormEvent, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { DEMO_ACCOUNTS } from "../data/seed";
+import type { UserRole } from "../types";
 
 export function LoginPage() {
   const { user, login } = useAuth();
-  const [email, setEmail] = useState(DEMO_ACCOUNTS[0].email);
-  const [password, setPassword] = useState("demo123");
-  const [error, setError] = useState("");
+  const [role, setRole] = useState<UserRole | null>(null);
 
   if (user?.role === "admin") return <Navigate to="/administrator" replace />;
   if (user?.role === "zaposlenik") return <Navigate to="/zaposlenik" replace />;
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
-    const ok = login(email, password);
-    if (!ok) setError("Pogrešan e-mail ili lozinka.");
+    if (!role) return;
+    login(role);
   }
 
   return (
@@ -30,45 +28,47 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">E-mail</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input"
-              autoComplete="username"
-              required
+          <div className="grid grid-cols-2 gap-2">
+            <RoleButton
+              label="Administrator"
+              selected={role === "admin"}
+              onClick={() => setRole("admin")}
             />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Lozinka</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input"
-              autoComplete="current-password"
-              required
+            <RoleButton
+              label="Zaposlenik"
+              selected={role === "zaposlenik"}
+              onClick={() => setRole("zaposlenik")}
             />
-          </label>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <button type="submit" className="btn-primary w-full">
+          </div>
+          <button type="submit" className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-40" disabled={!role}>
             Prijava
           </button>
         </form>
-
-        <div className="mt-6 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-          <p className="mb-2 font-semibold text-slate-700">Demo korisnici</p>
-          <p>
-            Administrator: <span className="font-medium">{DEMO_ACCOUNTS[0].email}</span>
-          </p>
-          <p>
-            Zaposlenik: <span className="font-medium">{DEMO_ACCOUNTS[1].email}</span>
-          </p>
-          <p className="mt-1">Lozinka za oba: <span className="font-medium">demo123</span></p>
-        </div>
       </div>
     </div>
+  );
+}
+
+function RoleButton({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-xl border px-3 py-3 text-sm font-semibold ${
+        selected
+          ? "border-blue-700 bg-blue-700 text-white"
+          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
