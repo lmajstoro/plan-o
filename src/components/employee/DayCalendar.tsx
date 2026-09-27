@@ -87,6 +87,7 @@ export function DayCalendar({
         {assignments.map((assignment) => {
           const order = orderById(assignment.workOrderId);
           const task = taskById(assignment.taskId);
+          const compact = assignment.durationHours < 2;
           return (
             <button
               key={assignment.id}
@@ -105,17 +106,27 @@ export function DayCalendar({
                 if (!readOnly) onSelectAssignment(assignment);
               }}
             >
-              <div className="flex min-h-0 flex-col gap-1">
-                <div className="truncate text-base font-semibold leading-tight">
-                  {[order?.code, order?.name].filter(Boolean).join(" - ")}
+              {compact ? (
+                <div className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-none">
+                  <span className="shrink-0">{order?.code ?? "?"}</span>
+                  <span className="min-w-0 truncate font-medium text-white/90">{task?.code}</span>
+                  <span className="ml-auto shrink-0 font-medium tabular-nums text-white/90">
+                    {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} {assignment.durationHours}h
+                  </span>
                 </div>
-                <div className="truncate text-sm leading-tight text-white/90">
-                  {taskLabel(task)}
+              ) : (
+                <div className="flex min-h-0 flex-col gap-1">
+                  <div className="truncate text-base font-semibold leading-tight">
+                    {[order?.code, order?.name].filter(Boolean).join(" - ")}
+                  </div>
+                  <div className="truncate text-sm leading-tight text-white/90">
+                    {taskLabel(task)}
+                  </div>
+                  <div className="truncate text-sm leading-tight text-white/90">
+                    {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} {assignment.durationHours}h
+                  </div>
                 </div>
-                <div className="truncate text-sm leading-tight text-white/90">
-                  {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} {assignment.durationHours}h
-                </div>
-              </div>
+              )}
             </button>
           );
         })}
