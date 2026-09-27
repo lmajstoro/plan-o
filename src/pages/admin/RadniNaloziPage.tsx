@@ -7,6 +7,8 @@ import {
   sortWorkOrders,
   templateName,
   workOrderColor,
+  WORK_ORDER_COLOR_LABELS,
+  WORK_ORDER_COLORS,
   WORK_ORDER_STATUS_LABELS,
   WORK_ORDER_STATUSES,
   workOrderStatusClass,
@@ -24,6 +26,7 @@ type FormState = {
   name: string;
   description: string;
   templateId: string;
+  color: string;
   status: WorkOrderStatus;
   archived: boolean;
 };
@@ -33,6 +36,7 @@ const emptyForm: FormState = {
   name: "",
   description: "",
   templateId: "",
+  color: WORK_ORDER_COLORS[0],
   status: "otvoren",
   archived: false,
 };
@@ -64,22 +68,35 @@ export function RadniNaloziPage() {
       ...emptyForm,
       code: nextWorkOrderCode(db.workOrders),
       templateId: first?.id ?? "",
+      color: first?.color ?? WORK_ORDER_COLORS[0],
     });
     setFormError("");
     setCreating(true);
   }
 
   function openEdit(order: WorkOrder) {
+    const template = templates.find((row) => row.id === order.templateId);
     setForm({
       code: order.code,
       name: order.name,
       description: order.description,
       templateId: order.templateId,
+      color: order.color || template?.color || WORK_ORDER_COLORS[0],
       status: order.status ?? "otvoren",
       archived: Boolean(order.archived),
     });
     setFormError("");
     setEditing(order);
+  }
+
+  function changeTemplate(templateId: string) {
+    const template = templates.find((row) => row.id === templateId);
+    setForm((current) => ({
+      ...current,
+      templateId,
+      color: creating && template ? template.color : current.color,
+    }));
+    setFormError("");
   }
 
   function openTasks(order: WorkOrder) {
@@ -146,10 +163,10 @@ export function RadniNaloziPage() {
   function save(event: FormEvent) {
     event.preventDefault();
     if (!form.templateId) {
-      setFormError("Odaberite predložak. Boja i zadaci dolaze s predloška.");
+      setFormError("Odaberite predložak. Nalog naslijedi njegovu boju i zadatke, pa ih možeš mijenjati.");
       return;
     }
-    const color = selectedTemplate?.color ?? "#334155";
+    const color = form.color || selectedTemplate?.color || "#334155";
     if (editing) {
       update((current) => ({
         ...current,
@@ -182,7 +199,7 @@ export function RadniNaloziPage() {
       <Header title="Radni nalozi" actionLabel="Novi radni nalog" onAction={openCreate} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-slate-500">
-          Novi nalog se kreira iz predloška i dobiva broj RN. Zadaci se uređuju zasebno na nalogu.
+          Novi nalog se kreira iz predloška i dobiva broj RN. Boju i zadatke naslijedi, pa ih možeš mijenjati na nalogu.
         </p>
         <button
           type="button"
@@ -296,7 +313,7 @@ export function RadniNaloziPage() {
                 className="input"
                 required
                 value={form.templateId}
-                onChange={(e) => setForm({ ...form, templateId: e.target.value })}
+                onChange={(e) => changeTemplate(e.target.value)}
               >
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
@@ -311,11 +328,27 @@ export function RadniNaloziPage() {
             <Field label="Napomene">
               <textarea className="input min-h-[88px]" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </Field>
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <span className="h-5 w-5 rounded-full" style={{ backgroundColor: selectedTemplate?.color ?? "#cbd5e1" }} />
-              Boja na planu dolazi s predloška.
-              {creating ? " Novi nalog naslijedi zadatke predloška." : " Zadaci se uređuju zasebnom akcijom."}
-            </div>
+            <Field label={`Boja na planu${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
+              <div className="flex flex-wrap gap-1.5">
+                {WORK_ORDER_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setForm({ ...form, color })}
+                    className={`h-7 w-7 rounded-full border ${
+                      form.color === color ? "border-white ring-2 ring-offset-1 ring-slate-400" : "border-slate-200"
+                    }`}
+                    style={{ backgroundColor: color }}
+                    aria-label={WORK_ORDER_COLOR_LABELS[color] ?? color}
+                  />
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-slate-500">
+                {creating
+                  ? "Novi nalog preuzima boju predloška. Možeš je odmah ili kasnije promijeniti."
+                  : "Zadaci se uređuju zasebnom akcijom."}
+              </p>
+            </Field>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
                 type="checkbox"

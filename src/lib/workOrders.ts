@@ -169,7 +169,8 @@ export function workOrderColor(
   templates: WorkOrderTemplate[],
 ): string {
   if (!order) return "#334155";
-  return templates.find((row) => row.id === order.templateId)?.color ?? order.color ?? "#334155";
+  if (order.color) return order.color;
+  return templates.find((row) => row.id === order.templateId)?.color ?? "#334155";
 }
 
 export function templateUsage(templateId: string, orders: WorkOrder[]): number {

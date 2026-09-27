@@ -113,7 +113,7 @@ export function PredlosciPage() {
     <div>
       <Header title="Predlošci" actionLabel="Novi predložak" onAction={openCreate} />
       <p className="mb-4 text-slate-500">
-        Tipovi uređaja iz kojih se kreira radni nalog. Boja na planu dolazi s predloška, npr. svaki CO2 je narančast.
+        Tipovi uređaja iz kojih se kreira radni nalog. Novi nalog naslijedi boju i zadatke predloška, pa ih možeš naknadno promijeniti na nalogu.
       </p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
@@ -186,7 +186,7 @@ export function PredlosciPage() {
             </Field>
             <div>
               <span className="mb-1 block text-sm font-medium text-slate-700">Zadaci koje nalog nasljeđuje</span>
-              <p className="mb-2 text-xs text-slate-500">Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi zadane zadatke predloška.</p>
+              <p className="mb-2 text-xs text-slate-500">Ovo su zadani zadaci novog naloga. Na nalogu ih možeš kasnije mijenjati.</p>
               <TaskPicker tasks={db.tasks} jobRoles={db.jobRoles} selectedIds={form.taskIds} onToggle={toggleTask} />
             </div>
             {formError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p> : null}
