@@ -15,10 +15,13 @@ import {
 } from "../../lib/workOrders";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
+import { NotesEditor } from "../../components/admin/NotesEditor";
+import { NotesView } from "../../components/admin/NotesView";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
+import { compactNotes, toggleNoteTodo } from "../../lib/notes";
 import type { WorkOrder, WorkOrderStatus } from "../../types";
 
 type FormState = {
@@ -150,11 +153,12 @@ export function RadniNaloziPage() {
       return;
     }
     const color = form.color || selectedTemplate?.color || "#334155";
+    const description = compactNotes(form.description);
     if (editing) {
       update((current) => ({
         ...current,
         workOrders: current.workOrders.map((row) =>
-          row.id === editing.id ? { ...row, ...form, color } : row,
+          row.id === editing.id ? { ...row, ...form, description, color } : row,
         ),
       }));
       setEditing(null);
@@ -169,10 +173,19 @@ export function RadniNaloziPage() {
       ...current,
       workOrders: [
         ...current.workOrders,
-        { id: newId("wo"), ...form, color, taskIds: inheritedTaskIds },
+        { id: newId("wo"), ...form, description, color, taskIds: inheritedTaskIds },
       ],
     }));
     setCreating(false);
+  }
+
+  function toggleOrderTodo(orderId: string, index: number) {
+    update((current) => ({
+      ...current,
+      workOrders: current.workOrders.map((row) =>
+        row.id === orderId ? { ...row, description: toggleNoteTodo(row.description, index) } : row,
+      ),
+    }));
   }
 
   const showForm = creating || editing;
@@ -225,7 +238,13 @@ export function RadniNaloziPage() {
                 </td>
                 <td className="px-4 py-3 font-medium text-slate-800">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">{templateName(db.workOrderTemplates, row.templateId)}</td>
-                <td className="max-w-xs px-4 py-3 text-slate-600">{row.description || ""}</td>
+                <td className="max-w-sm px-4 py-3 text-slate-600">
+                  <NotesView
+                    compact
+                    value={row.description || ""}
+                    onToggleTodo={(index) => toggleOrderTodo(row.id, index)}
+                  />
+                </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${workOrderStatusClass(row.status ?? "otvoren", Boolean(row.archived))}`}>
                     {row.archived ? "Arhiviran" : (WORK_ORDER_STATUS_LABELS[row.status] ?? "Otvoren")}
@@ -308,9 +327,10 @@ export function RadniNaloziPage() {
             <Field label="Naziv">
               <input className="input" required placeholder="npr. Flexi P8" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
-            <Field label="Napomene">
-              <textarea className="input min-h-[88px]" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            </Field>
+            <div>
+              <span className="mb-1 block text-sm font-medium text-slate-700">Napomene</span>
+              <NotesEditor value={form.description} onChange={(description) => setForm({ ...form, description })} />
+            </div>
             <Field label={`Boja na planu${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
               <div className="flex flex-wrap gap-1.5">
                 {WORK_ORDER_COLORS.map((color) => (

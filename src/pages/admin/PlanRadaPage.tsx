@@ -12,6 +12,8 @@ import {
 import { isEmployeeActive, isHoursConfirmed } from "../../lib/employee";
 import { sortJobRoles } from "../../lib/roles";
 import { workOrderColor } from "../../lib/workOrders";
+import { toggleNoteTodo } from "../../lib/notes";
+import { NotesView } from "../../components/admin/NotesView";
 
 const SOPNICA_GROUP_ID = "wg-sopnica";
 const SOPNICA_LOAD_MS = 1000;
@@ -290,7 +292,17 @@ export function PlanRadaPage() {
                     <div className="truncate text-sm font-semibold text-slate-900">
                       <span className="font-mono text-slate-500">{order.code}</span> {order.name}
                     </div>
-                    <div className="text-xs leading-snug text-slate-500">{order.description}</div>
+                    <NotesView
+                      value={order.description}
+                      onToggleTodo={(index) => {
+                        update((current) => ({
+                          ...current,
+                          workOrders: current.workOrders.map((row) =>
+                            row.id === order.id ? { ...row, description: toggleNoteTodo(row.description, index) } : row,
+                          ),
+                        }));
+                      }}
+                    />
                   </div>
                 </div>
               ))}
