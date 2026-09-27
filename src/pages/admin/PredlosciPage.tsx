@@ -161,8 +161,8 @@ export function PredlosciPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi predložak" : "Novi predložak"} wide onClose={closeForm}>
-          <form onSubmit={save} className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
+        <Modal title={editing ? "Uredi predložak" : "Novi predložak"} size="xl" onClose={closeForm}>
+          <form onSubmit={save} className="space-y-3">
             <Field label="Naziv">
               <input className="input" required value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); setFormError(""); }} />
             </Field>

@@ -283,7 +283,7 @@ export function RadniNaloziPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi radni nalog" : "Novi radni nalog"} onClose={closeForm}>
+        <Modal title={editing ? "Uredi radni nalog" : "Novi radni nalog"} size="xl" onClose={closeForm}>
           <form onSubmit={save} className="space-y-3">
             {templates.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
