@@ -30,7 +30,8 @@ export default function App() {
         <Route path="radne-skupine" element={<RadneSkupinePage />} />
         <Route path="zadaci" element={<ZadaciPage />} />
         <Route path="radni-nalozi" element={<RadniNaloziPage />} />
-        <Route path="predlosci" element={<PredlosciPage />} />
+        <Route path="radni-nalozi/predlosci" element={<PredlosciPage />} />
+        <Route path="predlosci" element={<Navigate to="/administrator/radni-nalozi/predlosci" replace />} />
       </Route>
       <Route
         path="/zaposlenik"

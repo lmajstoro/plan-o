@@ -3,10 +3,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
 import { BadgeIcon, CalendarIcon, ClipboardIcon, LayersIcon, LogoutIcon, ResetIcon, TagIcon, TemplateIcon, UsersIcon } from "../icons";
 
-const links = [
-  { to: "/administrator", label: "Plan rada", icon: CalendarIcon, end: true },
-  { to: "/administrator/radni-nalozi", label: "Radni nalozi", icon: LayersIcon, end: false },
-  { to: "/administrator/predlosci", label: "Predlošci", icon: TemplateIcon, end: false },
+const overviewLinks = [{ to: "/administrator", label: "Plan rada", icon: CalendarIcon, end: true }];
+
+const catalogLinks = [
   { to: "/administrator/zaposlenici", label: "Zaposlenici", icon: UsersIcon, end: false },
   { to: "/administrator/uloge", label: "Uloge", icon: BadgeIcon, end: false },
   { to: "/administrator/radne-skupine", label: "Radne skupine", icon: TagIcon, end: false },
@@ -26,11 +25,12 @@ export function AdminLayout() {
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       <p className="px-3 pb-1 pt-4 text-sm font-semibold uppercase tracking-wide text-slate-400">Pregled</p>
-      {links.slice(0, 1).map((link) => (
+      {overviewLinks.map((link) => (
         <NavItem key={link.to} {...link} />
       ))}
       <p className="px-3 pb-1 pt-5 text-sm font-semibold uppercase tracking-wide text-slate-400">Šifarnici</p>
-      {links.slice(1).map((link) => (
+      <WorkOrdersNav />
+      {catalogLinks.map((link) => (
         <NavItem key={link.to} {...link} />
       ))}
     </nav>
@@ -78,23 +78,36 @@ function Brand() {
   );
 }
 
+function WorkOrdersNav() {
+  return (
+    <div>
+      <NavItem to="/administrator/radni-nalozi" label="Radni nalozi" icon={LayersIcon} end />
+      <div className="ml-5 border-l border-slate-200 pl-1">
+        <NavItem to="/administrator/radni-nalozi/predlosci" label="Predlošci" icon={TemplateIcon} end nested />
+      </div>
+    </div>
+  );
+}
+
 function NavItem({
   to,
   label,
   icon: Icon,
   end,
+  nested = false,
 }: {
   to: string;
   label: string;
   icon: typeof CalendarIcon;
   end: boolean;
+  nested?: boolean;
 }) {
   return (
     <NavLink
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium ${
+        `flex items-center gap-3 rounded-lg px-3 text-base font-medium ${nested ? "py-2" : "py-2.5"} ${
           isActive ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
         }`
       }
