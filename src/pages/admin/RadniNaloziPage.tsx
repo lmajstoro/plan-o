@@ -14,7 +14,7 @@ import {
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { TaskPicker } from "../../components/admin/TaskPicker";
 import { PaginationBar } from "../../components/admin/PaginationBar";
-import { ArchiveIcon, EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
+import { EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
 import type { WorkOrder, WorkOrderStatus } from "../../types";
@@ -43,7 +43,6 @@ export function RadniNaloziPage() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState("");
-  const [removeId, setRemoveId] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<WorkOrder | null>(null);
   const [tasksOrder, setTasksOrder] = useState<WorkOrder | null>(null);
   const [taskIds, setTaskIds] = useState<string[]>([]);
@@ -176,16 +175,6 @@ export function RadniNaloziPage() {
     setCreating(false);
   }
 
-  function confirmRemove() {
-    if (!removeId) return;
-    update((current) => ({
-      ...current,
-      workOrders: current.workOrders.filter((row) => row.id !== removeId),
-      assignments: current.assignments.filter((row) => row.workOrderId !== removeId),
-    }));
-    setRemoveId(null);
-  }
-
   const showForm = creating || editing;
 
   return (
@@ -245,21 +234,18 @@ export function RadniNaloziPage() {
                 <td className="px-4 py-3 text-slate-600">{row.taskIds?.length ?? 0}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
-                    <button
-                      type="button"
-                      className="icon-btn"
-                      onClick={() => requestArchiveToggle(row)}
-                      title={row.archived ? "Vrati iz arhive" : "Arhiviraj"}
-                    >
-                      <ArchiveIcon className="h-4 w-4" />
-                    </button>
                     <button type="button" className="icon-btn" onClick={() => openTasks(row)} title="Uredi zadatke">
                       <ListChecksIcon className="h-4 w-4" />
                     </button>
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
                       <EditIcon className="h-4 w-4" />
                     </button>
-                    <button type="button" className="icon-btn-danger" onClick={() => setRemoveId(row.id)} title="Obriši">
+                    <button
+                      type="button"
+                      className="icon-btn-danger text-red-600 hover:text-red-700"
+                      onClick={() => requestArchiveToggle(row)}
+                      title={row.archived ? "Vrati iz arhive" : "Arhiviraj"}
+                    >
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>
@@ -378,15 +364,6 @@ export function RadniNaloziPage() {
           confirmLabel="Arhiviraj"
           onClose={() => setArchiveTarget(null)}
           onConfirm={confirmArchive}
-        />
-      ) : null}
-
-      {removeId ? (
-        <ConfirmDialog
-          title="Obriši radni nalog"
-          message="Nalog će se ukloniti i iz postojećih planova rada."
-          onClose={() => setRemoveId(null)}
-          onConfirm={confirmRemove}
         />
       ) : null}
     </div>
