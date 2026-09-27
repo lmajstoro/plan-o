@@ -27,7 +27,6 @@ import {
 import {
   blockEnd,
   blocksShifted,
-  closeWorkGaps,
   DAY_END,
   DAY_START,
   EXPECTED_HOURS,
@@ -36,7 +35,6 @@ import {
   newId,
   overlapErrorMessage,
   totalHours,
-  workGaps,
 } from "../../lib/gantt";
 import { isArchivedWorkOrder, tasksForWorkOrder } from "../../lib/workOrders";
 import { assignedRoles } from "../../lib/roles";
@@ -72,6 +70,7 @@ export function EmployeeDayPage() {
     [db.assignments, employee, date],
   );
   const workedHours = totalHours(assignments);
+  const confirmGap = gapErrorMessage(assignments);
   const hoursTone =
     workedHours === EXPECTED_HOURS ? "text-emerald-700" : workedHours > EXPECTED_HOURS ? "text-red-600" : "text-amber-700";
   const dayWorkOrderIds = useMemo(
@@ -127,16 +126,6 @@ export function EmployeeDayPage() {
       toSave = fitted;
       shifted = blocksShifted(next, fitted);
     }
-    if (!targetId && workGaps(toSave).length > 0) {
-      const packed = closeWorkGaps(toSave);
-      shifted = shifted || blocksShifted(toSave, packed);
-      toSave = packed;
-    }
-    const gapText = gapErrorMessage(toSave);
-    if (gapText) {
-      setError(gapText);
-      return false;
-    }
     update((currentDb) => ({
       ...currentDb,
       assignments: [
@@ -154,13 +143,7 @@ export function EmployeeDayPage() {
     }));
     setSheet(null);
     setError("");
-    setNotice(
-      shifted && overlapText
-        ? `${overlapText} Raspored je presložen.`
-        : shifted && !targetId
-          ? "Rupa u radu je zatvorena."
-          : "",
-    );
+    setNotice(shifted && overlapText ? `${overlapText} Raspored je presložen.` : "");
     return true;
   }
 
@@ -330,6 +313,9 @@ export function EmployeeDayPage() {
         {notice ? (
           <p className="mx-4 mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{notice}</p>
         ) : null}
+        {!sheet && error ? (
+          <p className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        ) : null}
         {restDay ? (
           <p className="px-6 py-16 text-center text-base font-medium text-slate-600">{REST_DAY_MESSAGE}</p>
         ) : (
@@ -368,7 +354,13 @@ export function EmployeeDayPage() {
             ) : canEdit ? (
               <div className="space-y-2">
                 <p className={`text-center text-sm font-medium ${hoursTone}`}>Radio si {workedHours} h</p>
-                <button type="button" className="btn-success w-full" onClick={confirmHours}>
+                {confirmGap ? <p className="text-center text-sm text-red-700">{confirmGap}</p> : null}
+                <button
+                  type="button"
+                  className="btn-success w-full disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={Boolean(confirmGap)}
+                  onClick={confirmHours}
+                >
                   Potvrdi sate
                 </button>
               </div>

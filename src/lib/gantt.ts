@@ -40,9 +40,9 @@ export function gapErrorMessage<T extends Timed>(blocks: T[]): string | null {
   if (gaps.length === 0) return null;
   const labels = gaps.map((gap) => `${formatHour(gap.start)} - ${formatHour(gap.end)}`).join(", ");
   if (gaps.length === 1) {
-    return `Rupa u radu nije dozvoljena (${labels}). Zadaci moraju ići jedan za drugim.`;
+    return `Dan se ne može potvrditi dok postoji rupa u radu (${labels}). Zadaci moraju ići jedan za drugim.`;
   }
-  return `Rupe u radu nisu dozvoljene (${labels}). Zadaci moraju ići jedan za drugim.`;
+  return `Dan se ne može potvrditi dok postoje rupe u radu (${labels}). Zadaci moraju ići jedan za drugim.`;
 }
 
 export function closeWorkGaps<T extends Timed>(blocks: T[]): T[] {
