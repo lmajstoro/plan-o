@@ -271,13 +271,19 @@ export function RadniNaloziPage() {
             </Field>
             <div>
               <span className="mb-1 block text-sm font-medium text-slate-700">Dostupni zadaci</span>
-              <p className="mb-2 text-xs text-slate-500">Samo ovi zadaci mogu se planirati i prijaviti na ovom nalogu.</p>
+              <p className="mb-2 text-xs text-slate-500">Zadaci se uređuju u šifarniku Zadaci. Ovdje samo odaberi koje nalog smije koristiti.</p>
+              {db.tasks.length === 0 ? (
+                <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">Nema zadataka. Dodajte ih u šifarniku Zadaci.</p>
+              ) : (
               <div className="grid gap-3 sm:grid-cols-3">
                 {taskGroups.map((group) => (
                   <div key={group.role} className="rounded-lg border border-slate-200 p-3">
                     <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{group.label}</div>
                     <div className="space-y-1.5">
-                      {group.tasks.map((task) => (
+                      {group.tasks.length === 0 ? (
+                        <p className="text-xs text-slate-400">Nema zadataka za ovu ulogu.</p>
+                      ) : (
+                        group.tasks.map((task) => (
                         <label key={task.id} className="flex items-start gap-2 text-sm text-slate-700">
                           <input
                             type="checkbox"
@@ -286,14 +292,16 @@ export function RadniNaloziPage() {
                             onChange={() => toggleTask(task.id)}
                           />
                           <span>
-                            <span className="font-mono text-slate-500">{task.code}</span> {task.name}
+                            <span className="font-mono text-slate-500">{task.code}</span> {task.description}
                           </span>
                         </label>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
+              )}
             </div>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input

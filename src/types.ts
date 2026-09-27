@@ -36,7 +36,7 @@ export type Employee = {
 export type Task = {
   id: string;
   code: string;
-  name: string;
+  description: string;
   role: Role;
 };
 

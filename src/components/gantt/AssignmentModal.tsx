@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { formatHour } from "../../lib/dates";
-import { selectableWorkOrders, tasksForWorkOrder } from "../../lib/workOrders";
+import { selectableWorkOrders, taskLabel, tasksForWorkOrder } from "../../lib/workOrders";
 import { Modal } from "../ui/Modal";
 import type { Role, Task, WorkOrder } from "../../types";
 
@@ -85,7 +85,7 @@ export function AssignmentModal({
               <select className="input" required value={taskId} onChange={(event) => setTaskId(event.target.value)}>
                 {availableTasks.map((task) => (
                   <option key={task.id} value={task.id}>
-                    {task.code} {task.name}
+                    {taskLabel(task)}
                   </option>
                 ))}
               </select>

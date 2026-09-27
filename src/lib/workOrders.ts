@@ -49,6 +49,11 @@ export function selectableWorkOrders(orders: WorkOrder[], currentId?: string): W
   return sortWorkOrders(orders.filter((order) => !order.archived || order.id === currentId));
 }
 
+export function taskLabel(task: Pick<Task, "code" | "description"> | undefined): string {
+  if (!task) return "";
+  return [task.code, task.description].filter(Boolean).join(" ");
+}
+
 export function tasksForWorkOrder(order: WorkOrder | undefined, tasks: Task[], roles?: Role | Role[]): Task[] {
   if (!order) return [];
   const allowed = new Set(order.taskIds ?? []);

@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import { DAY_END, DAY_START, blockEnd, hourColumns, occupiedHours } from "../../lib/gantt";
 import { formatHour } from "../../lib/dates";
+import { taskLabel } from "../../lib/workOrders";
 import type { Assignment, Task, WorkOrder } from "../../types";
 
 const HOURS = hourColumns();
@@ -97,7 +98,7 @@ export function DayCalendar({
                 {order?.code} · {order?.name}
               </div>
               <div className="truncate text-[12px] leading-tight text-white/90">
-                {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} · {task?.code} {task?.name}
+                {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} · {taskLabel(task)}
               </div>
             </button>
           );

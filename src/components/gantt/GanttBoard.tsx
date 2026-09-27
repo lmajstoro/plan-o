@@ -20,6 +20,7 @@ import {
 import { CheckIcon, CopyIcon, UserEditIcon, WarningIcon } from "../icons";
 import { AssignmentModal } from "./AssignmentModal";
 import { CopyScheduleModal } from "./CopyScheduleModal";
+import { taskLabel } from "../../lib/workOrders";
 import type { Assignment, Employee, JobRole, Task, WorkOrder } from "../../types";
 
 const HOUR_WIDTH = 56;
@@ -304,7 +305,7 @@ export function GanttBoard({
           width: assignment.durationHours * HOUR_WIDTH - 4,
           backgroundColor: order?.color ?? "#334155",
         }}
-        title={`${muted ? "Plan" : interactive ? "Plan" : "Ostvareno"}: ${order?.code ?? "?"} ${order?.name ?? ""} · ${task?.code ?? "?"} ${task?.name ?? ""}`}
+        title={`${muted ? "Plan" : interactive ? "Plan" : "Ostvareno"}: ${order?.code ?? "?"} ${order?.name ?? ""} · ${taskLabel(task) || "?"}`}
         onPointerDown={interactive ? (event) => beginMove(employeeId, assignment.id, event) : undefined}
       >
         {interactive ? (
@@ -322,7 +323,7 @@ export function GanttBoard({
           {compact ? (
             <div className="ml-1 truncate text-[10px] leading-none text-white/80">{task?.code}</div>
           ) : (
-            <div className="truncate text-[11px] text-white/85">{task?.code} {task?.name}</div>
+            <div className="truncate text-[11px] text-white/85">{taskLabel(task)}</div>
           )}
         </div>
         {interactive ? (

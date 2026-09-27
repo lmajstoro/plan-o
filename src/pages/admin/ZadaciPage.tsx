@@ -7,14 +7,15 @@ import { EditIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import type { Task } from "../../types";
 
-type FormState = { code: string; name: string; role: string };
-const emptyForm: FormState = { code: "", name: "", role: "" };
+type FormState = { code: string; description: string; role: string };
+const emptyForm: FormState = { code: "", description: "", role: "" };
 
 export function ZadaciPage() {
   const { db, update } = useDb();
   const [editing, setEditing] = useState<Task | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [formError, setFormError] = useState("");
   const [removeId, setRemoveId] = useState<string | null>(null);
 
   const rows = useMemo(
@@ -22,30 +23,51 @@ export function ZadaciPage() {
     [db.tasks],
   );
 
+  function closeForm() {
+    setCreating(false);
+    setEditing(null);
+    setFormError("");
+  }
+
   function openCreate() {
     setForm({ ...emptyForm, role: defaultRoleId(db.jobRoles) });
+    setFormError("");
     setCreating(true);
   }
 
   function openEdit(task: Task) {
-    setForm({ code: task.code, name: task.name, role: task.role });
+    setForm({ code: task.code, description: task.description, role: task.role });
+    setFormError("");
     setEditing(task);
   }
 
   function save(event: FormEvent) {
     event.preventDefault();
-    if (!form.role) return;
+    const code = form.code.trim();
+    const description = form.description.trim();
+    if (!form.role || !code || !description) {
+      setFormError("Unesite šifru, opis i ulogu.");
+      return;
+    }
+    const taken = db.tasks.some(
+      (row) => row.code.localeCompare(code, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id,
+    );
+    if (taken) {
+      setFormError("Zadatak s tom šifrom već postoji.");
+      return;
+    }
+    const next = { code, description, role: form.role };
     if (editing) {
       update((current) => ({
         ...current,
-        tasks: current.tasks.map((row) => (row.id === editing.id ? { ...row, ...form } : row)),
+        tasks: current.tasks.map((row) => (row.id === editing.id ? { ...row, ...next } : row)),
       }));
       setEditing(null);
       return;
     }
     update((current) => ({
       ...current,
-      tasks: [...current.tasks, { id: newId("task"), ...form }],
+      tasks: [...current.tasks, { id: newId("task"), ...next }],
     }));
     setCreating(false);
   }
@@ -56,6 +78,10 @@ export function ZadaciPage() {
       ...current,
       tasks: current.tasks.filter((row) => row.id !== removeId),
       assignments: current.assignments.filter((row) => row.taskId !== removeId),
+      workOrders: current.workOrders.map((order) => ({
+        ...order,
+        taskIds: (order.taskIds ?? []).filter((id) => id !== removeId),
+      })),
     }));
     setRemoveId(null);
   }
@@ -65,12 +91,13 @@ export function ZadaciPage() {
   return (
     <div>
       <Header title="Zadaci" actionLabel="Novi zadatak" onAction={openCreate} />
+      <p className="mb-4 text-slate-500">Šifarnik zadataka. Radni nalozi samo biraju postojeće zadatke; uređivanje je ovdje.</p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3 font-medium">Šifra</th>
-              <th className="px-4 py-3 font-medium">Naziv</th>
+              <th className="px-4 py-3 font-medium">Opis</th>
               <th className="px-4 py-3 font-medium">Uloga</th>
               <th className="px-4 py-3 font-medium text-right">Akcije</th>
             </tr>
@@ -79,7 +106,7 @@ export function ZadaciPage() {
             {rows.map((row) => (
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
                 <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.code}</td>
-                <td className="px-4 py-3 text-slate-700">{row.name}</td>
+                <td className="px-4 py-3 text-slate-700">{row.description}</td>
                 <td className="px-4 py-3">{roleName(db.jobRoles, row.role)}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
@@ -98,13 +125,18 @@ export function ZadaciPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi zadatak" : "Novi zadatak"} onClose={() => { setCreating(false); setEditing(null); }}>
+        <Modal title={editing ? "Uredi zadatak" : "Novi zadatak"} onClose={closeForm}>
           <form onSubmit={save} className="space-y-3">
             <Field label="Šifra">
-              <input className="input" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+              <input className="input" required value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value }); setFormError(""); }} />
             </Field>
-            <Field label="Naziv">
-              <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Field label="Opis">
+              <textarea
+                className="input min-h-[88px]"
+                required
+                value={form.description}
+                onChange={(e) => { setForm({ ...form, description: e.target.value }); setFormError(""); }}
+              />
             </Field>
             <Field label="Uloga">
               {db.jobRoles.length === 0 ? (
@@ -119,8 +151,9 @@ export function ZadaciPage() {
                 </select>
               )}
             </Field>
+            {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={() => { setCreating(false); setEditing(null); }}>
+              <button type="button" className="btn-secondary" onClick={closeForm}>
                 Odustani
               </button>
               <button type="submit" className="btn-primary">Spremi</button>
@@ -132,7 +165,7 @@ export function ZadaciPage() {
       {removeId ? (
         <ConfirmDialog
           title="Obriši zadatak"
-          message="Zadatak će se ukloniti i iz postojećih planova rada."
+          message="Zadatak će se ukloniti iz šifarnika, radnih naloga i postojećih planova rada."
           onClose={() => setRemoveId(null)}
           onConfirm={confirmRemove}
         />

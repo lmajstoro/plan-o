@@ -68,18 +68,18 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   ];
 
   const tasks = [
-    { id: "task-mn-01", code: "MN-01", name: "Postavljanje vanjske jedinice", role: "montazer" },
-    { id: "task-mn-02", code: "MN-02", name: "Montaža unutarnje jedinice", role: "montazer" },
-    { id: "task-mn-03", code: "MN-03", name: "Povlačenje bakrenih cijevi", role: "montazer" },
-    { id: "task-mn-04", code: "MN-04", name: "Hidraulički priključak", role: "montazer" },
-    { id: "task-sv-01", code: "SV-01", name: "Vakuumiranje kruga", role: "serviser" },
-    { id: "task-sv-02", code: "SV-02", name: "Punjenje rashladnog sredstva", role: "serviser" },
-    { id: "task-sv-03", code: "SV-03", name: "Dijagnostika kvara", role: "serviser" },
-    { id: "task-sv-04", code: "SV-04", name: "Zamjena kompresora", role: "serviser" },
-    { id: "task-el-01", code: "EL-01", name: "Priključak napajanja", role: "elektromonter" },
-    { id: "task-el-02", code: "EL-02", name: "Ugradnja regulacije", role: "elektromonter" },
-    { id: "task-el-03", code: "EL-03", name: "Ispitivanje električnih veza", role: "elektromonter" },
-    { id: "task-el-04", code: "EL-04", name: "Povezivanje BMS-a", role: "elektromonter" },
+    { id: "task-mn-01", code: "MN-01", description: "Postavljanje vanjske jedinice", role: "montazer" },
+    { id: "task-mn-02", code: "MN-02", description: "Montaža unutarnje jedinice", role: "montazer" },
+    { id: "task-mn-03", code: "MN-03", description: "Povlačenje bakrenih cijevi", role: "montazer" },
+    { id: "task-mn-04", code: "MN-04", description: "Hidraulički priključak", role: "montazer" },
+    { id: "task-sv-01", code: "SV-01", description: "Vakuumiranje kruga", role: "serviser" },
+    { id: "task-sv-02", code: "SV-02", description: "Punjenje rashladnog sredstva", role: "serviser" },
+    { id: "task-sv-03", code: "SV-03", description: "Dijagnostika kvara", role: "serviser" },
+    { id: "task-sv-04", code: "SV-04", description: "Zamjena kompresora", role: "serviser" },
+    { id: "task-el-01", code: "EL-01", description: "Priključak napajanja", role: "elektromonter" },
+    { id: "task-el-02", code: "EL-02", description: "Ugradnja regulacije", role: "elektromonter" },
+    { id: "task-el-03", code: "EL-03", description: "Ispitivanje električnih veza", role: "elektromonter" },
+    { id: "task-el-04", code: "EL-04", description: "Povezivanje BMS-a", role: "elektromonter" },
   ];
 
   const workOrders: WorkOrder[] = [
