@@ -1,5 +1,7 @@
 import { roleName, sortJobRoles } from "./roles";
-import type { JobRole, Role, Task, WorkOrder, WorkOrderStatus } from "../types";
+import type { JobRole, Role, Task, WorkOrder, WorkOrderStatus, WorkOrderTemplate } from "../types";
+
+export const WORK_ORDER_COLORS = ["#2563eb", "#7c3aed", "#db2777", "#d97706", "#e11d48", "#0284c7", "#c026d3", "#4f46e5"];
 
 export const WORK_ORDER_STATUSES: WorkOrderStatus[] = ["otvoren", "u_tijeku", "zavrsen"];
 
@@ -88,4 +90,24 @@ export function taskRoleGroups(tasks: Task[], roles: JobRole[]): { role: Role; l
     });
   }
   return groups;
+}
+
+export function sortTemplates(templates: WorkOrderTemplate[]): WorkOrderTemplate[] {
+  return [...templates].sort((a, b) => a.name.localeCompare(b.name, "hr"));
+}
+
+export function templateName(templates: WorkOrderTemplate[], id: string): string {
+  return templates.find((row) => row.id === id)?.name ?? "Nepoznat predložak";
+}
+
+export function workOrderColor(
+  order: Pick<WorkOrder, "color" | "templateId"> | undefined,
+  templates: WorkOrderTemplate[],
+): string {
+  if (!order) return "#334155";
+  return templates.find((row) => row.id === order.templateId)?.color ?? order.color ?? "#334155";
+}
+
+export function templateUsage(templateId: string, orders: WorkOrder[]): number {
+  return orders.filter((order) => order.templateId === templateId).length;
 }

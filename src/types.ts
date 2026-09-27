@@ -40,6 +40,13 @@ export type Task = {
   role: Role;
 };
 
+export type WorkOrderTemplate = {
+  id: string;
+  name: string;
+  color: string;
+  taskIds: string[];
+};
+
 export type WorkOrderStatus = "otvoren" | "u_tijeku" | "zavrsen";
 
 export type WorkOrder = {
@@ -48,6 +55,7 @@ export type WorkOrder = {
   name: string;
   description: string;
   color: string;
+  templateId: string;
   status: WorkOrderStatus;
   archived: boolean;
   taskIds: string[];
@@ -76,6 +84,7 @@ export type Database = {
   employees: Employee[];
   tasks: Task[];
   workOrders: WorkOrder[];
+  workOrderTemplates: WorkOrderTemplate[];
   workGroups: WorkGroup[];
   jobRoles: JobRole[];
   assignments: Assignment[];

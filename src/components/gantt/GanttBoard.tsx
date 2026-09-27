@@ -20,8 +20,8 @@ import {
 import { CheckIcon, CopyIcon, UserEditIcon, WarningIcon } from "../icons";
 import { AssignmentModal } from "./AssignmentModal";
 import { CopyScheduleModal } from "./CopyScheduleModal";
-import { taskLabel } from "../../lib/workOrders";
-import type { Assignment, Employee, JobRole, Task, WorkOrder } from "../../types";
+import { taskLabel, workOrderColor } from "../../lib/workOrders";
+import type { Assignment, Employee, JobRole, Task, WorkOrder, WorkOrderTemplate } from "../../types";
 
 const HOUR_WIDTH = 56;
 const EMP_WIDTH = 300;
@@ -57,6 +57,7 @@ type Props = {
   employees: Employee[];
   tasks: Task[];
   workOrders: WorkOrder[];
+  workOrderTemplates: WorkOrderTemplate[];
   jobRoles: JobRole[];
   assignments: Assignment[];
   copySources: Employee[];
@@ -69,6 +70,7 @@ export function GanttBoard({
   employees,
   tasks,
   workOrders,
+  workOrderTemplates,
   jobRoles,
   assignments,
   copySources,
@@ -303,7 +305,7 @@ export function GanttBoard({
         style={{
           left: (assignment.startHour - DAY_START) * HOUR_WIDTH + 2,
           width: assignment.durationHours * HOUR_WIDTH - 4,
-          backgroundColor: order?.color ?? "#334155",
+          backgroundColor: workOrderColor(order, workOrderTemplates),
         }}
         title={`${muted ? "Plan" : interactive ? "Plan" : "Ostvareno"}: ${order?.code ?? "?"} ${order?.name ?? ""} · ${taskLabel(task) || "?"}`}
         onPointerDown={interactive ? (event) => beginMove(employeeId, assignment.id, event) : undefined}

@@ -1,8 +1,8 @@
 import type { MouseEvent } from "react";
 import { DAY_END, DAY_START, blockEnd, hourColumns, occupiedHours } from "../../lib/gantt";
 import { formatHour } from "../../lib/dates";
-import { taskLabel } from "../../lib/workOrders";
-import type { Assignment, Task, WorkOrder } from "../../types";
+import { taskLabel, workOrderColor } from "../../lib/workOrders";
+import type { Assignment, Task, WorkOrder, WorkOrderTemplate } from "../../types";
 
 const HOURS = hourColumns();
 export const HOUR_HEIGHT = 56;
@@ -11,6 +11,7 @@ const GUTTER = 56;
 type Props = {
   assignments: Assignment[];
   workOrders: WorkOrder[];
+  workOrderTemplates: WorkOrderTemplate[];
   tasks: Task[];
   tone: "live" | "past" | "future";
   showNow: boolean;
@@ -22,6 +23,7 @@ type Props = {
 export function DayCalendar({
   assignments,
   workOrders,
+  workOrderTemplates,
   tasks,
   tone,
   showNow,
@@ -87,7 +89,7 @@ export function DayCalendar({
                 height: assignment.durationHours * HOUR_HEIGHT - 4,
                 left: GUTTER,
                 right: 10,
-                backgroundColor: order?.color ?? "#334155",
+                backgroundColor: workOrderColor(order, workOrderTemplates),
               }}
               onClick={(event) => {
                 event.stopPropagation();

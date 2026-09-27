@@ -269,6 +269,7 @@ export function EmployeeDayPage() {
             <DayCalendar
               assignments={assignments}
               workOrders={db.workOrders}
+              workOrderTemplates={db.workOrderTemplates}
               tasks={db.tasks}
               tone={tone}
               locked={confirmed}

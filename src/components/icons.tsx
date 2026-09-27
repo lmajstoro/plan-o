@@ -188,3 +188,12 @@ export function BadgeIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function TemplateIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="5" y="4" width="12" height="16" rx="2" />
+      <path d="M9 9h4M9 13h6" />
+    </svg>
+  );
+}

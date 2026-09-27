@@ -3,6 +3,7 @@ import { RequireAdmin, RequireEmployee } from "./components/auth/Guards";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { PlanRadaPage } from "./pages/admin/PlanRadaPage";
+import { PredlosciPage } from "./pages/admin/PredlosciPage";
 import { RadneSkupinePage } from "./pages/admin/RadneSkupinePage";
 import { RadniNaloziPage } from "./pages/admin/RadniNaloziPage";
 import { UlogePage } from "./pages/admin/UlogePage";
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="radne-skupine" element={<RadneSkupinePage />} />
         <Route path="zadaci" element={<ZadaciPage />} />
         <Route path="radni-nalozi" element={<RadniNaloziPage />} />
+        <Route path="predlosci" element={<PredlosciPage />} />
       </Route>
       <Route
         path="/zaposlenik"

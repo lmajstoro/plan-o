@@ -11,6 +11,7 @@ import {
 } from "../../lib/dates";
 import { isHoursConfirmed } from "../../lib/employee";
 import { sortJobRoles } from "../../lib/roles";
+import { workOrderColor } from "../../lib/workOrders";
 
 const SOPNICA_GROUP_ID = "wg-sopnica";
 const SOPNICA_LOAD_MS = 1000;
@@ -246,6 +247,7 @@ export function PlanRadaPage() {
               copySources={allEmployees}
               tasks={db.tasks}
               workOrders={db.workOrders}
+              workOrderTemplates={db.workOrderTemplates}
               jobRoles={db.jobRoles}
               assignments={db.assignments}
               confirmedEmployeeIds={confirmedEmployeeIds}
@@ -280,7 +282,7 @@ export function PlanRadaPage() {
                 .filter((order) => !order.archived)
                 .map((order) => (
                 <div key={order.id} className="flex items-start gap-2 rounded-lg bg-slate-50 px-2.5 py-2">
-                  <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: order.color }} />
+                  <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: workOrderColor(order, db.workOrderTemplates) }} />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-slate-900">
                       <span className="font-mono text-slate-500">{order.code}</span> {order.name}

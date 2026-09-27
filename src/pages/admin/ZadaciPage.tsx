@@ -82,6 +82,10 @@ export function ZadaciPage() {
         ...order,
         taskIds: (order.taskIds ?? []).filter((id) => id !== removeId),
       })),
+      workOrderTemplates: current.workOrderTemplates.map((template) => ({
+        ...template,
+        taskIds: template.taskIds.filter((id) => id !== removeId),
+      })),
     }));
     setRemoveId(null);
   }
