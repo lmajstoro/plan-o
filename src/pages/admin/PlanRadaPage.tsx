@@ -10,6 +10,7 @@ import {
   todayWorkDate,
 } from "../../lib/dates";
 import { isHoursConfirmed } from "../../lib/employee";
+import { sortJobRoles } from "../../lib/roles";
 
 const SOPNICA_GROUP_ID = "wg-sopnica";
 const SOPNICA_LOAD_MS = 1000;
@@ -24,6 +25,7 @@ export function PlanRadaPage() {
   const { db, update, reset } = useDb();
   const [date, setDate] = useState(() => formatDateKey(todayWorkDate()));
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
+  const [roleFilter, setRoleFilter] = useState<string[]>([]);
   const [legendOpen, setLegendOpen] = useState(false);
   const [sopnicaStep, setSopnicaStep] = useState(0);
   const [sopnicaReady, setSopnicaReady] = useState(false);
@@ -64,9 +66,14 @@ export function PlanRadaPage() {
   );
 
   const employees = useMemo(() => {
-    if (groupFilter.length === 0) return allEmployees;
-    return allEmployees.filter((employee) => employee.groupIds.some((id) => groupFilter.includes(id)));
-  }, [allEmployees, groupFilter]);
+    return allEmployees.filter((employee) => {
+      const matchesGroup =
+        groupFilter.length === 0 || employee.groupIds.some((id) => groupFilter.includes(id));
+      const matchesRole =
+        roleFilter.length === 0 || employee.roleIds.some((id) => roleFilter.includes(id));
+      return matchesGroup && matchesRole;
+    });
+  }, [allEmployees, groupFilter, roleFilter]);
 
   const dayHasActuals = db.assignments.some((row) => row.date === date && row.kind === "actual");
   const confirmedEmployeeIds = useMemo(
@@ -83,6 +90,12 @@ export function PlanRadaPage() {
 
   function toggleGroup(id: string) {
     setGroupFilter((currentFilter) =>
+      currentFilter.includes(id) ? currentFilter.filter((item) => item !== id) : [...currentFilter, id],
+    );
+  }
+
+  function toggleRole(id: string) {
+    setRoleFilter((currentFilter) =>
       currentFilter.includes(id) ? currentFilter.filter((item) => item !== id) : [...currentFilter, id],
     );
   }
@@ -120,34 +133,65 @@ export function PlanRadaPage() {
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Filter radnih skupina</div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-              groupFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-            onClick={() => setGroupFilter([])}
-          >
-            Sve
-          </button>
-          {db.workGroups.map((group) => {
-            const active = groupFilter.includes(group.id);
-            return (
-              <button
-                key={group.id}
-                type="button"
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                  active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-                onClick={() => toggleGroup(group.id)}
-              >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: group.color }} />
-                {group.name}
-              </button>
-            );
-          })}
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div>
+          <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Filter radnih skupina</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                groupFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+              onClick={() => setGroupFilter([])}
+            >
+              Sve
+            </button>
+            {db.workGroups.map((group) => {
+              const active = groupFilter.includes(group.id);
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                    active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                  onClick={() => toggleGroup(group.id)}
+                >
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: group.color }} />
+                  {group.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Filter uloga</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                roleFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+              onClick={() => setRoleFilter([])}
+            >
+              Sve
+            </button>
+            {sortJobRoles(db.jobRoles).map((role) => {
+              const active = roleFilter.includes(role.id);
+              return (
+                <button
+                  key={role.id}
+                  type="button"
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                    active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                  onClick={() => toggleRole(role.id)}
+                >
+                  {role.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

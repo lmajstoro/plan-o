@@ -26,7 +26,7 @@ import {
 } from "../../lib/employee";
 import { blockEnd, DAY_END, DAY_START, newId, overlapErrorMessage } from "../../lib/gantt";
 import { isArchivedWorkOrder, tasksForWorkOrder } from "../../lib/workOrders";
-import { roleName } from "../../lib/roles";
+import { roleNames } from "../../lib/roles";
 import type { Assignment } from "../../types";
 
 type SheetState =
@@ -77,7 +77,7 @@ export function EmployeeDayPage() {
     });
     const invalidTask = next.some((row) => {
       const order = db.workOrders.find((item) => item.id === row.workOrderId);
-      return !tasksForWorkOrder(order, db.tasks, employee.role).some((task) => task.id === row.taskId);
+      return !tasksForWorkOrder(order, db.tasks, employee.roleIds).some((task) => task.id === row.taskId);
     });
     const overlapText = targetId ? overlapErrorMessage(next, targetId) : null;
     if (invalid || overlapText || usesArchived || invalidTask) {
@@ -213,7 +213,7 @@ export function EmployeeDayPage() {
             >
               {employee.name}
             </button>
-            <div className="text-xs text-slate-500">{roleName(db.jobRoles, employee.role)}</div>
+            <div className="truncate text-xs text-slate-500">{roleNames(db.jobRoles, employee.roleIds)}</div>
           </div>
           <button
             type="button"
@@ -323,7 +323,7 @@ export function EmployeeDayPage() {
           durationHours={sheet.mode === "create" ? sheet.durationHours : sheet.assignment.durationHours}
           workOrders={db.workOrders}
           tasks={db.tasks}
-          role={employee.role}
+          roleIds={employee.roleIds}
           initialWorkOrderId={sheet.mode === "edit" ? sheet.assignment.workOrderId : undefined}
           initialTaskId={sheet.mode === "edit" ? sheet.assignment.taskId : undefined}
           error={error}

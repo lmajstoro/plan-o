@@ -58,13 +58,13 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   ];
 
   const employees = [
-    { id: "emp-1", name: "Ivan Vladić", email: "ivan.vladic@plan-o.hr", role: "montazer", groupIds: ["wg-ivanovi", "wg-najjaci", "wg-sopnica"] },
-    { id: "emp-2", name: "Luka Majstorović", email: "luka.majstorovic@plan-o.hr", role: "montazer", groupIds: ["wg-ivanovi", "wg-gornja"] },
-    { id: "emp-3", name: "Mario Nikolić", email: "mario.nikolic@plan-o.hr", role: "serviser", groupIds: ["wg-dezurstvo", "wg-gornja"] },
-    { id: "emp-4", name: "Domagoj Takač", email: "domagoj.takac@plan-o.hr", role: "serviser", groupIds: ["wg-najjaci", "wg-donja"] },
-    { id: "emp-5", name: "Marko Čižmek", email: "marko.cizmek@plan-o.hr", role: "elektromonter", groupIds: ["wg-elektricari", "wg-ivanovi", "wg-sopnica"] },
-    { id: "emp-6", name: "Tomo Žižak", email: "tomo.zizak@plan-o.hr", role: "elektromonter", groupIds: ["wg-elektricari", "wg-donja"] },
-    { id: "emp-7", name: "Patrik Lukanović", email: "patrik.lukanovic@plan-o.hr", role: "serviser", groupIds: ["wg-dezurstvo", "wg-najjaci", "wg-sopnica"] },
+    { id: "emp-1", name: "Ivan Vladić", email: "ivan.vladic@plan-o.hr", roleIds: ["montazer", "serviser"], groupIds: ["wg-ivanovi", "wg-najjaci", "wg-sopnica"] },
+    { id: "emp-2", name: "Luka Majstorović", email: "luka.majstorovic@plan-o.hr", roleIds: ["montazer"], groupIds: ["wg-ivanovi", "wg-gornja"] },
+    { id: "emp-3", name: "Mario Nikolić", email: "mario.nikolic@plan-o.hr", roleIds: ["serviser"], groupIds: ["wg-dezurstvo", "wg-gornja"] },
+    { id: "emp-4", name: "Domagoj Takač", email: "domagoj.takac@plan-o.hr", roleIds: ["serviser"], groupIds: ["wg-najjaci", "wg-donja"] },
+    { id: "emp-5", name: "Marko Čižmek", email: "marko.cizmek@plan-o.hr", roleIds: ["elektromonter"], groupIds: ["wg-elektricari", "wg-ivanovi", "wg-sopnica"] },
+    { id: "emp-6", name: "Tomo Žižak", email: "tomo.zizak@plan-o.hr", roleIds: ["elektromonter", "montazer"], groupIds: ["wg-elektricari", "wg-donja"] },
+    { id: "emp-7", name: "Patrik Lukanović", email: "patrik.lukanovic@plan-o.hr", roleIds: ["serviser"], groupIds: ["wg-dezurstvo", "wg-najjaci", "wg-sopnica"] },
   ];
 
   const tasks = [

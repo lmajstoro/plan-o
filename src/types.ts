@@ -29,7 +29,7 @@ export type Employee = {
   id: string;
   name: string;
   email: string;
-  role: Role;
+  roleIds: Role[];
   groupIds: string[];
 };
 

@@ -49,10 +49,15 @@ export function selectableWorkOrders(orders: WorkOrder[], currentId?: string): W
   return sortWorkOrders(orders.filter((order) => !order.archived || order.id === currentId));
 }
 
-export function tasksForWorkOrder(order: WorkOrder | undefined, tasks: Task[], role?: Role): Task[] {
+export function tasksForWorkOrder(order: WorkOrder | undefined, tasks: Task[], roles?: Role | Role[]): Task[] {
   if (!order) return [];
   const allowed = new Set(order.taskIds ?? []);
-  return tasks.filter((task) => allowed.has(task.id) && (!role || task.role === role));
+  const roleIds = roles == null ? null : Array.isArray(roles) ? roles : [roles];
+  return tasks.filter((task) => {
+    if (!allowed.has(task.id)) return false;
+    if (roleIds == null) return true;
+    return roleIds.includes(task.role);
+  });
 }
 
 export function isArchivedWorkOrder(order: WorkOrder | undefined): boolean {

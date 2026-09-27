@@ -12,7 +12,7 @@ type Props = {
   durationHours: number;
   workOrders: WorkOrder[];
   tasks: Task[];
-  role?: Role;
+  roleIds?: Role[];
   initialWorkOrderId?: string;
   initialTaskId?: string;
   error?: string;
@@ -27,7 +27,7 @@ export function EmployeeAssignmentSheet({
   durationHours,
   workOrders,
   tasks,
-  role,
+  roleIds,
   initialWorkOrderId,
   initialTaskId,
   error,
@@ -40,7 +40,7 @@ export function EmployeeAssignmentSheet({
   const orders = useMemo(() => selectableWorkOrders(workOrders, initialWorkOrderId), [workOrders, initialWorkOrderId]);
   const [workOrderId, setWorkOrderId] = useState(initialWorkOrderId ?? orders[0]?.id ?? "");
   const selectedOrder = orders.find((order) => order.id === workOrderId);
-  const availableTasks = tasksForWorkOrder(selectedOrder, tasks, role);
+  const availableTasks = tasksForWorkOrder(selectedOrder, tasks, roleIds);
   const [taskId, setTaskId] = useState(
     initialTaskId && availableTasks.some((task) => task.id === initialTaskId)
       ? initialTaskId
@@ -118,7 +118,7 @@ export function EmployeeAssignmentSheet({
             <span className="mb-1 block text-sm font-medium text-slate-700">Zadatak</span>
             {availableTasks.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                Ovaj nalog nema zadataka za tvoju ulogu.
+                Ovaj nalog nema zadataka za tvoje uloge.
               </p>
             ) : (
               <select className="input text-base" required value={taskId} onChange={(event) => setTaskId(event.target.value)}>

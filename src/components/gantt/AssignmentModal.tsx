@@ -10,7 +10,7 @@ type Props = {
   endHour: number;
   workOrders: WorkOrder[];
   tasks: Task[];
-  role?: Role;
+  roleIds?: Role[];
   initialWorkOrderId?: string;
   initialTaskId?: string;
   onClose: () => void;
@@ -25,7 +25,7 @@ export function AssignmentModal({
   endHour,
   workOrders,
   tasks,
-  role,
+  roleIds,
   initialWorkOrderId,
   initialTaskId,
   onClose,
@@ -36,7 +36,7 @@ export function AssignmentModal({
   const orders = useMemo(() => selectableWorkOrders(workOrders, initialWorkOrderId), [workOrders, initialWorkOrderId]);
   const [workOrderId, setWorkOrderId] = useState(initialWorkOrderId ?? orders[0]?.id ?? "");
   const selectedOrder = orders.find((order) => order.id === workOrderId);
-  const availableTasks = tasksForWorkOrder(selectedOrder, tasks, role);
+  const availableTasks = tasksForWorkOrder(selectedOrder, tasks, roleIds);
   const [taskId, setTaskId] = useState(
     initialTaskId && availableTasks.some((task) => task.id === initialTaskId)
       ? initialTaskId
@@ -79,7 +79,7 @@ export function AssignmentModal({
             <span className="mb-1 block text-sm font-medium text-slate-700">Zadatak</span>
             {availableTasks.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                Ovaj nalog nema zadataka za ovu ulogu.
+                Ovaj nalog nema zadataka za ove uloge.
               </p>
             ) : (
               <select className="input" required value={taskId} onChange={(event) => setTaskId(event.target.value)}>

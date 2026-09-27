@@ -1,14 +1,14 @@
 import { FormEvent, useMemo, useState, type ReactNode } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
-import { defaultRoleId, roleName, sortJobRoles } from "../../lib/roles";
+import { defaultRoleId, sortJobRoles } from "../../lib/roles";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { PlusIcon, TrashIcon, EditIcon } from "../../components/icons";
 import type { Employee } from "../../types";
 
-type FormState = { name: string; email: string; role: string; groupIds: string[] };
+type FormState = { name: string; email: string; roleIds: string[]; groupIds: string[] };
 
-const emptyForm: FormState = { name: "", email: "", role: "", groupIds: [] };
+const emptyForm: FormState = { name: "", email: "", roleIds: [], groupIds: [] };
 
 export function ZaposleniciPage() {
   const { db, update } = useDb();
@@ -23,7 +23,8 @@ export function ZaposleniciPage() {
   );
 
   function openCreate() {
-    setForm({ ...emptyForm, role: defaultRoleId(db.jobRoles) });
+    const first = defaultRoleId(db.jobRoles);
+    setForm({ ...emptyForm, roleIds: first ? [first] : [] });
     setCreating(true);
   }
 
@@ -31,10 +32,19 @@ export function ZaposleniciPage() {
     setForm({
       name: employee.name,
       email: employee.email,
-      role: employee.role,
+      roleIds: [...employee.roleIds],
       groupIds: [...employee.groupIds],
     });
     setEditing(employee);
+  }
+
+  function toggleRole(id: string) {
+    setForm((current) => ({
+      ...current,
+      roleIds: current.roleIds.includes(id)
+        ? current.roleIds.filter((roleId) => roleId !== id)
+        : [...current.roleIds, id],
+    }));
   }
 
   function toggleGroup(id: string) {
@@ -48,7 +58,7 @@ export function ZaposleniciPage() {
 
   function save(event: FormEvent) {
     event.preventDefault();
-    if (!form.role) return;
+    if (form.roleIds.length === 0) return;
     if (editing) {
       update((current) => ({
         ...current,
@@ -86,7 +96,7 @@ export function ZaposleniciPage() {
             <tr>
               <th className="px-4 py-3 font-medium">Ime</th>
               <th className="px-4 py-3 font-medium">E-mail</th>
-              <th className="px-4 py-3 font-medium">Uloga</th>
+              <th className="px-4 py-3 font-medium">Uloge</th>
               <th className="px-4 py-3 font-medium">Radne skupine</th>
               <th className="px-4 py-3 font-medium text-right">Akcije</th>
             </tr>
@@ -96,7 +106,16 @@ export function ZaposleniciPage() {
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
                 <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">{row.email}</td>
-                <td className="px-4 py-3">{roleName(db.jobRoles, row.role)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
+                    {row.roleIds.length === 0 ? <span className="text-slate-400">-</span> : null}
+                    {sortJobRoles(db.jobRoles.filter((role) => row.roleIds.includes(role.id))).map((role) => (
+                      <span key={role.id} className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                        {role.name}
+                      </span>
+                    ))}
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
                     {row.groupIds.length === 0 ? <span className="text-slate-400">-</span> : null}
@@ -137,19 +156,28 @@ export function ZaposleniciPage() {
             <Field label="E-mail">
               <input type="email" className="input" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
-            <Field label="Uloga">
+            <div>
+              <span className="mb-1 block text-sm font-medium text-slate-700">Uloge</span>
               {db.jobRoles.length === 0 ? (
                 <p className="text-sm text-slate-500">Nema uloga. Dodajte ih u šifarniku Uloge.</p>
               ) : (
-                <select className="input" required value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                <div className="space-y-1.5 rounded-lg border border-slate-200 p-3">
                   {sortJobRoles(db.jobRoles).map((role) => (
-                    <option key={role.id} value={role.id}>
+                    <label key={role.id} className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={form.roleIds.includes(role.id)}
+                        onChange={() => toggleRole(role.id)}
+                      />
                       {role.name}
-                    </option>
+                    </label>
                   ))}
-                </select>
+                </div>
               )}
-            </Field>
+              {form.roleIds.length === 0 && db.jobRoles.length > 0 ? (
+                <p className="mt-1 text-sm text-red-600">Odaberite barem jednu ulogu.</p>
+              ) : null}
+            </div>
             <div>
               <span className="mb-1 block text-sm font-medium text-slate-700">Radne skupine</span>
               <div className="space-y-1.5 rounded-lg border border-slate-200 p-3">
@@ -174,7 +202,7 @@ export function ZaposleniciPage() {
               <button type="button" className="btn-secondary" onClick={() => { setCreating(false); setEditing(null); }}>
                 Odustani
               </button>
-              <button type="submit" className="btn-primary">Spremi</button>
+              <button type="submit" className="btn-primary" disabled={form.roleIds.length === 0}>Spremi</button>
             </div>
           </form>
         </Modal>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { formatHour } from "../../lib/dates";
-import { roleName } from "../../lib/roles";
+import { roleNames } from "../../lib/roles";
 import {
   CORE_END,
   CORE_START,
@@ -442,7 +442,7 @@ export function GanttBoard({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold text-slate-900">{employee.name}</div>
-                    <div className="text-xs text-slate-500">{roleName(jobRoles, employee.role)}</div>
+                    <div className="truncate text-xs text-slate-500">{roleNames(jobRoles, employee.roleIds)}</div>
                     <div className="text-xs text-slate-500">
                       {split && planHours !== displayHours ? `${planHours} → ${displayHours} h` : `${displayHours} h`}
                       {confirmedEmployeeIds.includes(employee.id) ? (
@@ -571,7 +571,7 @@ export function GanttBoard({
           endHour={create.endHour}
           workOrders={workOrders}
           tasks={tasks}
-          role={createEmployee?.role}
+          roleIds={createEmployee?.roleIds}
           onClose={() => setCreate(null)}
           onSave={saveCreate}
         />
@@ -584,7 +584,7 @@ export function GanttBoard({
           endHour={editAssignment.startHour + editAssignment.durationHours}
           workOrders={workOrders}
           tasks={tasks}
-          role={editEmployee?.role}
+          roleIds={editEmployee?.roleIds}
           initialWorkOrderId={editAssignment.workOrderId}
           initialTaskId={editAssignment.taskId}
           onClose={() => setEdit(null)}
