@@ -205,3 +205,14 @@ export function TemplateIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function ListChecksIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M10 7h10M10 12h10M10 17h7" />
+      <path d="M4 7l1.2 1.2L7.5 6" />
+      <path d="M4 12l1.2 1.2L7.5 11" />
+      <path d="M4 17l1.2 1.2L7.5 16" />
+    </svg>
+  );
+}

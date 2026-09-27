@@ -14,7 +14,7 @@ import {
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { TaskPicker } from "../../components/admin/TaskPicker";
 import { PaginationBar } from "../../components/admin/PaginationBar";
-import { ArchiveIcon, EditIcon, TrashIcon } from "../../components/icons";
+import { ArchiveIcon, EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
 import type { WorkOrder, WorkOrderStatus } from "../../types";
@@ -26,7 +26,6 @@ type FormState = {
   templateId: string;
   status: WorkOrderStatus;
   archived: boolean;
-  taskIds: string[];
 };
 
 const emptyForm: FormState = {
@@ -36,7 +35,6 @@ const emptyForm: FormState = {
   templateId: "",
   status: "otvoren",
   archived: false,
-  taskIds: [],
 };
 
 export function RadniNaloziPage() {
@@ -47,6 +45,9 @@ export function RadniNaloziPage() {
   const [formError, setFormError] = useState("");
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<WorkOrder | null>(null);
+  const [tasksOrder, setTasksOrder] = useState<WorkOrder | null>(null);
+  const [taskIds, setTaskIds] = useState<string[]>([]);
+  const [taskError, setTaskError] = useState("");
   const [showArchived, setShowArchived] = useState(false);
 
   const templates = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
@@ -64,7 +65,6 @@ export function RadniNaloziPage() {
       ...emptyForm,
       code: nextWorkOrderCode(db.workOrders),
       templateId: first?.id ?? "",
-      taskIds: first ? [...first.taskIds] : [],
     });
     setFormError("");
     setCreating(true);
@@ -78,29 +78,41 @@ export function RadniNaloziPage() {
       templateId: order.templateId,
       status: order.status ?? "otvoren",
       archived: Boolean(order.archived),
-      taskIds: [...(order.taskIds ?? [])],
     });
     setFormError("");
     setEditing(order);
   }
 
-  function changeTemplate(templateId: string) {
-    const template = templates.find((row) => row.id === templateId);
-    setForm((current) => ({
-      ...current,
-      templateId,
-      taskIds: creating && template ? [...template.taskIds] : current.taskIds,
-    }));
-    setFormError("");
+  function openTasks(order: WorkOrder) {
+    setTaskIds([...(order.taskIds ?? [])]);
+    setTaskError("");
+    setTasksOrder(order);
+  }
+
+  function closeTasks() {
+    setTasksOrder(null);
+    setTaskError("");
   }
 
   function toggleTask(id: string) {
-    setForm((current) => ({
+    setTaskIds((current) =>
+      current.includes(id) ? current.filter((taskId) => taskId !== id) : [...current, id],
+    );
+    setTaskError("");
+  }
+
+  function saveTasks(event: FormEvent) {
+    event.preventDefault();
+    if (!tasksOrder) return;
+    if (taskIds.length === 0) {
+      setTaskError("Odaberite barem jedan zadatak koji se smije raditi na ovom nalogu.");
+      return;
+    }
+    update((current) => ({
       ...current,
-      taskIds: current.taskIds.includes(id)
-        ? current.taskIds.filter((taskId) => taskId !== id)
-        : [...current.taskIds, id],
+      workOrders: current.workOrders.map((row) => (row.id === tasksOrder.id ? { ...row, taskIds } : row)),
     }));
+    closeTasks();
   }
 
   function requestArchiveToggle(order: WorkOrder) {
@@ -138,23 +150,28 @@ export function RadniNaloziPage() {
       setFormError("Odaberite predložak. Boja i zadaci dolaze s predloška.");
       return;
     }
-    if (form.taskIds.length === 0) {
-      setFormError("Odaberite barem jedan zadatak koji se smije raditi na ovom nalogu.");
-      return;
-    }
     const color = selectedTemplate?.color ?? "#334155";
-    const payload = { ...form, color };
     if (editing) {
       update((current) => ({
         ...current,
-        workOrders: current.workOrders.map((row) => (row.id === editing.id ? { ...row, ...payload } : row)),
+        workOrders: current.workOrders.map((row) =>
+          row.id === editing.id ? { ...row, ...form, color } : row,
+        ),
       }));
       setEditing(null);
       return;
     }
+    const inheritedTaskIds = [...(selectedTemplate?.taskIds ?? [])];
+    if (inheritedTaskIds.length === 0) {
+      setFormError("Predložak nema zadataka. Dodajte ih na predlošku pa kreirajte nalog.");
+      return;
+    }
     update((current) => ({
       ...current,
-      workOrders: [...current.workOrders, { id: newId("wo"), ...payload }],
+      workOrders: [
+        ...current.workOrders,
+        { id: newId("wo"), ...form, color, taskIds: inheritedTaskIds },
+      ],
     }));
     setCreating(false);
   }
@@ -176,7 +193,7 @@ export function RadniNaloziPage() {
       <Header title="Radni nalozi" actionLabel="Novi radni nalog" onAction={openCreate} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-slate-500">
-          Novi nalog se kreira iz predloška i dobiva broj RN. Boja na planu dolazi s predloška.
+          Novi nalog se kreira iz predloška i dobiva broj RN. Zadaci se uređuju zasebno na nalogu.
         </p>
         <button
           type="button"
@@ -236,6 +253,9 @@ export function RadniNaloziPage() {
                     >
                       <ArchiveIcon className="h-4 w-4" />
                     </button>
+                    <button type="button" className="icon-btn" onClick={() => openTasks(row)} title="Uredi zadatke">
+                      <ListChecksIcon className="h-4 w-4" />
+                    </button>
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
                       <EditIcon className="h-4 w-4" />
                     </button>
@@ -260,8 +280,8 @@ export function RadniNaloziPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi radni nalog" : "Novi radni nalog"} wide onClose={closeForm}>
-          <form onSubmit={save} className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
+        <Modal title={editing ? "Uredi radni nalog" : "Novi radni nalog"} onClose={closeForm}>
+          <form onSubmit={save} className="space-y-3">
             {templates.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 Nema predložaka. Dodajte ih u šifarniku Predlošci pa onda kreirajte nalog.
@@ -290,7 +310,7 @@ export function RadniNaloziPage() {
                 className="input"
                 required
                 value={form.templateId}
-                onChange={(e) => changeTemplate(e.target.value)}
+                onChange={(e) => setForm({ ...form, templateId: e.target.value })}
               >
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
@@ -308,13 +328,7 @@ export function RadniNaloziPage() {
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <span className="h-5 w-5 rounded-full" style={{ backgroundColor: selectedTemplate?.color ?? "#cbd5e1" }} />
               Boja na planu dolazi s predloška.
-            </div>
-            <div>
-              <span className="mb-1 block text-sm font-medium text-slate-700">Dostupni zadaci</span>
-              <p className="mb-2 text-xs text-slate-500">
-                Novi nalog naslijedi zadatke predloška. Zadaci se uređuju u šifarniku Zadaci; ovdje samo odaberi koje nalog smije koristiti.
-              </p>
-              <TaskPicker tasks={db.tasks} jobRoles={db.jobRoles} selectedIds={form.taskIds} onToggle={toggleTask} />
+              {creating ? " Novi nalog naslijedi zadatke predloška." : " Zadaci se uređuju zasebnom akcijom."}
             </div>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
@@ -330,6 +344,26 @@ export function RadniNaloziPage() {
                 Odustani
               </button>
               <button type="submit" className="btn-primary" disabled={templates.length === 0}>
+                Spremi
+              </button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
+
+      {tasksOrder ? (
+        <Modal title={`Zadaci naloga ${tasksOrder.code}`} wide onClose={closeTasks}>
+          <form onSubmit={saveTasks} className="space-y-3">
+            <p className="text-sm text-slate-500">
+              Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi koje nalog {tasksOrder.name} smije koristiti.
+            </p>
+            <TaskPicker tasks={db.tasks} jobRoles={db.jobRoles} selectedIds={taskIds} onToggle={toggleTask} />
+            {taskError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{taskError}</p> : null}
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" className="btn-secondary" onClick={closeTasks}>
+                Odustani
+              </button>
+              <button type="submit" className="btn-primary">
                 Spremi
               </button>
             </div>
