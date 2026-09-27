@@ -70,7 +70,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   ];
 
   const employees = [
-    { id: "emp-1", name: "Ivan Vladić", email: "ivan.vladic@plan-o.hr", roleIds: ["monter-konstrukcije", "serviser"], groupIds: ["wg-ivanovi", "wg-najjaci", "wg-sopnica"] },
+    { id: "emp-1", name: "Ivan Vladić", email: "ivan.vladic@plan-o.hr", roleIds: ["monter-konstrukcije"], groupIds: ["wg-ivanovi", "wg-najjaci", "wg-sopnica"] },
     { id: "emp-2", name: "Luka Majstorović", email: "luka.majstorovic@plan-o.hr", roleIds: ["monter-konstrukcije"], groupIds: ["wg-ivanovi", "wg-gornja"] },
     { id: "emp-3", name: "Mario Nikolić", email: "mario.nikolic@plan-o.hr", roleIds: ["serviser"], groupIds: ["wg-dezurstvo", "wg-gornja"] },
     { id: "emp-4", name: "Domagoj Takač", email: "domagoj.takac@plan-o.hr", roleIds: ["serviser"], groupIds: ["wg-najjaci", "wg-donja"] },

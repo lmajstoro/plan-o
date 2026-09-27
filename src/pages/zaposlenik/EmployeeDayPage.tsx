@@ -401,7 +401,6 @@ export function EmployeeDayPage() {
           durationHours={sheet.mode === "create" ? sheet.durationHours : sheet.assignment.durationHours}
           workOrders={db.workOrders}
           tasks={db.tasks}
-          jobRoles={db.jobRoles}
           roleIds={employee.roleIds}
           dayWorkOrderIds={dayWorkOrderIds}
           otherHours={sheetOtherHours}
