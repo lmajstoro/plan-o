@@ -9,7 +9,7 @@ import {
   parseDateKey,
   todayWorkDate,
 } from "../../lib/dates";
-import { isHoursConfirmed } from "../../lib/employee";
+import { isEmployeeActive, isHoursConfirmed } from "../../lib/employee";
 import { sortJobRoles } from "../../lib/roles";
 import { workOrderColor } from "../../lib/workOrders";
 
@@ -63,7 +63,10 @@ export function PlanRadaPage() {
   }, [sopnicaOnly]);
 
   const allEmployees = useMemo(
-    () => [...db.employees].sort((a, b) => a.name.localeCompare(b.name, "hr")),
+    () =>
+      [...db.employees]
+        .filter(isEmployeeActive)
+        .sort((a, b) => a.name.localeCompare(b.name, "hr")),
     [db.employees],
   );
 

@@ -17,7 +17,7 @@ import {
   totalHours,
   workGaps,
 } from "../../lib/gantt";
-import { CheckIcon, CopyIcon, UserEditIcon, WarningIcon } from "../icons";
+import { CheckIcon, CopyIcon, WarningIcon } from "../icons";
 import { AssignmentModal } from "./AssignmentModal";
 import { CopyScheduleModal } from "./CopyScheduleModal";
 import { taskLabel, workOrderColor } from "../../lib/workOrders";
@@ -480,18 +480,6 @@ export function GanttBoard({
                         <CopyIcon className="h-4 w-4" />
                       </button>
                     </div>
-                    <span className="group relative">
-                      <button
-                        type="button"
-                        className="icon-btn cursor-not-allowed text-slate-300 hover:bg-transparent hover:text-slate-300"
-                        aria-label="Uredi informacije o zaposleniku"
-                      >
-                        <UserEditIcon className="h-4 w-4" />
-                      </button>
-                      <span className="pointer-events-none absolute bottom-full right-0 z-30 mb-1 hidden whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs text-white group-hover:block">
-                        Uredi informacije o zaposleniku
-                      </span>
-                    </span>
                   </div>
                 </div>
               </div>

@@ -3,15 +3,15 @@ import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { sortTemplates, templateUsage, WORK_ORDER_COLOR_LABELS, WORK_ORDER_COLORS } from "../../lib/workOrders";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
-import { TaskPicker } from "../../components/admin/TaskPicker";
+import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
-import { EditIcon, TrashIcon } from "../../components/icons";
+import { EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
 import type { WorkOrderTemplate } from "../../types";
 
-type FormState = { name: string; color: string; taskIds: string[] };
-const emptyForm: FormState = { name: "", color: WORK_ORDER_COLORS[0], taskIds: [] };
+type FormState = { name: string; color: string };
+const emptyForm: FormState = { name: "", color: WORK_ORDER_COLORS[0] };
 
 export function PredlosciPage() {
   const { db, update } = useDb();
@@ -21,6 +21,7 @@ export function PredlosciPage() {
   const [formError, setFormError] = useState("");
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [blockedRemove, setBlockedRemove] = useState("");
+  const [tasksTemplate, setTasksTemplate] = useState<WorkOrderTemplate | null>(null);
 
   const rows = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
   const paging = usePagedRows(rows);
@@ -41,18 +42,9 @@ export function PredlosciPage() {
   }
 
   function openEdit(template: WorkOrderTemplate) {
-    setForm({ name: template.name, color: template.color, taskIds: [...template.taskIds] });
+    setForm({ name: template.name, color: template.color });
     setFormError("");
     setEditing(template);
-  }
-
-  function toggleTask(id: string) {
-    setForm((current) => ({
-      ...current,
-      taskIds: current.taskIds.includes(id)
-        ? current.taskIds.filter((taskId) => taskId !== id)
-        : [...current.taskIds, id],
-    }));
   }
 
   function save(event: FormEvent) {
@@ -60,10 +52,6 @@ export function PredlosciPage() {
     const name = form.name.trim();
     if (!name) {
       setFormError("Unesite naziv predloška.");
-      return;
-    }
-    if (form.taskIds.length === 0) {
-      setFormError("Odaberite barem jedan zadatak koji novi nalog nasljeđuje.");
       return;
     }
     const taken = db.workOrderTemplates.some(
@@ -77,7 +65,7 @@ export function PredlosciPage() {
       update((current) => ({
         ...current,
         workOrderTemplates: current.workOrderTemplates.map((row) =>
-          row.id === editing.id ? { ...row, name, color: form.color, taskIds: form.taskIds } : row,
+          row.id === editing.id ? { ...row, name, color: form.color } : row,
         ),
       }));
       setEditing(null);
@@ -85,9 +73,20 @@ export function PredlosciPage() {
     }
     update((current) => ({
       ...current,
-      workOrderTemplates: [...current.workOrderTemplates, { id: newId("tpl"), name, color: form.color, taskIds: form.taskIds }],
+      workOrderTemplates: [...current.workOrderTemplates, { id: newId("tpl"), name, color: form.color, taskIds: [] }],
     }));
     setCreating(false);
+  }
+
+  function saveTasks(taskIds: string[]) {
+    if (!tasksTemplate) return;
+    update((current) => ({
+      ...current,
+      workOrderTemplates: current.workOrderTemplates.map((row) =>
+        row.id === tasksTemplate.id ? { ...row, taskIds } : row,
+      ),
+    }));
+    setTasksTemplate(null);
   }
 
   function requestRemove(template: WorkOrderTemplate) {
@@ -141,6 +140,9 @@ export function PredlosciPage() {
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
                       <EditIcon className="h-4 w-4" />
                     </button>
+                    <button type="button" className="icon-btn" onClick={() => setTasksTemplate(row)} title="Uredi zadatke">
+                      <ListChecksIcon className="h-4 w-4" />
+                    </button>
                     <button type="button" className="icon-btn-danger" onClick={() => requestRemove(row)} title="Obriši">
                       <TrashIcon className="h-4 w-4" />
                     </button>
@@ -161,7 +163,7 @@ export function PredlosciPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi predložak" : "Novi predložak"} size="xl" onClose={closeForm}>
+        <Modal title={editing ? "Uredi predložak" : "Novi predložak"} onClose={closeForm}>
           <form onSubmit={save} className="space-y-3">
             <Field label="Naziv">
               <input className="input" required value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); setFormError(""); }} />
@@ -184,11 +186,6 @@ export function PredlosciPage() {
                 ))}
               </div>
             </Field>
-            <div>
-              <span className="mb-1 block text-sm font-medium text-slate-700">Zadaci koje nalog nasljeđuje</span>
-              <p className="mb-2 text-xs text-slate-500">Ovo su zadani zadaci novog naloga. Na nalogu ih možeš kasnije mijenjati.</p>
-              <TaskPicker tasks={db.tasks} jobRoles={db.jobRoles} selectedIds={form.taskIds} onToggle={toggleTask} />
-            </div>
             {formError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={closeForm}>Odustani</button>
@@ -196,6 +193,18 @@ export function PredlosciPage() {
             </div>
           </form>
         </Modal>
+      ) : null}
+
+      {tasksTemplate ? (
+        <TaskSelectModal
+          title={`Zadaci predloška ${tasksTemplate.name}`}
+          description="Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi koje novi nalog iz ovog predloška nasljeđuje."
+          tasks={db.tasks}
+          jobRoles={db.jobRoles}
+          initialSelectedIds={tasksTemplate.taskIds}
+          onClose={() => setTasksTemplate(null)}
+          onSave={saveTasks}
+        />
       ) : null}
 
       {removeId ? (

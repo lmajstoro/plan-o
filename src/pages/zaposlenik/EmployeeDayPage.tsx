@@ -16,6 +16,7 @@ import {
   findEmployeeForUser,
   hourStatusFor,
   isEditableDay,
+  isEmployeeActive,
   isHoursConfirmed,
   isRestDay,
   maxViewKey,
@@ -240,6 +241,26 @@ export function EmployeeDayPage() {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-slate-100 px-4">
         <p className="text-slate-600">Zaposlenik nije pronađen u planu.</p>
+      </div>
+    );
+  }
+
+  if (!isEmployeeActive(employee)) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center bg-white px-6 text-center shadow-sm">
+        <p className="text-lg font-semibold text-slate-900">Račun je deaktiviran</p>
+        <p className="mt-2 text-sm text-slate-600">Ne možeš unositi sate dok administrator ponovno ne aktivira tvoj račun.</p>
+        <button
+          type="button"
+          className="btn-secondary mt-6"
+          onClick={() => {
+            logout();
+            navigate("/prijava");
+          }}
+        >
+          <LogoutIcon className="h-5 w-5" />
+          Odjava
+        </button>
       </div>
     );
   }

@@ -31,6 +31,7 @@ export type Employee = {
   email: string;
   roleIds: Role[];
   groupIds: string[];
+  active: boolean;
 };
 
 export type Task = {

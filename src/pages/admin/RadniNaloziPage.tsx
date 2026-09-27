@@ -14,7 +14,7 @@ import {
   workOrderStatusClass,
 } from "../../lib/workOrders";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
-import { TaskPicker } from "../../components/admin/TaskPicker";
+import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
@@ -49,8 +49,6 @@ export function RadniNaloziPage() {
   const [formError, setFormError] = useState("");
   const [archiveTarget, setArchiveTarget] = useState<WorkOrder | null>(null);
   const [tasksOrder, setTasksOrder] = useState<WorkOrder | null>(null);
-  const [taskIds, setTaskIds] = useState<string[]>([]);
-  const [taskError, setTaskError] = useState("");
   const [showArchived, setShowArchived] = useState(false);
 
   const templates = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
@@ -100,30 +98,15 @@ export function RadniNaloziPage() {
   }
 
   function openTasks(order: WorkOrder) {
-    setTaskIds([...(order.taskIds ?? [])]);
-    setTaskError("");
     setTasksOrder(order);
   }
 
   function closeTasks() {
     setTasksOrder(null);
-    setTaskError("");
   }
 
-  function toggleTask(id: string) {
-    setTaskIds((current) =>
-      current.includes(id) ? current.filter((taskId) => taskId !== id) : [...current, id],
-    );
-    setTaskError("");
-  }
-
-  function saveTasks(event: FormEvent) {
-    event.preventDefault();
+  function saveTasks(taskIds: string[]) {
     if (!tasksOrder) return;
-    if (taskIds.length === 0) {
-      setTaskError("Odaberite barem jedan zadatak koji se smije raditi na ovom nalogu.");
-      return;
-    }
     update((current) => ({
       ...current,
       workOrders: current.workOrders.map((row) => (row.id === tasksOrder.id ? { ...row, taskIds } : row)),
@@ -259,7 +242,7 @@ export function RadniNaloziPage() {
                     </button>
                     <button
                       type="button"
-                      className="icon-btn-danger text-red-600 hover:text-red-700"
+                      className="icon-btn-danger"
                       onClick={() => requestArchiveToggle(row)}
                       title={row.archived ? "Vrati iz arhive" : "Arhiviraj"}
                     >
@@ -283,7 +266,7 @@ export function RadniNaloziPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi radni nalog" : "Novi radni nalog"} size="xl" onClose={closeForm}>
+        <Modal title={editing ? "Uredi radni nalog" : "Novi radni nalog"} onClose={closeForm}>
           <form onSubmit={save} className="space-y-3">
             {templates.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -371,23 +354,15 @@ export function RadniNaloziPage() {
       ) : null}
 
       {tasksOrder ? (
-        <Modal title={`Zadaci naloga ${tasksOrder.code}`} wide onClose={closeTasks}>
-          <form onSubmit={saveTasks} className="space-y-3">
-            <p className="text-sm text-slate-500">
-              Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi koje nalog {tasksOrder.name} smije koristiti.
-            </p>
-            <TaskPicker tasks={db.tasks} jobRoles={db.jobRoles} selectedIds={taskIds} onToggle={toggleTask} />
-            {taskError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{taskError}</p> : null}
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={closeTasks}>
-                Odustani
-              </button>
-              <button type="submit" className="btn-primary">
-                Spremi
-              </button>
-            </div>
-          </form>
-        </Modal>
+        <TaskSelectModal
+          title={`Zadaci naloga ${tasksOrder.code}`}
+          description={`Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi koje nalog ${tasksOrder.name} smije koristiti.`}
+          tasks={db.tasks}
+          jobRoles={db.jobRoles}
+          initialSelectedIds={tasksOrder.taskIds ?? []}
+          onClose={closeTasks}
+          onSave={saveTasks}
+        />
       ) : null}
 
       {archiveTarget ? (

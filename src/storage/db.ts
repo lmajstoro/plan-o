@@ -41,6 +41,10 @@ export function loadDatabase(): Database {
     if (!parsed.workOrders.every((row) => Boolean(row.templateId))) return writeSeed();
     if (!hasRecentActuals(parsed) || !hasWorkOrderSchema(parsed)) return writeSeed();
     if (!Array.isArray(parsed.dayStatuses)) parsed.dayStatuses = [];
+    parsed.employees = parsed.employees.map((row) => ({
+      ...row,
+      active: row.active !== false,
+    }));
     return parsed;
   } catch {
     return writeSeed();

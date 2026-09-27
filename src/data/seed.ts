@@ -77,7 +77,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     { id: "emp-5", name: "Marko Čižmek", email: "marko.cizmek@plan-o.hr", roleIds: ["elektromonter"], groupIds: ["wg-elektricari", "wg-ivanovi", "wg-sopnica"] },
     { id: "emp-6", name: "Tomo Žižak", email: "tomo.zizak@plan-o.hr", roleIds: ["elektromonter", "monter-konstrukcije"], groupIds: ["wg-elektricari", "wg-donja"] },
     { id: "emp-7", name: "Patrik Lukanović", email: "patrik.lukanovic@plan-o.hr", roleIds: ["serviser"], groupIds: ["wg-dezurstvo", "wg-najjaci", "wg-sopnica"] },
-  ];
+  ].map((row) => ({ ...row, active: true }));
 
   const tasks = [
     { id: "task-ep-01", code: "EP-01", description: "Čitanje elektro nacrta", role: "elektroplanimetrist" },

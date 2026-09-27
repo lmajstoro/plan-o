@@ -4,8 +4,9 @@ import { newId } from "../../lib/gantt";
 import { defaultRoleId, sortJobRoles } from "../../lib/roles";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
-import { PlusIcon, TrashIcon, EditIcon } from "../../components/icons";
+import { PlusIcon, EditIcon, UserOffIcon, CheckIcon } from "../../components/icons";
 import { usePagedRows } from "../../lib/pagination";
+import { isEmployeeActive } from "../../lib/employee";
 import type { Employee } from "../../types";
 
 type FormState = { name: string; email: string; roleIds: string[]; groupIds: string[] };
@@ -17,7 +18,7 @@ export function ZaposleniciPage() {
   const [editing, setEditing] = useState<Employee | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [removeId, setRemoveId] = useState<string | null>(null);
+  const [deactivateId, setDeactivateId] = useState<string | null>(null);
 
   const rows = useMemo(
     () => [...db.employees].sort((a, b) => a.name.localeCompare(b.name, "hr")),
@@ -72,20 +73,22 @@ export function ZaposleniciPage() {
     }
     update((current) => ({
       ...current,
-      employees: [...current.employees, { id: newId("emp"), ...form }],
+      employees: [...current.employees, { id: newId("emp"), ...form, active: true }],
     }));
     setCreating(false);
   }
 
-  function confirmRemove() {
-    if (!removeId) return;
+  function setActive(id: string, active: boolean) {
     update((current) => ({
       ...current,
-      employees: current.employees.filter((row) => row.id !== removeId),
-      assignments: current.assignments.filter((row) => row.employeeId !== removeId),
-      dayStatuses: (current.dayStatuses ?? []).filter((row) => row.employeeId !== removeId),
+      employees: current.employees.map((row) => (row.id === id ? { ...row, active } : row)),
     }));
-    setRemoveId(null);
+  }
+
+  function confirmDeactivate() {
+    if (!deactivateId) return;
+    setActive(deactivateId, false);
+    setDeactivateId(null);
   }
 
   const showForm = creating || editing;
@@ -101,12 +104,13 @@ export function ZaposleniciPage() {
               <th className="px-4 py-3 font-medium">E-mail</th>
               <th className="px-4 py-3 font-medium">Uloge</th>
               <th className="px-4 py-3 font-medium">Radne skupine</th>
+              <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium text-right">Akcije</th>
             </tr>
           </thead>
           <tbody>
             {paging.pageRows.map((row) => (
-              <tr key={row.id} className="border-b border-slate-50 last:border-0">
+              <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${isEmployeeActive(row) ? "" : "bg-slate-50 text-slate-500"}`}>
                 <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">{row.email}</td>
                 <td className="px-4 py-3">
@@ -135,13 +139,28 @@ export function ZaposleniciPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3">
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      isEmployeeActive(row) ? "bg-emerald-50 text-emerald-800" : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {isEmployeeActive(row) ? "Aktivan" : "Deaktiviran"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
                       <EditIcon className="h-4 w-4" />
                     </button>
-                    <button type="button" className="icon-btn-danger" onClick={() => setRemoveId(row.id)} title="Obriši">
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                    {isEmployeeActive(row) ? (
+                      <button type="button" className="icon-btn-danger" onClick={() => setDeactivateId(row.id)} title="Deaktiviraj">
+                        <UserOffIcon className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button type="button" className="icon-btn" onClick={() => setActive(row.id, true)} title="Aktiviraj">
+                        <CheckIcon className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -219,12 +238,13 @@ export function ZaposleniciPage() {
         </Modal>
       ) : null}
 
-      {removeId ? (
+      {deactivateId ? (
         <ConfirmDialog
-          title="Obriši zaposlenika"
-          message="Brisanje uklanja i raspored rada tog zaposlenika."
-          onClose={() => setRemoveId(null)}
-          onConfirm={confirmRemove}
+          title="Deaktiviraj zaposlenika"
+          message="Zaposlenik ostaje u evidenciji, ali se više ne prikazuje na planu rada i ne može unositi sate. Kasnije ga možeš ponovno aktivirati."
+          confirmLabel="Deaktiviraj"
+          onClose={() => setDeactivateId(null)}
+          onConfirm={confirmDeactivate}
         />
       ) : null}
     </div>

@@ -6,6 +6,10 @@ export const REST_DAY_MESSAGE = "Neradni dan je, odmori :)";
 export const MAX_FUTURE_WORK_DAYS = 3;
 export const MAX_PAST_WORK_DAYS = 21;
 
+export function isEmployeeActive(employee: Employee): boolean {
+  return employee.active !== false;
+}
+
 export function findEmployeeForUser(employees: Employee[], user: SessionUser): Employee | undefined {
   const email = user.email.trim().toLowerCase();
   return (

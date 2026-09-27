@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { useLockPageScroll } from "../../lib/scrollLock";
 import { CloseIcon } from "../icons";
 
-type ModalSize = "md" | "lg" | "xl";
+type ModalSize = "md" | "lg" | "xl" | "full";
 
 type ModalProps = {
   title: string;
@@ -16,6 +16,7 @@ const WIDTH: Record<ModalSize, string> = {
   md: "max-w-md",
   lg: "max-w-2xl",
   xl: "max-w-5xl",
+  full: "max-w-7xl",
 };
 
 export function Modal({ title, children, onClose, wide, size }: ModalProps) {
@@ -41,7 +42,7 @@ export function Modal({ title, children, onClose, wide, size }: ModalProps) {
             <CloseIcon className="h-5 w-5" />
           </button>
         </div>
-        <div className={`${tall ? "max-h-[min(90vh,52rem)]" : "max-h-[min(80vh,36rem)]"} overflow-y-auto px-6 py-5`} data-allow-scroll>
+        <div className={`${tall ? "max-h-[min(92vh,58rem)]" : "max-h-[min(80vh,36rem)]"} overflow-y-auto px-6 py-5`} data-allow-scroll>
           {children}
         </div>
       </div>
