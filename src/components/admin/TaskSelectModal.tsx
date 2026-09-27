@@ -74,9 +74,9 @@ export function TaskSelectModal({
 
   return (
     <Modal title={title} size="full" onClose={onClose}>
-      <form onSubmit={save} className="space-y-3">
-        {description ? <p className="text-sm text-slate-500">{description}</p> : null}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <form onSubmit={save} className="flex h-full min-h-0 flex-col gap-3">
+        {description ? <p className="shrink-0 text-sm text-slate-500">{description}</p> : null}
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
           <input
             className="input max-w-md"
             value={query}
@@ -90,11 +90,11 @@ export function TaskSelectModal({
           </p>
         </div>
         {rows.length === 0 ? (
-          <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
+          <p className="shrink-0 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
             Nema zadataka. Dodajte ih u šifarniku Zadaci.
           </p>
         ) : (
-          <div className="max-h-[min(62vh,38rem)] overflow-auto rounded-xl border border-slate-200">
+          <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="sticky top-0 border-b border-slate-100 bg-slate-50 text-slate-500">
                 <tr>
@@ -145,8 +145,8 @@ export function TaskSelectModal({
             </table>
           </div>
         )}
-        {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        <div className="flex justify-end gap-2 pt-1">
+        {error ? <p className="shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+        <div className="flex shrink-0 justify-end gap-2 pt-1">
           <button type="button" className="btn-secondary" onClick={onClose}>
             Odustani
           </button>
