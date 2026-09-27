@@ -6,10 +6,10 @@ import { BadgeIcon, CalendarIcon, ClipboardIcon, LayersIcon, LogoutIcon, ResetIc
 const overviewLinks = [{ to: "/administrator", label: "Plan rada", icon: CalendarIcon, end: true }];
 
 const catalogLinks = [
+  { to: "/administrator/zadaci", label: "Zadaci", icon: ClipboardIcon, end: false },
   { to: "/administrator/zaposlenici", label: "Zaposlenici", icon: UsersIcon, end: false },
   { to: "/administrator/uloge", label: "Uloge", icon: BadgeIcon, end: false },
   { to: "/administrator/radne-skupine", label: "Radne skupine", icon: TagIcon, end: false },
-  { to: "/administrator/zadaci", label: "Zadaci", icon: ClipboardIcon, end: false },
 ];
 
 export function AdminLayout() {
