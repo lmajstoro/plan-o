@@ -234,11 +234,11 @@ export function RadniNaloziPage() {
                 <td className="px-4 py-3 text-slate-600">{row.taskIds?.length ?? 0}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
-                    <button type="button" className="icon-btn" onClick={() => openTasks(row)} title="Uredi zadatke">
-                      <ListChecksIcon className="h-4 w-4" />
-                    </button>
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
                       <EditIcon className="h-4 w-4" />
+                    </button>
+                    <button type="button" className="icon-btn" onClick={() => openTasks(row)} title="Uredi zadatke">
+                      <ListChecksIcon className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
