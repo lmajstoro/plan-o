@@ -79,6 +79,46 @@ function rangeLabel(block: Pick<Timed, "startHour" | "durationHours">): string {
   return `${formatHour(block.startHour)} - ${formatHour(blockEnd(block))}`;
 }
 
+export function fitAroundTarget<T extends Timed>(blocks: T[], targetId: string): T[] | null {
+  const target = blocks.find((block) => block.id === targetId);
+  if (!target) return null;
+  if (target.startHour < DAY_START || blockEnd(target) > DAY_END || target.durationHours < 1) return null;
+
+  const others = blocks.filter((block) => block.id !== targetId);
+  const left = others
+    .filter((block) => block.startHour < target.startHour)
+    .sort((a, b) => b.startHour - a.startHour || b.id.localeCompare(a.id));
+  const right = others
+    .filter((block) => block.startHour >= target.startHour)
+    .sort((a, b) => a.startHour - b.startHour || a.id.localeCompare(b.id));
+
+  const moved = new Map<string, T>();
+  moved.set(target.id, { ...target });
+
+  let leftCursor = target.startHour;
+  for (const block of left) {
+    const end = Math.min(blockEnd(block), leftCursor);
+    moved.set(block.id, { ...block, startHour: end - block.durationHours });
+    leftCursor = end - block.durationHours;
+  }
+
+  let rightCursor = blockEnd(target);
+  for (const block of right) {
+    const startHour = Math.max(block.startHour, rightCursor);
+    moved.set(block.id, { ...block, startHour });
+    rightCursor = startHour + block.durationHours;
+  }
+
+  const next = blocks.map((block) => moved.get(block.id) ?? { ...block });
+  if (!isInBounds(next) || hasOverlap(next)) return null;
+  return next;
+}
+
+export function blocksShifted<T extends Timed>(before: T[], after: T[]): boolean {
+  const starts = new Map(before.map((block) => [block.id, block.startHour]));
+  return after.some((block) => starts.get(block.id) !== block.startHour);
+}
+
 export function overlapErrorMessage<T extends Timed>(blocks: T[], targetId: string): string | null {
   const sorted = sortBlocks(blocks);
   const idx = sorted.findIndex((block) => block.id === targetId);

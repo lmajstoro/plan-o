@@ -51,6 +51,29 @@ export function selectableWorkOrders(orders: WorkOrder[], currentId?: string): W
   return sortWorkOrders(orders.filter((order) => !order.archived || order.id === currentId));
 }
 
+export function sortWorkOrdersForEmployeeDay(
+  orders: WorkOrder[],
+  dayWorkOrderIds: string[],
+  currentId?: string,
+): WorkOrder[] {
+  const selectable = selectableWorkOrders(orders, currentId);
+  const dayIndex = new Map<string, number>();
+  for (const id of dayWorkOrderIds) {
+    if (!dayIndex.has(id)) dayIndex.set(id, dayIndex.size);
+  }
+  const onDay = selectable
+    .filter((order) => dayIndex.has(order.id))
+    .sort((a, b) => (dayIndex.get(a.id) ?? 0) - (dayIndex.get(b.id) ?? 0));
+  const rest = selectable
+    .filter((order) => !dayIndex.has(order.id))
+    .sort((a, b) => {
+      const byNumber = workOrderNumber(b.code) - workOrderNumber(a.code);
+      if (byNumber !== 0) return byNumber;
+      return b.code.localeCompare(a.code, "hr");
+    });
+  return [...onDay, ...rest];
+}
+
 export function taskLabel(task: Pick<Task, "code" | "description"> | undefined): string {
   if (!task) return "";
   return [task.code, task.description].filter(Boolean).join(" ");

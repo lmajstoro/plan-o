@@ -24,7 +24,17 @@ import {
   todayKey,
   upsertDayStatus,
 } from "../../lib/employee";
-import { blockEnd, DAY_END, DAY_START, newId, overlapErrorMessage } from "../../lib/gantt";
+import {
+  blockEnd,
+  blocksShifted,
+  DAY_END,
+  DAY_START,
+  EXPECTED_HOURS,
+  fitAroundTarget,
+  newId,
+  overlapErrorMessage,
+  totalHours,
+} from "../../lib/gantt";
 import { isArchivedWorkOrder, tasksForWorkOrder } from "../../lib/workOrders";
 import { roleNames } from "../../lib/roles";
 import type { Assignment } from "../../types";
@@ -40,6 +50,7 @@ export function EmployeeDayPage() {
   const [date, setDate] = useState(() => todayKey());
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
 
   const employee = user ? findEmployeeForUser(db.employees, user) : undefined;
@@ -57,6 +68,17 @@ export function EmployeeDayPage() {
     () => (employee ? dayAssignments(db.assignments, employee.id, date) : []),
     [db.assignments, employee, date],
   );
+  const workedHours = totalHours(assignments);
+  const hoursTone =
+    workedHours === EXPECTED_HOURS ? "text-emerald-700" : workedHours > EXPECTED_HOURS ? "text-red-600" : "text-amber-700";
+  const dayWorkOrderIds = useMemo(
+    () => [...assignments].sort((a, b) => a.startHour - b.startHour).map((row) => row.workOrderId),
+    [assignments],
+  );
+  const sheetOtherHours =
+    sheet?.mode === "edit"
+      ? totalHours(assignments.filter((row) => row.id !== sheet.assignment.id))
+      : workedHours;
 
   function go(delta: number) {
     const next = formatDateKey(addCalendarDays(current, delta));
@@ -64,6 +86,7 @@ export function EmployeeDayPage() {
     setDate(next);
     setSheet(null);
     setError("");
+    setNotice("");
   }
 
   function commit(next: Assignment[], targetId?: string): boolean {
@@ -79,18 +102,27 @@ export function EmployeeDayPage() {
       const order = db.workOrders.find((item) => item.id === row.workOrderId);
       return !tasksForWorkOrder(order, db.tasks, employee.roleIds).some((task) => task.id === row.taskId);
     });
-    const overlapText = targetId ? overlapErrorMessage(next, targetId) : null;
-    if (invalid || overlapText || usesArchived || invalidTask) {
+    if (invalid || usesArchived || invalidTask) {
       setError(
         usesArchived
           ? "Na arhivirani nalog se ne mogu unositi sati."
           : invalidTask
             ? "Odabrani zadatak nije dostupan na tom nalogu."
-            : overlapText
-              ? overlapText
-              : "Zadatak izlazi iz radnog dana.",
+            : "Zadatak izlazi iz radnog dana.",
       );
       return false;
+    }
+    const overlapText = targetId ? overlapErrorMessage(next, targetId) : null;
+    let toSave = next;
+    let shifted = false;
+    if (overlapText && targetId) {
+      const fitted = fitAroundTarget(next, targetId);
+      if (!fitted) {
+        setError(`${overlapText} Raspored se ne može presložiti unutar radnog dana.`);
+        return false;
+      }
+      toSave = fitted;
+      shifted = blocksShifted(next, fitted);
     }
     update((currentDb) => ({
       ...currentDb,
@@ -98,7 +130,7 @@ export function EmployeeDayPage() {
         ...currentDb.assignments.filter(
           (row) => !(row.employeeId === employee.id && row.date === date && row.kind === "actual"),
         ),
-        ...next.map((row) => ({
+        ...toSave.map((row) => ({
           ...row,
           id: row.kind === "actual" ? row.id : newId("asg"),
           employeeId: employee.id,
@@ -109,6 +141,7 @@ export function EmployeeDayPage() {
     }));
     setSheet(null);
     setError("");
+    setNotice(shifted && overlapText ? `${overlapText} Raspored je presložen.` : "");
     return true;
   }
 
@@ -140,6 +173,7 @@ export function EmployeeDayPage() {
     });
     setSheet(null);
     setError("");
+    setNotice("");
   }
 
   function unconfirmHours() {
@@ -185,6 +219,7 @@ export function EmployeeDayPage() {
     setDate(todayKey());
     setSheet(null);
     setError("");
+    setNotice("");
     setResetOpen(false);
   }
 
@@ -234,6 +269,7 @@ export function EmployeeDayPage() {
           </button>
           <div className="min-w-0 flex-1 text-center">
             <div className="truncate text-sm font-semibold text-slate-900">{formatCroatianDate(current)}</div>
+            {!restDay ? <div className={`text-xs font-medium ${hoursTone}`}>Ukupno {workedHours} h</div> : null}
           </div>
           <button type="button" className="icon-btn disabled:opacity-30" disabled={!canGoForward} onClick={() => go(1)} aria-label="Sljedeći dan">
             <ChevronRightIcon className="h-5 w-5" />
@@ -259,6 +295,9 @@ export function EmployeeDayPage() {
       </header>
 
       <div className={`flex-1 ${sheet ? "overflow-hidden" : "overflow-y-auto"} pb-[max(7rem,env(safe-area-inset-bottom))]`}>
+        {notice ? (
+          <p className="mx-4 mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{notice}</p>
+        ) : null}
         {restDay ? (
           <p className="px-6 py-16 text-center text-base font-medium text-slate-600">{REST_DAY_MESSAGE}</p>
         ) : (
@@ -276,10 +315,12 @@ export function EmployeeDayPage() {
               showNow={date === todayKey()}
               onSelectAssignment={(assignment) => {
                 setError("");
+                setNotice("");
                 setSheet({ mode: "edit", assignment });
               }}
               onSelectHour={(hour) => {
                 setError("");
+                setNotice("");
                 setSheet({ mode: "create", startHour: hour, durationHours: 1 });
               }}
             />
@@ -293,15 +334,19 @@ export function EmployeeDayPage() {
             {restDay ? (
               <p className="py-1 text-center text-sm text-slate-500">{REST_DAY_MESSAGE}</p>
             ) : canEdit ? (
-              <button type="button" className="btn-success w-full" onClick={confirmHours}>
-                Potvrdi sate
-              </button>
+              <div className="space-y-2">
+                <p className={`text-center text-sm font-medium ${hoursTone}`}>Radio si {workedHours} h</p>
+                <button type="button" className="btn-success w-full" onClick={confirmHours}>
+                  Potvrdi sate
+                </button>
+              </div>
             ) : confirmed ? (
               <div className="space-y-2">
                 <p className="flex items-center justify-center gap-2 text-sm font-medium text-emerald-700">
                   <CheckIcon className="h-4 w-4" />
                   {hourStatus === "uredeni_i_potvrdeni" ? "Sati su uređeni i potvrđeni" : "Sati su potvrđeni"}
                 </p>
+                <p className={`text-center text-sm font-medium ${hoursTone}`}>Radio si {workedHours} h</p>
                 {editable ? (
                   <button type="button" className="btn-danger w-full" onClick={unconfirmHours}>
                     Poništi potvrdu
@@ -309,9 +354,9 @@ export function EmployeeDayPage() {
                 ) : null}
               </div>
             ) : tone === "future" ? (
-              <p className="py-1 text-center text-sm text-slate-500">Samo pregled</p>
+              <p className="py-1 text-center text-sm text-slate-500">Samo pregled · planirano {workedHours} h</p>
             ) : (
-              <p className="py-1 text-center text-sm text-slate-500">Sati nisu potvrđeni</p>
+              <p className="py-1 text-center text-sm text-slate-500">Sati nisu potvrđeni · {workedHours} h</p>
             )}
           </div>
         </div>
@@ -325,6 +370,8 @@ export function EmployeeDayPage() {
           workOrders={db.workOrders}
           tasks={db.tasks}
           roleIds={employee.roleIds}
+          dayWorkOrderIds={dayWorkOrderIds}
+          otherHours={sheetOtherHours}
           initialWorkOrderId={sheet.mode === "edit" ? sheet.assignment.workOrderId : undefined}
           initialTaskId={sheet.mode === "edit" ? sheet.assignment.taskId : undefined}
           error={error}

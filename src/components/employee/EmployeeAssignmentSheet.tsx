@@ -1,9 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CloseIcon } from "../icons";
 import { formatHour } from "../../lib/dates";
-import { DAY_END, DAY_START, hourColumns } from "../../lib/gantt";
+import { DAY_END, DAY_START, EXPECTED_HOURS, hourColumns } from "../../lib/gantt";
 import { useLockPageScroll } from "../../lib/scrollLock";
-import { selectableWorkOrders, taskLabel, tasksForWorkOrder } from "../../lib/workOrders";
+import { sortWorkOrdersForEmployeeDay, taskLabel, tasksForWorkOrder } from "../../lib/workOrders";
 import type { Role, Task, WorkOrder } from "../../types";
 
 type Props = {
@@ -13,6 +13,8 @@ type Props = {
   workOrders: WorkOrder[];
   tasks: Task[];
   roleIds?: Role[];
+  dayWorkOrderIds?: string[];
+  otherHours?: number;
   initialWorkOrderId?: string;
   initialTaskId?: string;
   error?: string;
@@ -28,6 +30,8 @@ export function EmployeeAssignmentSheet({
   workOrders,
   tasks,
   roleIds,
+  dayWorkOrderIds = [],
+  otherHours = 0,
   initialWorkOrderId,
   initialTaskId,
   error,
@@ -37,7 +41,12 @@ export function EmployeeAssignmentSheet({
 }: Props) {
   useLockPageScroll();
   const hours = hourColumns();
-  const orders = useMemo(() => selectableWorkOrders(workOrders, initialWorkOrderId), [workOrders, initialWorkOrderId]);
+  const [nextStart, setNextStart] = useState(startHour);
+  const [nextDuration, setNextDuration] = useState(durationHours);
+  const orders = useMemo(
+    () => sortWorkOrdersForEmployeeDay(workOrders, dayWorkOrderIds, initialWorkOrderId),
+    [workOrders, dayWorkOrderIds, initialWorkOrderId],
+  );
   const [workOrderId, setWorkOrderId] = useState(initialWorkOrderId ?? orders[0]?.id ?? "");
   const selectedOrder = orders.find((order) => order.id === workOrderId);
   const availableTasks = tasksForWorkOrder(selectedOrder, tasks, roleIds);
@@ -46,6 +55,9 @@ export function EmployeeAssignmentSheet({
       ? initialTaskId
       : availableTasks[0]?.id ?? "",
   );
+  const dayTotal = otherHours + nextDuration;
+  const hoursTone =
+    dayTotal === EXPECTED_HOURS ? "text-emerald-700" : dayTotal > EXPECTED_HOURS ? "text-red-600" : "text-amber-700";
 
   useEffect(() => {
     if (!availableTasks.some((task) => task.id === taskId)) {
@@ -55,12 +67,8 @@ export function EmployeeAssignmentSheet({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const nextStart = Number(data.get("startHour"));
-    const nextDuration = Number(data.get("durationHours"));
     if (!workOrderId || !taskId) return;
     if (selectedOrder?.archived) return;
-    if (!Number.isFinite(nextStart) || !Number.isFinite(nextDuration)) return;
     onSave(workOrderId, taskId, nextStart, nextDuration);
   }
 
@@ -78,10 +86,17 @@ export function EmployeeAssignmentSheet({
           </button>
         </div>
         <form onSubmit={submit} className="space-y-3 px-4 py-4">
+          <p className={`text-sm font-medium ${hoursTone}`}>Ukupno ovaj dan: {dayTotal} h</p>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-slate-700">Početak</span>
-              <select name="startHour" className="input text-base" defaultValue={startHour} required>
+              <select
+                name="startHour"
+                className="input text-base"
+                value={nextStart}
+                onChange={(event) => setNextStart(Number(event.target.value))}
+                required
+              >
                 {hours.map((hour) => (
                   <option key={hour} value={hour}>
                     {formatHour(hour)}
@@ -91,7 +106,13 @@ export function EmployeeAssignmentSheet({
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-slate-700">Trajanje</span>
-              <select name="durationHours" className="input text-base" defaultValue={durationHours} required>
+              <select
+                name="durationHours"
+                className="input text-base"
+                value={nextDuration}
+                onChange={(event) => setNextDuration(Number(event.target.value))}
+                required
+              >
                 {Array.from({ length: DAY_END - DAY_START }, (_, index) => index + 1).map((hoursCount) => (
                   <option key={hoursCount} value={hoursCount}>
                     {hoursCount} h

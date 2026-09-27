@@ -100,7 +100,7 @@ export function DayCalendar({
                 {order?.code} · {order?.name}
               </div>
               <div className="truncate text-[12px] leading-tight text-white/90">
-                {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} · {taskLabel(task)}
+                {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} · {assignment.durationHours} h · {taskLabel(task)}
               </div>
             </button>
           );
