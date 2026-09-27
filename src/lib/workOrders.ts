@@ -1,7 +1,43 @@
-import { roleName, sortJobRoles } from "./roles";
+import { roleColor, roleName, sortJobRoles } from "./roles";
 import type { JobRole, Role, Task, WorkOrder, WorkOrderStatus, WorkOrderTemplate } from "../types";
 
-export const WORK_ORDER_COLORS = ["#2563eb", "#7c3aed", "#db2777", "#d97706", "#e11d48", "#0284c7", "#c026d3", "#4f46e5"];
+export const WORK_ORDER_COLORS = [
+  "#2563eb",
+  "#dc2626",
+  "#16a34a",
+  "#ca8a04",
+  "#ea580c",
+  "#0d9488",
+  "#7c3aed",
+  "#9f1239",
+  "#0284c7",
+  "#4f46e5",
+  "#65a30d",
+  "#c2410c",
+  "#155e75",
+  "#78716c",
+  "#db2777",
+  "#a16207",
+];
+
+export const WORK_ORDER_COLOR_LABELS: Record<string, string> = {
+  "#2563eb": "Plava",
+  "#dc2626": "Crvena",
+  "#16a34a": "Zelena",
+  "#ca8a04": "Žuta",
+  "#ea580c": "Narančasta",
+  "#0d9488": "Tirkizna",
+  "#7c3aed": "Ljubičasta",
+  "#9f1239": "Bordo",
+  "#0284c7": "Nebeskoplava",
+  "#4f46e5": "Indigo",
+  "#65a30d": "Maslinasta",
+  "#c2410c": "Bakrena",
+  "#155e75": "Petrol",
+  "#78716c": "Siva",
+  "#db2777": "Ružičasta",
+  "#a16207": "Zlatna",
+};
 
 export const WORK_ORDER_STATUSES: WorkOrderStatus[] = ["otvoren", "u_tijeku", "zavrsen"];
 
@@ -94,13 +130,17 @@ export function isArchivedWorkOrder(order: WorkOrder | undefined): boolean {
   return Boolean(order?.archived);
 }
 
-export function taskRoleGroups(tasks: Task[], roles: JobRole[]): { role: Role; label: string; tasks: Task[] }[] {
+export function taskRoleGroups(
+  tasks: Task[],
+  roles: JobRole[],
+): { role: Role; label: string; color: string; tasks: Task[] }[] {
   const seen = new Set<string>();
   const groups = sortJobRoles(roles).map((role) => {
     seen.add(role.id);
     return {
       role: role.id,
       label: role.name,
+      color: role.color,
       tasks: tasks.filter((task) => task.role === role.id),
     };
   });
@@ -109,6 +149,7 @@ export function taskRoleGroups(tasks: Task[], roles: JobRole[]): { role: Role; l
     groups.push({
       role: id,
       label: roleName(roles, id),
+      color: roleColor(roles, id),
       tasks: tasks.filter((task) => task.role === id),
     });
   }

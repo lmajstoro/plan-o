@@ -2,8 +2,8 @@ import { formatHour } from "./dates";
 
 export const DAY_START = 4;
 export const DAY_END = 23;
-export const CORE_START = 7;
-export const CORE_END = 15;
+export const CORE_START = 8;
+export const CORE_END = 16;
 export const EXPECTED_HOURS = 8;
 
 export type Timed = {
@@ -33,6 +33,30 @@ export function workGaps<T extends Timed>(blocks: T[]): { start: number; end: nu
     if (end > start) gaps.push({ start, end });
   }
   return gaps;
+}
+
+export function gapErrorMessage<T extends Timed>(blocks: T[]): string | null {
+  const gaps = workGaps(blocks);
+  if (gaps.length === 0) return null;
+  const labels = gaps.map((gap) => `${formatHour(gap.start)} - ${formatHour(gap.end)}`).join(", ");
+  if (gaps.length === 1) {
+    return `Rupa u radu nije dozvoljena (${labels}). Zadaci moraju ići jedan za drugim.`;
+  }
+  return `Rupe u radu nisu dozvoljene (${labels}). Zadaci moraju ići jedan za drugim.`;
+}
+
+export function closeWorkGaps<T extends Timed>(blocks: T[]): T[] {
+  const sorted = sortBlocks(blocks);
+  if (sorted.length < 2) return blocks.map((block) => ({ ...block }));
+  const moved = new Map<string, T>();
+  moved.set(sorted[0].id, { ...sorted[0] });
+  let cursor = blockEnd(sorted[0]);
+  for (const block of sorted.slice(1)) {
+    const startHour = block.startHour > cursor ? cursor : block.startHour;
+    moved.set(block.id, { ...block, startHour });
+    cursor = startHour + block.durationHours;
+  }
+  return blocks.map((block) => moved.get(block.id) ?? { ...block });
 }
 
 export function hourFromClientX(clientX: number, timeline: HTMLElement): number {

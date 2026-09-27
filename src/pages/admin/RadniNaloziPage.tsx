@@ -13,8 +13,10 @@ import {
 } from "../../lib/workOrders";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { TaskPicker } from "../../components/admin/TaskPicker";
+import { PaginationBar } from "../../components/admin/PaginationBar";
 import { ArchiveIcon, EditIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
+import { usePagedRows } from "../../lib/pagination";
 import type { WorkOrder, WorkOrderStatus } from "../../types";
 
 type FormState = {
@@ -53,6 +55,7 @@ export function RadniNaloziPage() {
     const sorted = sortWorkOrders(db.workOrders);
     return showArchived ? sorted : sorted.filter((row) => !row.archived);
   }, [db.workOrders, showArchived]);
+  const paging = usePagedRows(rows);
   const archivedCount = db.workOrders.filter((row) => row.archived).length;
 
   function openCreate() {
@@ -199,14 +202,14 @@ export function RadniNaloziPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {paging.pageRows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                   Nema naloga za prikaz.
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              paging.pageRows.map((row) => (
               <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${row.archived ? "bg-slate-50 text-slate-500" : ""}`}>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-2 font-mono font-medium text-slate-900">
@@ -246,6 +249,14 @@ export function RadniNaloziPage() {
             )}
           </tbody>
         </table>
+        <PaginationBar
+          page={paging.page}
+          totalPages={paging.totalPages}
+          from={paging.from}
+          to={paging.to}
+          total={paging.total}
+          onPage={paging.setPage}
+        />
       </div>
 
       {showForm ? (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { formatHour } from "../../lib/dates";
-import { roleNames } from "../../lib/roles";
+import { assignedRoles } from "../../lib/roles";
 import {
   CORE_END,
   CORE_START,
@@ -454,7 +454,14 @@ export function GanttBoard({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold text-slate-900">{employee.name}</div>
-                    <div className="truncate text-xs text-slate-500">{roleNames(jobRoles, employee.roleIds)}</div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+                      {assignedRoles(jobRoles, employee.roleIds).map((role) => (
+                        <span key={role.id} className="inline-flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: role.color }} />
+                          {role.name}
+                        </span>
+                      ))}
+                    </div>
                     <div className="text-xs text-slate-500">
                       {split && planHours !== displayHours ? `${planHours} → ${displayHours} h` : `${displayHours} h`}
                       {confirmedEmployeeIds.includes(employee.id) ? (

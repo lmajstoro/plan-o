@@ -2,13 +2,16 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { roleUsage, sortJobRoles } from "../../lib/roles";
+import { WORK_ORDER_COLOR_LABELS, WORK_ORDER_COLORS } from "../../lib/workOrders";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
+import { PaginationBar } from "../../components/admin/PaginationBar";
 import { Field, Header } from "./ZaposleniciPage";
+import { usePagedRows } from "../../lib/pagination";
 import type { JobRole } from "../../types";
 
-type FormState = { name: string };
-const emptyForm: FormState = { name: "" };
+type FormState = { name: string; color: string };
+const emptyForm: FormState = { name: "", color: WORK_ORDER_COLORS[0] };
 
 export function UlogePage() {
   const { db, update } = useDb();
@@ -20,15 +23,18 @@ export function UlogePage() {
   const [blockedRemove, setBlockedRemove] = useState("");
 
   const rows = useMemo(() => sortJobRoles(db.jobRoles), [db.jobRoles]);
+  const paging = usePagedRows(rows);
 
   function openCreate() {
-    setForm(emptyForm);
+    const used = new Set(db.jobRoles.map((row) => row.color));
+    const color = WORK_ORDER_COLORS.find((item) => !used.has(item)) ?? WORK_ORDER_COLORS[db.jobRoles.length % WORK_ORDER_COLORS.length];
+    setForm({ ...emptyForm, color });
     setFormError("");
     setCreating(true);
   }
 
   function openEdit(role: JobRole) {
-    setForm({ name: role.name });
+    setForm({ name: role.name, color: role.color });
     setFormError("");
     setEditing(role);
   }
@@ -56,14 +62,14 @@ export function UlogePage() {
     if (editing) {
       update((current) => ({
         ...current,
-        jobRoles: current.jobRoles.map((row) => (row.id === editing.id ? { ...row, name } : row)),
+        jobRoles: current.jobRoles.map((row) => (row.id === editing.id ? { ...row, name, color: form.color } : row)),
       }));
       setEditing(null);
       return;
     }
     update((current) => ({
       ...current,
-      jobRoles: [...current.jobRoles, { id: newId("role"), name }],
+      jobRoles: [...current.jobRoles, { id: newId("role"), name, color: form.color }],
     }));
     setCreating(false);
   }
@@ -91,7 +97,7 @@ export function UlogePage() {
   return (
     <div>
       <Header title="Uloge" actionLabel="Nova uloga" onAction={openCreate} />
-      <p className="mb-4 text-slate-500">Šifarnik uloga za zaposlenike i zadatke. Naziv se vidi na planu rada i u ostalim šifarnicima.</p>
+      <p className="mb-4 text-slate-500">Šifarnik uloga za zaposlenike i zadatke. Boja se vidi na planu rada i u ostalim šifarnicima.</p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[520px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
@@ -103,11 +109,16 @@ export function UlogePage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {paging.pageRows.map((row) => {
               const usage = roleUsage(row.id, db.employees, db.tasks);
               return (
                 <tr key={row.id} className="border-b border-slate-50 last:border-0">
-                  <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center gap-2 font-medium text-slate-900">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: row.color }} />
+                      {row.name}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-slate-600">{usage.employees}</td>
                   <td className="px-4 py-3 text-slate-600">{usage.tasks}</td>
                   <td className="px-4 py-3">
@@ -125,13 +136,39 @@ export function UlogePage() {
             })}
           </tbody>
         </table>
+        <PaginationBar
+          page={paging.page}
+          totalPages={paging.totalPages}
+          from={paging.from}
+          to={paging.to}
+          total={paging.total}
+          onPage={paging.setPage}
+        />
       </div>
 
       {showForm ? (
         <Modal title={editing ? "Uredi ulogu" : "Nova uloga"} onClose={closeForm}>
           <form onSubmit={save} className="space-y-3">
             <Field label="Naziv">
-              <input className="input" required value={form.name} onChange={(e) => { setForm({ name: e.target.value }); setFormError(""); }} />
+              <input className="input" required value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); setFormError(""); }} />
+            </Field>
+            <Field label="Boja">
+              <div className="flex flex-wrap gap-2">
+                {WORK_ORDER_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setForm({ ...form, color })}
+                    className={`flex items-center gap-2 rounded-full border px-2 py-1 text-xs font-medium ${
+                      form.color === color ? "border-slate-400 ring-2 ring-offset-1 ring-slate-400" : "border-slate-200"
+                    }`}
+                    style={{ backgroundColor: color, color: "#fff" }}
+                    aria-label={WORK_ORDER_COLOR_LABELS[color] ?? color}
+                  >
+                    {WORK_ORDER_COLOR_LABELS[color] ?? color}
+                  </button>
+                ))}
+              </div>
             </Field>
             {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">

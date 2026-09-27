@@ -3,7 +3,9 @@ import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { defaultRoleId, sortJobRoles } from "../../lib/roles";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { PaginationBar } from "../../components/admin/PaginationBar";
 import { PlusIcon, TrashIcon, EditIcon } from "../../components/icons";
+import { usePagedRows } from "../../lib/pagination";
 import type { Employee } from "../../types";
 
 type FormState = { name: string; email: string; roleIds: string[]; groupIds: string[] };
@@ -21,6 +23,7 @@ export function ZaposleniciPage() {
     () => [...db.employees].sort((a, b) => a.name.localeCompare(b.name, "hr")),
     [db.employees],
   );
+  const paging = usePagedRows(rows);
 
   function openCreate() {
     const first = defaultRoleId(db.jobRoles);
@@ -102,7 +105,7 @@ export function ZaposleniciPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {paging.pageRows.map((row) => (
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
                 <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">{row.email}</td>
@@ -110,7 +113,8 @@ export function ZaposleniciPage() {
                   <div className="flex flex-wrap gap-1">
                     {row.roleIds.length === 0 ? <span className="text-slate-400">-</span> : null}
                     {sortJobRoles(db.jobRoles.filter((role) => row.roleIds.includes(role.id))).map((role) => (
-                      <span key={role.id} className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                      <span key={role.id} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: role.color }} />
                         {role.name}
                       </span>
                     ))}
@@ -123,8 +127,7 @@ export function ZaposleniciPage() {
                       const group = db.workGroups.find((item) => item.id === id);
                       if (!group) return null;
                       return (
-                        <span key={id} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: group.color }} />
+                        <span key={id} className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
                           {group.name}
                         </span>
                       );
@@ -145,6 +148,14 @@ export function ZaposleniciPage() {
             ))}
           </tbody>
         </table>
+        <PaginationBar
+          page={paging.page}
+          totalPages={paging.totalPages}
+          from={paging.from}
+          to={paging.to}
+          total={paging.total}
+          onPage={paging.setPage}
+        />
       </div>
 
       {showForm ? (
@@ -169,6 +180,7 @@ export function ZaposleniciPage() {
                         checked={form.roleIds.includes(role.id)}
                         onChange={() => toggleRole(role.id)}
                       />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: role.color }} />
                       {role.name}
                     </label>
                   ))}
@@ -191,7 +203,6 @@ export function ZaposleniciPage() {
                         checked={form.groupIds.includes(group.id)}
                         onChange={() => toggleGroup(group.id)}
                       />
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: group.color }} />
                       {group.name}
                     </label>
                   ))

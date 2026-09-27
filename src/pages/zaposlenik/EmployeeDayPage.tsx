@@ -27,16 +27,19 @@ import {
 import {
   blockEnd,
   blocksShifted,
+  closeWorkGaps,
   DAY_END,
   DAY_START,
   EXPECTED_HOURS,
   fitAroundTarget,
+  gapErrorMessage,
   newId,
   overlapErrorMessage,
   totalHours,
+  workGaps,
 } from "../../lib/gantt";
 import { isArchivedWorkOrder, tasksForWorkOrder } from "../../lib/workOrders";
-import { roleNames } from "../../lib/roles";
+import { assignedRoles } from "../../lib/roles";
 import type { Assignment } from "../../types";
 
 type SheetState =
@@ -124,6 +127,16 @@ export function EmployeeDayPage() {
       toSave = fitted;
       shifted = blocksShifted(next, fitted);
     }
+    if (!targetId && workGaps(toSave).length > 0) {
+      const packed = closeWorkGaps(toSave);
+      shifted = shifted || blocksShifted(toSave, packed);
+      toSave = packed;
+    }
+    const gapText = gapErrorMessage(toSave);
+    if (gapText) {
+      setError(gapText);
+      return false;
+    }
     update((currentDb) => ({
       ...currentDb,
       assignments: [
@@ -141,12 +154,24 @@ export function EmployeeDayPage() {
     }));
     setSheet(null);
     setError("");
-    setNotice(shifted && overlapText ? `${overlapText} Raspored je presložen.` : "");
+    setNotice(
+      shifted && overlapText
+        ? `${overlapText} Raspored je presložen.`
+        : shifted && !targetId
+          ? "Rupa u radu je zatvorena."
+          : "",
+    );
     return true;
   }
 
   function confirmHours() {
     if (!employee || !canEdit) return;
+    const gapText = gapErrorMessage(assignments);
+    if (gapText) {
+      setNotice("");
+      setError(gapText);
+      return;
+    }
     const hadActuals = db.assignments.some(
       (row) => row.employeeId === employee.id && row.date === date && row.kind === "actual",
     );
@@ -248,7 +273,14 @@ export function EmployeeDayPage() {
             >
               {employee.name}
             </button>
-            <div className="truncate text-xs text-slate-500">{roleNames(db.jobRoles, employee.roleIds)}</div>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+              {assignedRoles(db.jobRoles, employee.roleIds).map((role) => (
+                <span key={role.id} className="inline-flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: role.color }} />
+                  {role.name}
+                </span>
+              ))}
+            </div>
           </div>
           <button
             type="button"
@@ -369,6 +401,7 @@ export function EmployeeDayPage() {
           durationHours={sheet.mode === "create" ? sheet.durationHours : sheet.assignment.durationHours}
           workOrders={db.workOrders}
           tasks={db.tasks}
+          jobRoles={db.jobRoles}
           roleIds={employee.roleIds}
           dayWorkOrderIds={dayWorkOrderIds}
           otherHours={sheetOtherHours}

@@ -2,14 +2,14 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { PaginationBar } from "../../components/admin/PaginationBar";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
+import { usePagedRows } from "../../lib/pagination";
 import type { WorkGroup } from "../../types";
 
-const COLORS = ["#2563eb", "#0d9488", "#d97706", "#7c3aed", "#e11d48", "#0284c7", "#65a30d"];
-
-type FormState = { name: string; color: string };
-const emptyForm: FormState = { name: "", color: COLORS[0] };
+type FormState = { name: string };
+const emptyForm: FormState = { name: "" };
 
 export function RadneSkupinePage() {
   const { db, update } = useDb();
@@ -22,30 +22,33 @@ export function RadneSkupinePage() {
     () => [...db.workGroups].sort((a, b) => a.name.localeCompare(b.name, "hr")),
     [db.workGroups],
   );
+  const paging = usePagedRows(rows);
 
   function openCreate() {
-    setForm({ ...emptyForm, color: COLORS[db.workGroups.length % COLORS.length] });
+    setForm(emptyForm);
     setCreating(true);
   }
 
   function openEdit(group: WorkGroup) {
-    setForm({ name: group.name, color: group.color });
+    setForm({ name: group.name });
     setEditing(group);
   }
 
   function save(event: FormEvent) {
     event.preventDefault();
+    const name = form.name.trim();
+    if (!name) return;
     if (editing) {
       update((current) => ({
         ...current,
-        workGroups: current.workGroups.map((row) => (row.id === editing.id ? { ...row, ...form } : row)),
+        workGroups: current.workGroups.map((row) => (row.id === editing.id ? { ...row, name } : row)),
       }));
       setEditing(null);
       return;
     }
     update((current) => ({
       ...current,
-      workGroups: [...current.workGroups, { id: newId("wg"), ...form }],
+      workGroups: [...current.workGroups, { id: newId("wg"), name }],
     }));
     setCreating(false);
   }
@@ -79,14 +82,9 @@ export function RadneSkupinePage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {paging.pageRows.map((row) => (
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-2 font-medium text-slate-900">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: row.color }} />
-                    {row.name}
-                  </span>
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">
                   {db.employees.filter((employee) => employee.groupIds.includes(row.id)).length}
                 </td>
@@ -104,6 +102,14 @@ export function RadneSkupinePage() {
             ))}
           </tbody>
         </table>
+        <PaginationBar
+          page={paging.page}
+          totalPages={paging.totalPages}
+          from={paging.from}
+          to={paging.to}
+          total={paging.total}
+          onPage={paging.setPage}
+        />
       </div>
 
       {showForm ? (
@@ -111,20 +117,6 @@ export function RadneSkupinePage() {
           <form onSubmit={save} className="space-y-3">
             <Field label="Naziv">
               <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            </Field>
-            <Field label="Boja">
-              <div className="flex flex-wrap gap-2">
-                {COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setForm({ ...form, color })}
-                    className={`h-8 w-8 rounded-full ${form.color === color ? "ring-2 ring-offset-2 ring-slate-400" : ""}`}
-                    style={{ backgroundColor: color }}
-                    aria-label={color}
-                  />
-                ))}
-              </div>
             </Field>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={() => { setCreating(false); setEditing(null); }}>

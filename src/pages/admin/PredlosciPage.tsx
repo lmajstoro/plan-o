@@ -1,11 +1,13 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
-import { sortTemplates, templateUsage, WORK_ORDER_COLORS } from "../../lib/workOrders";
+import { sortTemplates, templateUsage, WORK_ORDER_COLOR_LABELS, WORK_ORDER_COLORS } from "../../lib/workOrders";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { TaskPicker } from "../../components/admin/TaskPicker";
+import { PaginationBar } from "../../components/admin/PaginationBar";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
+import { usePagedRows } from "../../lib/pagination";
 import type { WorkOrderTemplate } from "../../types";
 
 type FormState = { name: string; color: string; taskIds: string[] };
@@ -21,6 +23,7 @@ export function PredlosciPage() {
   const [blockedRemove, setBlockedRemove] = useState("");
 
   const rows = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
+  const paging = usePagedRows(rows);
 
   function closeForm() {
     setCreating(false);
@@ -123,7 +126,7 @@ export function PredlosciPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {paging.pageRows.map((row) => (
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-2 font-medium text-slate-900">
@@ -147,6 +150,14 @@ export function PredlosciPage() {
             ))}
           </tbody>
         </table>
+        <PaginationBar
+          page={paging.page}
+          totalPages={paging.totalPages}
+          from={paging.from}
+          to={paging.to}
+          total={paging.total}
+          onPage={paging.setPage}
+        />
       </div>
 
       {showForm ? (
@@ -162,10 +173,14 @@ export function PredlosciPage() {
                     key={color}
                     type="button"
                     onClick={() => setForm({ ...form, color })}
-                    className={`h-8 w-8 rounded-full ${form.color === color ? "ring-2 ring-offset-2 ring-slate-400" : ""}`}
-                    style={{ backgroundColor: color }}
-                    aria-label={color}
-                  />
+                    className={`flex items-center gap-2 rounded-full border px-2 py-1 text-xs font-medium ${
+                      form.color === color ? "border-slate-400 ring-2 ring-offset-1 ring-slate-400" : "border-slate-200"
+                    }`}
+                    style={{ backgroundColor: color, color: "#fff" }}
+                    aria-label={WORK_ORDER_COLOR_LABELS[color] ?? color}
+                  >
+                    {WORK_ORDER_COLOR_LABELS[color] ?? color}
+                  </button>
                 ))}
               </div>
             </Field>

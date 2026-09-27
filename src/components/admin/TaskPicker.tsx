@@ -16,10 +16,13 @@ export function TaskPicker({ tasks, jobRoles, selectedIds, onToggle }: Props) {
   const groups = taskRoleGroups(tasks, jobRoles);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid max-h-[420px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
       {groups.map((group) => (
         <div key={group.role} className="rounded-lg border border-slate-200 p-3">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{group.label}</div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: group.color }} />
+            {group.label}
+          </div>
           <div className="space-y-1.5">
             {group.tasks.length === 0 ? (
               <p className="text-xs text-slate-400">Nema zadataka za ovu ulogu.</p>

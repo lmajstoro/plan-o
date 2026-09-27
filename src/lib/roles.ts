@@ -8,12 +8,20 @@ export function roleName(roles: JobRole[], id: string): string {
   return roles.find((role) => role.id === id)?.name ?? "Nepoznata uloga";
 }
 
+export function roleColor(roles: JobRole[], id: string): string {
+  return roles.find((role) => role.id === id)?.color ?? "#64748b";
+}
+
 export function defaultRoleId(roles: JobRole[]): string {
   return sortJobRoles(roles)[0]?.id ?? "";
 }
 
+export function assignedRoles(roles: JobRole[], ids: string[]): JobRole[] {
+  return sortJobRoles(roles.filter((role) => ids.includes(role.id)));
+}
+
 export function roleNames(roles: JobRole[], ids: string[]): string {
-  const known = sortJobRoles(roles.filter((role) => ids.includes(role.id))).map((role) => role.name);
+  const known = assignedRoles(roles, ids).map((role) => role.name);
   if (ids.some((id) => !roles.some((role) => role.id === id))) known.push("Nepoznata uloga");
   return known.join(", ");
 }

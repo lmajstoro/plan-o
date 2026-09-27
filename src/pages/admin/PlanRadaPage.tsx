@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { GanttBoard } from "../../components/gantt/GanttBoard";
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, LayersIcon } from "../../components/icons";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, LayersIcon } from "../../components/icons";
 import { useDb } from "../../context/DbContext";
 import {
   addWorkDays,
@@ -27,6 +27,7 @@ export function PlanRadaPage() {
   const [date, setDate] = useState(() => formatDateKey(todayWorkDate()));
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
   const [roleFilter, setRoleFilter] = useState<string[]>([]);
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
   const [sopnicaStep, setSopnicaStep] = useState(0);
   const [sopnicaReady, setSopnicaReady] = useState(false);
@@ -134,37 +135,7 @@ export function PlanRadaPage() {
         </div>
       )}
 
-      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div>
-          <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Filter radnih skupina</div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                groupFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
-              onClick={() => setGroupFilter([])}
-            >
-              Sve
-            </button>
-            {db.workGroups.map((group) => {
-              const active = groupFilter.includes(group.id);
-              return (
-                <button
-                  key={group.id}
-                  type="button"
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                    active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}
-                  onClick={() => toggleGroup(group.id)}
-                >
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: group.color }} />
-                  {group.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
           <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Filter uloga</div>
           <div className="flex flex-wrap items-center gap-2">
@@ -183,16 +154,65 @@ export function PlanRadaPage() {
                 <button
                   key={role.id}
                   type="button"
-                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                  className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium ${
                     active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                   onClick={() => toggleRole(role.id)}
                 >
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: role.color }} />
                   {role.name}
                 </button>
               );
             })}
           </div>
+        </div>
+        <div className="border-t border-slate-100 pt-3">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-3 text-left"
+            aria-expanded={groupsOpen}
+            onClick={() => setGroupsOpen((open) => !open)}
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold uppercase tracking-wide text-slate-500">Filter radnih skupina</span>
+              {!groupsOpen ? (
+                <span className="mt-0.5 block truncate text-sm text-slate-600">
+                  {groupFilter.length === 0
+                    ? "Sve skupine"
+                    : db.workGroups.filter((group) => groupFilter.includes(group.id)).map((group) => group.name).join(", ")}
+                </span>
+              ) : null}
+            </span>
+            <ChevronDownIcon className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${groupsOpen ? "rotate-180" : ""}`} />
+          </button>
+          {groupsOpen ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                  groupFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+                onClick={() => setGroupFilter([])}
+              >
+                Sve
+              </button>
+              {db.workGroups.map((group) => {
+                const active = groupFilter.includes(group.id);
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                      active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                    onClick={() => toggleGroup(group.id)}
+                  >
+                    {group.name}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       </div>
 

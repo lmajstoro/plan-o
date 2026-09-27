@@ -3,6 +3,7 @@ export type Role = string;
 export type JobRole = {
   id: string;
   name: string;
+  color: string;
 };
 
 export type HourStatus = "potvrdeni" | "uredeni_i_potvrdeni" | "nisu_uneseni";
@@ -22,7 +23,6 @@ export type DemoAccount = SessionUser & {
 export type WorkGroup = {
   id: string;
   name: string;
-  color: string;
 };
 
 export type Employee = {

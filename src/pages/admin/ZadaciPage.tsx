@@ -1,10 +1,12 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
-import { defaultRoleId, roleName, sortJobRoles } from "../../lib/roles";
+import { defaultRoleId, roleColor, roleName, sortJobRoles } from "../../lib/roles";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
+import { PaginationBar } from "../../components/admin/PaginationBar";
 import { Field, Header } from "./ZaposleniciPage";
+import { usePagedRows } from "../../lib/pagination";
 import type { Task } from "../../types";
 
 type FormState = { code: string; description: string; role: string };
@@ -22,6 +24,7 @@ export function ZadaciPage() {
     () => [...db.tasks].sort((a, b) => a.code.localeCompare(b.code, "hr")),
     [db.tasks],
   );
+  const paging = usePagedRows(rows);
 
   function closeForm() {
     setCreating(false);
@@ -107,11 +110,16 @@ export function ZadaciPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {paging.pageRows.map((row) => (
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
                 <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.code}</td>
                 <td className="px-4 py-3 text-slate-700">{row.description}</td>
-                <td className="px-4 py-3">{roleName(db.jobRoles, row.role)}</td>
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: roleColor(db.jobRoles, row.role) }} />
+                    {roleName(db.jobRoles, row.role)}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
@@ -126,6 +134,14 @@ export function ZadaciPage() {
             ))}
           </tbody>
         </table>
+        <PaginationBar
+          page={paging.page}
+          totalPages={paging.totalPages}
+          from={paging.from}
+          to={paging.to}
+          total={paging.total}
+          onPage={paging.setPage}
+        />
       </div>
 
       {showForm ? (

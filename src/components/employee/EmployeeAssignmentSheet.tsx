@@ -3,8 +3,8 @@ import { CloseIcon } from "../icons";
 import { formatHour } from "../../lib/dates";
 import { DAY_END, DAY_START, EXPECTED_HOURS, hourColumns } from "../../lib/gantt";
 import { useLockPageScroll } from "../../lib/scrollLock";
-import { sortWorkOrdersForEmployeeDay, taskLabel, tasksForWorkOrder } from "../../lib/workOrders";
-import type { Role, Task, WorkOrder } from "../../types";
+import { sortWorkOrdersForEmployeeDay, taskRoleGroups, tasksForWorkOrder } from "../../lib/workOrders";
+import type { JobRole, Role, Task, WorkOrder } from "../../types";
 
 type Props = {
   title: string;
@@ -12,6 +12,7 @@ type Props = {
   durationHours: number;
   workOrders: WorkOrder[];
   tasks: Task[];
+  jobRoles?: JobRole[];
   roleIds?: Role[];
   dayWorkOrderIds?: string[];
   otherHours?: number;
@@ -29,6 +30,7 @@ export function EmployeeAssignmentSheet({
   durationHours,
   workOrders,
   tasks,
+  jobRoles = [],
   roleIds,
   dayWorkOrderIds = [],
   otherHours = 0,
@@ -50,6 +52,10 @@ export function EmployeeAssignmentSheet({
   const [workOrderId, setWorkOrderId] = useState(initialWorkOrderId ?? orders[0]?.id ?? "");
   const selectedOrder = orders.find((order) => order.id === workOrderId);
   const availableTasks = tasksForWorkOrder(selectedOrder, tasks, roleIds);
+  const taskGroups = useMemo(() => {
+    const roles = jobRoles.filter((role) => !roleIds || roleIds.includes(role.id));
+    return taskRoleGroups(availableTasks, roles).filter((group) => group.tasks.length > 0);
+  }, [availableTasks, jobRoles, roleIds]);
   const [taskId, setTaskId] = useState(
     initialTaskId && availableTasks.some((task) => task.id === initialTaskId)
       ? initialTaskId
@@ -135,22 +141,49 @@ export function EmployeeAssignmentSheet({
               </select>
             )}
           </label>
-          <label className="block">
+          <div>
             <span className="mb-1 block text-sm font-medium text-slate-700">Zadatak</span>
             {availableTasks.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 Ovaj nalog nema zadataka za tvoje uloge.
               </p>
             ) : (
-              <select className="input text-base" required value={taskId} onChange={(event) => setTaskId(event.target.value)}>
-                {availableTasks.map((task) => (
-                  <option key={task.id} value={task.id}>
-                    {taskLabel(task)}
-                  </option>
+              <div className="space-y-3">
+                {taskGroups.map((group) => (
+                  <div key={group.role}>
+                    <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: group.color }} />
+                      {group.label}
+                    </div>
+                    <div className="space-y-1.5">
+                      {group.tasks.map((task) => {
+                        const selected = taskId === task.id;
+                        return (
+                          <label
+                            key={task.id}
+                            className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
+                              selected ? "border-blue-700 bg-blue-50 text-slate-900" : "border-slate-200 text-slate-700"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              className="mt-0.5"
+                              name="taskId"
+                              checked={selected}
+                              onChange={() => setTaskId(task.id)}
+                            />
+                            <span>
+                              <span className="font-mono text-slate-500">{task.code}</span> {task.description}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
-              </select>
+              </div>
             )}
-          </label>
+          </div>
           {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
           <div className="flex items-center justify-between gap-2 pt-1">
             {onDelete ? (

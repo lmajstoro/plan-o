@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import { DAY_END, DAY_START, blockEnd, hourColumns, occupiedHours } from "../../lib/gantt";
+import { CORE_END, CORE_START, DAY_END, DAY_START, blockEnd, hourColumns, occupiedHours } from "../../lib/gantt";
 import { formatHour } from "../../lib/dates";
 import { taskLabel, workOrderColor } from "../../lib/workOrders";
 import type { Assignment, Task, WorkOrder, WorkOrderTemplate } from "../../types";
@@ -62,6 +62,15 @@ export function DayCalendar({
   return (
     <div className={`relative pt-3 ${toneClass}`}>
       <div className="relative" style={{ height: HOURS.length * HOUR_HEIGHT }} onClick={onGridClick}>
+        <div
+          className="pointer-events-none absolute bg-sky-100/70"
+          style={{
+            top: (CORE_START - DAY_START) * HOUR_HEIGHT,
+            height: (CORE_END - CORE_START) * HOUR_HEIGHT,
+            left: GUTTER,
+            right: 10,
+          }}
+        />
         {HOURS.map((hour) => (
           <div
             key={hour}
@@ -83,7 +92,7 @@ export function DayCalendar({
               key={assignment.id}
               type="button"
               disabled={readOnly}
-              className="absolute z-10 overflow-hidden rounded-lg px-2.5 py-1.5 text-left text-white shadow-sm disabled:pointer-events-none"
+              className="absolute z-10 flex flex-col justify-center overflow-hidden rounded-lg px-2.5 py-1.5 text-left text-white shadow-sm disabled:pointer-events-none"
               style={{
                 top: (assignment.startHour - DAY_START) * HOUR_HEIGHT + 2,
                 height: assignment.durationHours * HOUR_HEIGHT - 4,
@@ -96,11 +105,16 @@ export function DayCalendar({
                 if (!readOnly) onSelectAssignment(assignment);
               }}
             >
-              <div className="truncate text-[13px] font-semibold leading-tight">
-                {order?.code} · {order?.name}
-              </div>
-              <div className="truncate text-[12px] leading-tight text-white/90">
-                {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} · {assignment.durationHours} h · {taskLabel(task)}
+              <div className="flex min-h-0 flex-col gap-1">
+                <div className="truncate text-base font-semibold leading-tight">
+                  {[order?.code, order?.name].filter(Boolean).join(" - ")}
+                </div>
+                <div className="truncate text-sm leading-tight text-white/90">
+                  {taskLabel(task)}
+                </div>
+                <div className="truncate text-sm leading-tight text-white/90">
+                  {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} {assignment.durationHours}h
+                </div>
               </div>
             </button>
           );

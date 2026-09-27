@@ -4,7 +4,7 @@ import type { Database } from "../types";
 
 const DB_KEY = "plano-db";
 const SEED_VERSION_KEY = "plano-seed-version";
-export const SEED_VERSION = "19";
+export const SEED_VERSION = "23";
 
 function writeSeed(): Database {
   const seeded = createSeedDatabase();
@@ -35,6 +35,7 @@ export function loadDatabase(): Database {
     }
     if (!Array.isArray(parsed.jobRoles) || parsed.jobRoles.length === 0) return writeSeed();
     if (!parsed.employees.every((row) => Array.isArray(row.roleIds))) return writeSeed();
+    if (!parsed.jobRoles.every((row) => typeof row.color === "string")) return writeSeed();
     if (!parsed.tasks.every((row) => typeof row.description === "string")) return writeSeed();
     if (!Array.isArray(parsed.workOrderTemplates) || parsed.workOrderTemplates.length === 0) return writeSeed();
     if (!parsed.workOrders.every((row) => Boolean(row.templateId))) return writeSeed();
