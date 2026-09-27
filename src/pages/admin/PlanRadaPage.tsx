@@ -202,6 +202,7 @@ export function PlanRadaPage() {
               copySources={allEmployees}
               tasks={db.tasks}
               workOrders={db.workOrders}
+              jobRoles={db.jobRoles}
               assignments={db.assignments}
               confirmedEmployeeIds={confirmedEmployeeIds}
               onCommitEmployeeDay={(employeeId, next) => {

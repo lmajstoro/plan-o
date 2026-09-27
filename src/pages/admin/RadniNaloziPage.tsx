@@ -51,7 +51,7 @@ export function RadniNaloziPage() {
     return showArchived ? sorted : sorted.filter((row) => !row.archived);
   }, [db.workOrders, showArchived]);
   const archivedCount = db.workOrders.filter((row) => row.archived).length;
-  const taskGroups = useMemo(() => taskRoleGroups(db.tasks), [db.tasks]);
+  const taskGroups = useMemo(() => taskRoleGroups(db.tasks, db.jobRoles), [db.tasks, db.jobRoles]);
 
   function openCreate() {
     setForm({

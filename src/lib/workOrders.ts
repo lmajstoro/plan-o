@@ -1,5 +1,5 @@
-import { ROLE_LABELS } from "./dates";
-import type { Role, Task, WorkOrder, WorkOrderStatus } from "../types";
+import { roleName, sortJobRoles } from "./roles";
+import type { JobRole, Role, Task, WorkOrder, WorkOrderStatus } from "../types";
 
 export const WORK_ORDER_STATUSES: WorkOrderStatus[] = ["otvoren", "u_tijeku", "zavrsen"];
 
@@ -59,11 +59,23 @@ export function isArchivedWorkOrder(order: WorkOrder | undefined): boolean {
   return Boolean(order?.archived);
 }
 
-export function taskRoleGroups(tasks: Task[]): { role: Role; label: string; tasks: Task[] }[] {
-  const roles: Role[] = ["montazer", "serviser", "elektromonter"];
-  return roles.map((role) => ({
-    role,
-    label: ROLE_LABELS[role],
-    tasks: tasks.filter((task) => task.role === role),
-  }));
+export function taskRoleGroups(tasks: Task[], roles: JobRole[]): { role: Role; label: string; tasks: Task[] }[] {
+  const seen = new Set<string>();
+  const groups = sortJobRoles(roles).map((role) => {
+    seen.add(role.id);
+    return {
+      role: role.id,
+      label: role.name,
+      tasks: tasks.filter((task) => task.role === role.id),
+    };
+  });
+  const unknown = [...new Set(tasks.map((task) => task.role).filter((id) => !seen.has(id)))];
+  for (const id of unknown) {
+    groups.push({
+      role: id,
+      label: roleName(roles, id),
+      tasks: tasks.filter((task) => task.role === id),
+    });
+  }
+  return groups;
 }

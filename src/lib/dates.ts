@@ -1,11 +1,3 @@
-export const ROLE_LABELS: Record<import("../types").Role, string> = {
-  montazer: "Montažer",
-  serviser: "Serviser",
-  elektromonter: "Elektromonter",
-};
-
-export const ROLES = ["montazer", "serviser", "elektromonter"] as const;
-
 export const WEEKDAYS = [
   "nedjelja",
   "ponedjeljak",

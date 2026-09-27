@@ -41,6 +41,12 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   const next2 = formatDateKey(addWorkDays(today, 2));
   const next3 = formatDateKey(addWorkDays(today, 3));
 
+  const jobRoles = [
+    { id: "montazer", name: "Montažer" },
+    { id: "serviser", name: "Serviser" },
+    { id: "elektromonter", name: "Elektromonter" },
+  ];
+
   const workGroups = [
     { id: "wg-ivanovi", name: "Ivanovi ljudi", color: "#2563eb" },
     { id: "wg-elektricari", name: "Električari", color: "#0d9488" },
@@ -52,28 +58,28 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   ];
 
   const employees = [
-    { id: "emp-1", name: "Ivan Vladić", email: "ivan.vladic@plan-o.hr", role: "montazer" as const, groupIds: ["wg-ivanovi", "wg-najjaci", "wg-sopnica"] },
-    { id: "emp-2", name: "Luka Majstorović", email: "luka.majstorovic@plan-o.hr", role: "montazer" as const, groupIds: ["wg-ivanovi", "wg-gornja"] },
-    { id: "emp-3", name: "Mario Nikolić", email: "mario.nikolic@plan-o.hr", role: "serviser" as const, groupIds: ["wg-dezurstvo", "wg-gornja"] },
-    { id: "emp-4", name: "Domagoj Takač", email: "domagoj.takac@plan-o.hr", role: "serviser" as const, groupIds: ["wg-najjaci", "wg-donja"] },
-    { id: "emp-5", name: "Marko Čižmek", email: "marko.cizmek@plan-o.hr", role: "elektromonter" as const, groupIds: ["wg-elektricari", "wg-ivanovi", "wg-sopnica"] },
-    { id: "emp-6", name: "Tomo Žižak", email: "tomo.zizak@plan-o.hr", role: "elektromonter" as const, groupIds: ["wg-elektricari", "wg-donja"] },
-    { id: "emp-7", name: "Patrik Lukanović", email: "patrik.lukanovic@plan-o.hr", role: "serviser" as const, groupIds: ["wg-dezurstvo", "wg-najjaci", "wg-sopnica"] },
+    { id: "emp-1", name: "Ivan Vladić", email: "ivan.vladic@plan-o.hr", role: "montazer", groupIds: ["wg-ivanovi", "wg-najjaci", "wg-sopnica"] },
+    { id: "emp-2", name: "Luka Majstorović", email: "luka.majstorovic@plan-o.hr", role: "montazer", groupIds: ["wg-ivanovi", "wg-gornja"] },
+    { id: "emp-3", name: "Mario Nikolić", email: "mario.nikolic@plan-o.hr", role: "serviser", groupIds: ["wg-dezurstvo", "wg-gornja"] },
+    { id: "emp-4", name: "Domagoj Takač", email: "domagoj.takac@plan-o.hr", role: "serviser", groupIds: ["wg-najjaci", "wg-donja"] },
+    { id: "emp-5", name: "Marko Čižmek", email: "marko.cizmek@plan-o.hr", role: "elektromonter", groupIds: ["wg-elektricari", "wg-ivanovi", "wg-sopnica"] },
+    { id: "emp-6", name: "Tomo Žižak", email: "tomo.zizak@plan-o.hr", role: "elektromonter", groupIds: ["wg-elektricari", "wg-donja"] },
+    { id: "emp-7", name: "Patrik Lukanović", email: "patrik.lukanovic@plan-o.hr", role: "serviser", groupIds: ["wg-dezurstvo", "wg-najjaci", "wg-sopnica"] },
   ];
 
   const tasks = [
-    { id: "task-mn-01", code: "MN-01", name: "Postavljanje vanjske jedinice", role: "montazer" as const },
-    { id: "task-mn-02", code: "MN-02", name: "Montaža unutarnje jedinice", role: "montazer" as const },
-    { id: "task-mn-03", code: "MN-03", name: "Povlačenje bakrenih cijevi", role: "montazer" as const },
-    { id: "task-mn-04", code: "MN-04", name: "Hidraulički priključak", role: "montazer" as const },
-    { id: "task-sv-01", code: "SV-01", name: "Vakuumiranje kruga", role: "serviser" as const },
-    { id: "task-sv-02", code: "SV-02", name: "Punjenje rashladnog sredstva", role: "serviser" as const },
-    { id: "task-sv-03", code: "SV-03", name: "Dijagnostika kvara", role: "serviser" as const },
-    { id: "task-sv-04", code: "SV-04", name: "Zamjena kompresora", role: "serviser" as const },
-    { id: "task-el-01", code: "EL-01", name: "Priključak napajanja", role: "elektromonter" as const },
-    { id: "task-el-02", code: "EL-02", name: "Ugradnja regulacije", role: "elektromonter" as const },
-    { id: "task-el-03", code: "EL-03", name: "Ispitivanje električnih veza", role: "elektromonter" as const },
-    { id: "task-el-04", code: "EL-04", name: "Povezivanje BMS-a", role: "elektromonter" as const },
+    { id: "task-mn-01", code: "MN-01", name: "Postavljanje vanjske jedinice", role: "montazer" },
+    { id: "task-mn-02", code: "MN-02", name: "Montaža unutarnje jedinice", role: "montazer" },
+    { id: "task-mn-03", code: "MN-03", name: "Povlačenje bakrenih cijevi", role: "montazer" },
+    { id: "task-mn-04", code: "MN-04", name: "Hidraulički priključak", role: "montazer" },
+    { id: "task-sv-01", code: "SV-01", name: "Vakuumiranje kruga", role: "serviser" },
+    { id: "task-sv-02", code: "SV-02", name: "Punjenje rashladnog sredstva", role: "serviser" },
+    { id: "task-sv-03", code: "SV-03", name: "Dijagnostika kvara", role: "serviser" },
+    { id: "task-sv-04", code: "SV-04", name: "Zamjena kompresora", role: "serviser" },
+    { id: "task-el-01", code: "EL-01", name: "Priključak napajanja", role: "elektromonter" },
+    { id: "task-el-02", code: "EL-02", name: "Ugradnja regulacije", role: "elektromonter" },
+    { id: "task-el-03", code: "EL-03", name: "Ispitivanje električnih veza", role: "elektromonter" },
+    { id: "task-el-04", code: "EL-04", name: "Povezivanje BMS-a", role: "elektromonter" },
   ];
 
   const workOrders: WorkOrder[] = [
@@ -282,6 +288,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     tasks,
     workOrders,
     workGroups,
+    jobRoles,
     assignments,
     dayStatuses: [],
   };

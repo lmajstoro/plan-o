@@ -1,14 +1,14 @@
 import { FormEvent, useMemo, useState, type ReactNode } from "react";
 import { useDb } from "../../context/DbContext";
-import { ROLE_LABELS, ROLES } from "../../lib/dates";
 import { newId } from "../../lib/gantt";
+import { defaultRoleId, roleName, sortJobRoles } from "../../lib/roles";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { PlusIcon, TrashIcon, EditIcon } from "../../components/icons";
-import type { Employee, Role } from "../../types";
+import type { Employee } from "../../types";
 
-type FormState = { name: string; email: string; role: Role; groupIds: string[] };
+type FormState = { name: string; email: string; role: string; groupIds: string[] };
 
-const emptyForm: FormState = { name: "", email: "", role: "montazer", groupIds: [] };
+const emptyForm: FormState = { name: "", email: "", role: "", groupIds: [] };
 
 export function ZaposleniciPage() {
   const { db, update } = useDb();
@@ -23,7 +23,7 @@ export function ZaposleniciPage() {
   );
 
   function openCreate() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, role: defaultRoleId(db.jobRoles) });
     setCreating(true);
   }
 
@@ -48,6 +48,7 @@ export function ZaposleniciPage() {
 
   function save(event: FormEvent) {
     event.preventDefault();
+    if (!form.role) return;
     if (editing) {
       update((current) => ({
         ...current,
@@ -95,7 +96,7 @@ export function ZaposleniciPage() {
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
                 <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">{row.email}</td>
-                <td className="px-4 py-3">{ROLE_LABELS[row.role]}</td>
+                <td className="px-4 py-3">{roleName(db.jobRoles, row.role)}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
                     {row.groupIds.length === 0 ? <span className="text-slate-400">-</span> : null}
@@ -137,13 +138,17 @@ export function ZaposleniciPage() {
               <input type="email" className="input" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
             <Field label="Uloga">
-              <select className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>
-                    {ROLE_LABELS[role]}
-                  </option>
-                ))}
-              </select>
+              {db.jobRoles.length === 0 ? (
+                <p className="text-sm text-slate-500">Nema uloga. Dodajte ih u šifarniku Uloge.</p>
+              ) : (
+                <select className="input" required value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                  {sortJobRoles(db.jobRoles).map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </Field>
             <div>
               <span className="mb-1 block text-sm font-medium text-slate-700">Radne skupine</span>

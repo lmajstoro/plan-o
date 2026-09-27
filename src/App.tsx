@@ -5,6 +5,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { PlanRadaPage } from "./pages/admin/PlanRadaPage";
 import { RadneSkupinePage } from "./pages/admin/RadneSkupinePage";
 import { RadniNaloziPage } from "./pages/admin/RadniNaloziPage";
+import { UlogePage } from "./pages/admin/UlogePage";
 import { ZadaciPage } from "./pages/admin/ZadaciPage";
 import { ZaposleniciPage } from "./pages/admin/ZaposleniciPage";
 import { EmployeeDayPage } from "./pages/zaposlenik/EmployeeDayPage";
@@ -24,6 +25,7 @@ export default function App() {
       >
         <Route index element={<PlanRadaPage />} />
         <Route path="zaposlenici" element={<ZaposleniciPage />} />
+        <Route path="uloge" element={<UlogePage />} />
         <Route path="radne-skupine" element={<RadneSkupinePage />} />
         <Route path="zadaci" element={<ZadaciPage />} />
         <Route path="radni-nalozi" element={<RadniNaloziPage />} />

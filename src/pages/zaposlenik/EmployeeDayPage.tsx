@@ -6,7 +6,7 @@ import { ConfirmDialog } from "../../components/ui/Modal";
 import { ChevronLeftIcon, ChevronRightIcon, CheckIcon, LogoutIcon } from "../../components/icons";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
-import { addCalendarDays, formatCroatianDate, formatDateKey, parseDateKey, ROLE_LABELS } from "../../lib/dates";
+import { addCalendarDays, formatCroatianDate, formatDateKey, parseDateKey } from "../../lib/dates";
 import {
   canViewDay,
   clearDayStatus,
@@ -26,6 +26,7 @@ import {
 } from "../../lib/employee";
 import { blockEnd, DAY_END, DAY_START, newId, overlapErrorMessage } from "../../lib/gantt";
 import { isArchivedWorkOrder, tasksForWorkOrder } from "../../lib/workOrders";
+import { roleName } from "../../lib/roles";
 import type { Assignment } from "../../types";
 
 type SheetState =
@@ -212,7 +213,7 @@ export function EmployeeDayPage() {
             >
               {employee.name}
             </button>
-            <div className="text-xs text-slate-500">{ROLE_LABELS[employee.role]}</div>
+            <div className="text-xs text-slate-500">{roleName(db.jobRoles, employee.role)}</div>
           </div>
           <button
             type="button"

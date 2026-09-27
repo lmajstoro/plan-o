@@ -1,4 +1,9 @@
-export type Role = "montazer" | "serviser" | "elektromonter";
+export type Role = string;
+
+export type JobRole = {
+  id: string;
+  name: string;
+};
 
 export type HourStatus = "potvrdeni" | "uredeni_i_potvrdeni" | "nisu_uneseni";
 
@@ -72,6 +77,7 @@ export type Database = {
   tasks: Task[];
   workOrders: WorkOrder[];
   workGroups: WorkGroup[];
+  jobRoles: JobRole[];
   assignments: Assignment[];
   dayStatuses: DayStatus[];
 };

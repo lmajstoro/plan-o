@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { formatHour, ROLE_LABELS } from "../../lib/dates";
+import { formatHour } from "../../lib/dates";
+import { roleName } from "../../lib/roles";
 import {
   CORE_END,
   CORE_START,
@@ -19,7 +20,7 @@ import {
 import { CheckIcon, CopyIcon, UserEditIcon, WarningIcon } from "../icons";
 import { AssignmentModal } from "./AssignmentModal";
 import { CopyScheduleModal } from "./CopyScheduleModal";
-import type { Assignment, Employee, Task, WorkOrder } from "../../types";
+import type { Assignment, Employee, JobRole, Task, WorkOrder } from "../../types";
 
 const HOUR_WIDTH = 56;
 const EMP_WIDTH = 300;
@@ -55,6 +56,7 @@ type Props = {
   employees: Employee[];
   tasks: Task[];
   workOrders: WorkOrder[];
+  jobRoles: JobRole[];
   assignments: Assignment[];
   copySources: Employee[];
   confirmedEmployeeIds?: string[];
@@ -66,6 +68,7 @@ export function GanttBoard({
   employees,
   tasks,
   workOrders,
+  jobRoles,
   assignments,
   copySources,
   confirmedEmployeeIds = [],
@@ -439,7 +442,7 @@ export function GanttBoard({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold text-slate-900">{employee.name}</div>
-                    <div className="text-xs text-slate-500">{ROLE_LABELS[employee.role]}</div>
+                    <div className="text-xs text-slate-500">{roleName(jobRoles, employee.role)}</div>
                     <div className="text-xs text-slate-500">
                       {split && planHours !== displayHours ? `${planHours} → ${displayHours} h` : `${displayHours} h`}
                       {confirmedEmployeeIds.includes(employee.id) ? (

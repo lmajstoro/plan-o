@@ -1,14 +1,14 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
-import { ROLE_LABELS, ROLES } from "../../lib/dates";
 import { newId } from "../../lib/gantt";
+import { defaultRoleId, roleName, sortJobRoles } from "../../lib/roles";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
-import type { Role, Task } from "../../types";
+import type { Task } from "../../types";
 
-type FormState = { code: string; name: string; role: Role };
-const emptyForm: FormState = { code: "", name: "", role: "montazer" };
+type FormState = { code: string; name: string; role: string };
+const emptyForm: FormState = { code: "", name: "", role: "" };
 
 export function ZadaciPage() {
   const { db, update } = useDb();
@@ -23,7 +23,7 @@ export function ZadaciPage() {
   );
 
   function openCreate() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, role: defaultRoleId(db.jobRoles) });
     setCreating(true);
   }
 
@@ -34,6 +34,7 @@ export function ZadaciPage() {
 
   function save(event: FormEvent) {
     event.preventDefault();
+    if (!form.role) return;
     if (editing) {
       update((current) => ({
         ...current,
@@ -79,7 +80,7 @@ export function ZadaciPage() {
               <tr key={row.id} className="border-b border-slate-50 last:border-0">
                 <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.code}</td>
                 <td className="px-4 py-3 text-slate-700">{row.name}</td>
-                <td className="px-4 py-3">{ROLE_LABELS[row.role]}</td>
+                <td className="px-4 py-3">{roleName(db.jobRoles, row.role)}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
@@ -106,13 +107,17 @@ export function ZadaciPage() {
               <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
             <Field label="Uloga">
-              <select className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>
-                    {ROLE_LABELS[role]}
-                  </option>
-                ))}
-              </select>
+              {db.jobRoles.length === 0 ? (
+                <p className="text-sm text-slate-500">Nema uloga. Dodajte ih u šifarniku Uloge.</p>
+              ) : (
+                <select className="input" required value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                  {sortJobRoles(db.jobRoles).map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </Field>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={() => { setCreating(false); setEditing(null); }}>

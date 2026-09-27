@@ -1,20 +1,13 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
-import {
-  CalendarIcon,
-  ClipboardIcon,
-  LayersIcon,
-  LogoutIcon,
-  ResetIcon,
-  TagIcon,
-  UsersIcon,
-} from "../icons";
+import { BadgeIcon, CalendarIcon, ClipboardIcon, LayersIcon, LogoutIcon, ResetIcon, TagIcon, UsersIcon } from "../icons";
 
 const links = [
   { to: "/administrator", label: "Plan rada", icon: CalendarIcon, end: true },
   { to: "/administrator/radni-nalozi", label: "Radni nalozi", icon: LayersIcon, end: false },
   { to: "/administrator/zaposlenici", label: "Zaposlenici", icon: UsersIcon, end: false },
+  { to: "/administrator/uloge", label: "Uloge", icon: BadgeIcon, end: false },
   { to: "/administrator/radne-skupine", label: "Radne skupine", icon: TagIcon, end: false },
   { to: "/administrator/zadaci", label: "Zadaci", icon: ClipboardIcon, end: false },
 ];

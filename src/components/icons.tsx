@@ -179,3 +179,12 @@ export function TagIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function BadgeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="5" y="7" width="14" height="13" rx="2" />
+      <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M8 12h8M8 16h5" />
+    </svg>
+  );
+}
