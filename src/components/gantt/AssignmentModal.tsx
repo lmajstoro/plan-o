@@ -59,7 +59,10 @@ export function AssignmentModal({
   return (
     <Modal title={title} onClose={onClose}>
       <p className="mb-4 text-sm text-slate-600">
-        Odabrano vrijeme: <span className="font-medium text-slate-800">{formatHour(startHour)} - {formatHour(endHour)}</span>
+        Odabrano vrijeme:{" "}
+        <span className="font-medium text-slate-800">
+          {formatHour(startHour)} - {formatHour(endHour)} · {endHour - startHour} h
+        </span>
       </p>
       {orders.length === 0 ? (
         <p className="text-sm text-amber-700">Nema aktivnih radnih naloga za unos sati.</p>

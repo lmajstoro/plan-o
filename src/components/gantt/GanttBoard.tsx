@@ -307,7 +307,7 @@ export function GanttBoard({
           width: assignment.durationHours * HOUR_WIDTH - 4,
           backgroundColor: workOrderColor(order, workOrderTemplates),
         }}
-        title={`${muted ? "Plan" : interactive ? "Plan" : "Ostvareno"}: ${order?.code ?? "?"} ${order?.name ?? ""} · ${taskLabel(task) || "?"}`}
+        title={`${muted ? "Plan" : interactive ? "Plan" : "Ostvareno"}: ${order?.code ?? "?"} ${order?.name ?? ""} · ${taskLabel(task) || "?"} · ${assignment.durationHours} h`}
         onPointerDown={interactive ? (event) => beginMove(employeeId, assignment.id, event) : undefined}
       >
         {interactive ? (
@@ -318,12 +318,21 @@ export function GanttBoard({
             onPointerDown={(event) => beginResize(employeeId, assignment.id, "start", event)}
           />
         ) : null}
-        <div className={`flex min-w-0 flex-1 justify-center text-left ${compact ? "flex-row items-center px-2" : "flex-col px-3"}`}>
-          <div className={`truncate font-semibold ${compact ? "text-[10px] leading-none" : "text-xs"}`}>
-            {order?.code ?? "?"} · {order?.name ?? ""}
+        <div className={`flex min-w-0 flex-1 text-left ${compact ? "flex-row items-center gap-1 px-2" : "flex-col justify-center gap-0.5 px-3"}`}>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <div className={`min-w-0 truncate font-semibold ${compact ? "text-[10px] leading-none" : "text-xs"}`}>
+              {order?.code ?? "?"} · {order?.name ?? ""}
+            </div>
+            <span
+              className={`shrink-0 rounded bg-black/25 font-bold tabular-nums leading-none ${
+                compact ? "px-1 py-0.5 text-[9px]" : "px-1.5 py-0.5 text-[11px]"
+              }`}
+            >
+              {assignment.durationHours} h
+            </span>
           </div>
           {compact ? (
-            <div className="ml-1 truncate text-[10px] leading-none text-white/80">{task?.code}</div>
+            <div className="min-w-0 truncate text-[10px] leading-none text-white/80">{task?.code}</div>
           ) : (
             <div className="truncate text-[11px] text-white/85">{taskLabel(task)}</div>
           )}
@@ -510,12 +519,16 @@ export function GanttBoard({
                   ))}
                   {selectedRange ? (
                     <div
-                      className="pointer-events-none absolute top-1 bottom-1 z-10 rounded-md bg-blue-600/20 ring-1 ring-blue-500"
+                      className="pointer-events-none absolute top-1 bottom-1 z-10 flex items-center justify-center rounded-md bg-blue-600/20 ring-1 ring-blue-500"
                       style={{
                         left: (selectedRange.start - DAY_START) * HOUR_WIDTH + 2,
                         width: (selectedRange.end - selectedRange.start) * HOUR_WIDTH - 4,
                       }}
-                    />
+                    >
+                      <span className="rounded bg-blue-700 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
+                        {selectedRange.end - selectedRange.start} h
+                      </span>
+                    </div>
                   ) : null}
                   {plannedGaps.map((gap) => (
                     <div
