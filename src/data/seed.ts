@@ -79,7 +79,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   const workOrders: WorkOrder[] = [
     {
       id: "wo-ro-01",
-      code: "RO-01",
+      code: "RN-01",
       name: "Razvodni ormarić",
       description: "Ugradnja i ožičenje razvodnog ormarića za čiler ili dizalicu topline.",
       color: "#2563eb",
@@ -89,7 +89,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-pc-01",
-      code: "PC-01",
+      code: "RN-02",
       name: "Pumpa čilera",
       description: "Montaža i servis cirkulacijske pumpe na krugu čilera.",
       color: "#db2777",
@@ -99,7 +99,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-vj-01",
-      code: "VJ-01",
+      code: "RN-03",
       name: "Vanjska jedinica",
       description: "Postavljanje vanjske jedinice dizalice topline.",
       color: "#d97706",
@@ -109,7 +109,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-hm-01",
-      code: "HM-01",
+      code: "RN-04",
       name: "Hidraulički modul",
       description: "Spoj hidrauličkog modula, ventila i cjevovoda.",
       color: "#7c3aed",
@@ -119,7 +119,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-kc-01",
-      code: "KC-01",
+      code: "RN-05",
       name: "Kondenzator čilera",
       description: "Rad na kondenzatorskoj jedinici rashladnog agregata.",
       color: "#e11d48",
@@ -129,7 +129,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-ep-01",
-      code: "EP-01",
+      code: "RN-06",
       name: "Ekspanzijska posuda",
       description: "Ugradnja i provjera ekspanzijske posude na hidrauličkom krugu.",
       color: "#0284c7",
@@ -139,7 +139,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-fs-01",
-      code: "FS-01",
+      code: "RN-07",
       name: "Filter-sušač",
       description: "Zamjena filter-sušača u rashladnom krugu.",
       color: "#4f46e5",
@@ -149,7 +149,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-uj-01",
-      code: "UJ-01",
+      code: "RN-08",
       name: "Unutarnja jedinica",
       description: "Montaža unutarnje jedinice dizalice topline.",
       color: "#c026d3",
@@ -159,7 +159,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-ix-01",
-      code: "IX-01",
+      code: "RN-09",
       name: "Izmjenjivač topline",
       description: "Servis pločastog izmjenjivača na čileru ili dizalici.",
       color: "#ea580c",

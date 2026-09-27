@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import {
+  nextWorkOrderCode,
   sortWorkOrders,
   taskRoleGroups,
   WORK_ORDER_STATUS_LABELS,
@@ -42,12 +43,22 @@ export function RadniNaloziPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState("");
   const [removeId, setRemoveId] = useState<string | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<WorkOrder | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
-  const rows = useMemo(() => sortWorkOrders(db.workOrders), [db.workOrders]);
+  const rows = useMemo(() => {
+    const sorted = sortWorkOrders(db.workOrders);
+    return showArchived ? sorted : sorted.filter((row) => !row.archived);
+  }, [db.workOrders, showArchived]);
+  const archivedCount = db.workOrders.filter((row) => row.archived).length;
   const taskGroups = useMemo(() => taskRoleGroups(db.tasks), [db.tasks]);
 
   function openCreate() {
-    setForm({ ...emptyForm, color: COLORS[db.workOrders.length % COLORS.length] });
+    setForm({
+      ...emptyForm,
+      code: nextWorkOrderCode(db.workOrders),
+      color: COLORS[db.workOrders.length % COLORS.length],
+    });
     setFormError("");
     setCreating(true);
   }
@@ -73,6 +84,20 @@ export function RadniNaloziPage() {
         ? current.taskIds.filter((taskId) => taskId !== id)
         : [...current.taskIds, id],
     }));
+  }
+
+  function requestArchiveToggle(order: WorkOrder) {
+    if (order.archived) {
+      toggleArchived(order);
+      return;
+    }
+    setArchiveTarget(order);
+  }
+
+  function confirmArchive() {
+    if (!archiveTarget) return;
+    toggleArchived(archiveTarget);
+    setArchiveTarget(null);
   }
 
   function toggleArchived(order: WorkOrder) {
@@ -120,22 +145,41 @@ export function RadniNaloziPage() {
   return (
     <div>
       <Header title="Radni nalozi" actionLabel="Novi radni nalog" onAction={openCreate} />
-      <p className="mb-4 text-slate-500">
-        Status prati život naloga. Arhivirani nalozi idu na dno i ne nude se pri unosu sati.
-      </p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-slate-500">
+          Novi nalog dobiva broj RN. Arhivirani se ne nude pri unosu sati.
+        </p>
+        <button
+          type="button"
+          className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+            showArchived ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+          }`}
+          onClick={() => setShowArchived((current) => !current)}
+        >
+          {showArchived ? "Sakrij arhivirane" : `Prikaži arhivirane${archivedCount ? ` (${archivedCount})` : ""}`}
+        </button>
+      </div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full min-w-[860px] text-left text-sm">
+        <table className="w-full min-w-[920px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-3 font-medium">Šifra</th>
+              <th className="px-4 py-3 font-medium">Radni nalog</th>
               <th className="px-4 py-3 font-medium">Naziv</th>
+              <th className="px-4 py-3 font-medium">Napomene</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Zadaci</th>
               <th className="px-4 py-3 font-medium text-right">Akcije</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  Nema naloga za prikaz.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row) => (
               <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${row.archived ? "bg-slate-50 text-slate-500" : ""}`}>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-2 font-mono font-medium text-slate-900">
@@ -143,10 +187,8 @@ export function RadniNaloziPage() {
                     {row.code}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-slate-800">{row.name}</div>
-                  <div className="text-xs text-slate-500">{row.description}</div>
-                </td>
+                <td className="px-4 py-3 font-medium text-slate-800">{row.name}</td>
+                <td className="max-w-xs px-4 py-3 text-slate-600">{row.description || ""}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${workOrderStatusClass(row.status ?? "otvoren", Boolean(row.archived))}`}>
                     {row.archived ? "Arhiviran" : (WORK_ORDER_STATUS_LABELS[row.status] ?? "Otvoren")}
@@ -158,7 +200,7 @@ export function RadniNaloziPage() {
                     <button
                       type="button"
                       className="icon-btn"
-                      onClick={() => toggleArchived(row)}
+                      onClick={() => requestArchiveToggle(row)}
                       title={row.archived ? "Vrati iz arhive" : "Arhiviraj"}
                     >
                       <ArchiveIcon className="h-4 w-4" />
@@ -172,7 +214,8 @@ export function RadniNaloziPage() {
                   </div>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -189,8 +232,8 @@ export function RadniNaloziPage() {
         >
           <form onSubmit={save} className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Šifra">
-                <input className="input" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+              <Field label="Radni nalog">
+                <input className="input bg-slate-50" required value={form.code} readOnly />
               </Field>
               <Field label="Status">
                 <select
@@ -209,8 +252,8 @@ export function RadniNaloziPage() {
             <Field label="Naziv">
               <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
-            <Field label="Opis">
-              <textarea className="input min-h-[88px]" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Field label="Napomene">
+              <textarea className="input min-h-[88px]" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </Field>
             <Field label="Boja na planu">
               <div className="flex flex-wrap gap-2">
@@ -279,6 +322,16 @@ export function RadniNaloziPage() {
             </div>
           </form>
         </Modal>
+      ) : null}
+
+      {archiveTarget ? (
+        <ConfirmDialog
+          title="Arhiviraj radni nalog"
+          message="Arhivirani nalog više se ne nudi pri unosu sati. Možeš ga kasnije vratiti iz arhive."
+          confirmLabel="Arhiviraj"
+          onClose={() => setArchiveTarget(null)}
+          onConfirm={confirmArchive}
+        />
       ) : null}
 
       {removeId ? (
