@@ -82,7 +82,7 @@ export function AdminLayout() {
         </button>
       </div>
       <div className="hidden min-h-screen bg-slate-50 lg:flex">
-        <aside className="flex w-80 shrink-0 flex-col border-r border-slate-200 bg-white">
+        <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
           <Brand />
           {nav}
           <SidebarFooter
