@@ -39,6 +39,7 @@ export function TabletPreviewPage() {
             <iframe
               title="Tablet prikaz"
               src="/administrator/tablet"
+              allow="fullscreen"
               className="block rounded-[18px] border-0 bg-white"
               style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
             />

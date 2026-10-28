@@ -7,6 +7,7 @@ import { workOrderColor } from "../../lib/workOrders";
 import { toggleNoteTodo } from "../../lib/notes";
 import { SOPNICA_LOAD_MESSAGES, usePlanDay } from "../../lib/usePlanDay";
 import { NotesView } from "../../components/admin/NotesView";
+import { FullscreenButton } from "../../components/ui/FullscreenButton";
 
 export function PlanRadaPage() {
   const {
@@ -52,6 +53,7 @@ export function PlanRadaPage() {
           <button type="button" className="btn-secondary" onClick={goToday}>
             Danas
           </button>
+          <FullscreenButton className="btn-secondary px-2.5" />
         </div>
       </div>
 
