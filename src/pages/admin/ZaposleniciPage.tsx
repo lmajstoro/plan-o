@@ -1,10 +1,10 @@
-import { FormEvent, useMemo, useState, type ReactNode } from "react";
+import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { defaultRoleId, sortJobRoles } from "../../lib/roles";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
-import { PlusIcon, EditIcon, UserOffIcon, CheckIcon } from "../../components/icons";
+import { PlusIcon, EditIcon, UserOffIcon, CheckIcon, KeyIcon } from "../../components/icons";
 import { usePagedRows } from "../../lib/pagination";
 import { isEmployeeActive } from "../../lib/employee";
 import type { Employee } from "../../types";
@@ -13,12 +13,27 @@ type FormState = { name: string; email: string; roleIds: string[]; groupIds: str
 
 const emptyForm: FormState = { name: "", email: "", roleIds: [], groupIds: [] };
 
+function formatSentAt(iso: string) {
+  const date = new Date(iso);
+  const day = date.toLocaleDateString("hr-HR", { day: "numeric", month: "numeric" });
+  const time = date.toLocaleTimeString("hr-HR", { hour: "2-digit", minute: "2-digit" });
+  return `${day} u ${time}`;
+}
+
 export function ZaposleniciPage() {
   const { db, update } = useDb();
   const [editing, setEditing] = useState<Employee | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
+  const [resetTarget, setResetTarget] = useState<Employee | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const rows = useMemo(
     () => [...db.employees].sort((a, b) => a.name.localeCompare(b.name, "hr")),
@@ -91,11 +106,28 @@ export function ZaposleniciPage() {
     setDeactivateId(null);
   }
 
+  function confirmPasswordReset() {
+    if (!resetTarget) return;
+    const sentAt = new Date().toISOString();
+    update((current) => ({
+      ...current,
+      employees: current.employees.map((row) => (row.id === resetTarget.id ? { ...row, passwordResetSentAt: sentAt } : row)),
+    }));
+    setNotice(`E-mail za promjenu lozinke poslan je na ${resetTarget.email}.`);
+    setResetTarget(null);
+  }
+
   const showForm = creating || editing;
 
   return (
     <div>
       <Header title="Zaposlenici" actionLabel="Novi zaposlenik" onAction={openCreate} />
+      {notice ? (
+        <div role="status" className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">
+          <CheckIcon className="h-4 w-4 shrink-0" />
+          {notice}
+        </div>
+      ) : null}
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
@@ -112,7 +144,12 @@ export function ZaposleniciPage() {
             {paging.pageRows.map((row) => (
               <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${isEmployeeActive(row) ? "" : "bg-slate-50 text-slate-500"}`}>
                 <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
-                <td className="px-4 py-3 text-slate-600">{row.email}</td>
+                <td className="px-4 py-3 text-slate-600">
+                  {row.email}
+                  {row.passwordResetSentAt ? (
+                    <div className="text-xs text-slate-400">Poveznica za lozinku poslana {formatSentAt(row.passwordResetSentAt)}</div>
+                  ) : null}
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
                     {row.roleIds.length === 0 ? <span className="text-slate-400">-</span> : null}
@@ -152,6 +189,11 @@ export function ZaposleniciPage() {
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
                       <EditIcon className="h-4 w-4" />
                     </button>
+                    {isEmployeeActive(row) ? (
+                      <button type="button" className="icon-btn" onClick={() => setResetTarget(row)} title="Pošalji e-mail za promjenu lozinke">
+                        <KeyIcon className="h-4 w-4" />
+                      </button>
+                    ) : null}
                     {isEmployeeActive(row) ? (
                       <button type="button" className="icon-btn-danger" onClick={() => setDeactivateId(row.id)} title="Deaktiviraj">
                         <UserOffIcon className="h-4 w-4" />
@@ -245,6 +287,17 @@ export function ZaposleniciPage() {
           confirmLabel="Deaktiviraj"
           onClose={() => setDeactivateId(null)}
           onConfirm={confirmDeactivate}
+        />
+      ) : null}
+
+      {resetTarget ? (
+        <ConfirmDialog
+          title="Promjena lozinke"
+          message={`Zaposleniku ${resetTarget.name} poslat ćemo e-mail na ${resetTarget.email} s poveznicom za postavljanje nove lozinke. Trenutna lozinka vrijedi dok je ne promijeni.`}
+          confirmLabel="Pošalji e-mail"
+          tone="primary"
+          onClose={() => setResetTarget(null)}
+          onConfirm={confirmPasswordReset}
         />
       ) : null}
     </div>

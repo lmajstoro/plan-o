@@ -32,6 +32,15 @@ export function TabletIcon(props: IconProps) {
   );
 }
 
+export function KeyIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="8" cy="15" r="4" />
+      <path d="M10.85 12.15 19 4M15.5 7.5l2.5 2.5M17.5 5.5l2 2" />
+    </svg>
+  );
+}
+
 export function UsersIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

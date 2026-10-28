@@ -58,12 +58,14 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = "Obriši",
+  tone = "danger",
   onConfirm,
   onClose,
 }: {
   title: string;
   message: string;
   confirmLabel?: string;
+  tone?: "danger" | "primary";
   onConfirm: () => void;
   onClose: () => void;
 }) {
@@ -74,7 +76,7 @@ export function ConfirmDialog({
         <button type="button" className="btn-secondary" onClick={onClose}>
           Odustani
         </button>
-        <button type="button" className="btn-danger" onClick={onConfirm}>
+        <button type="button" className={tone === "danger" ? "btn-danger" : "btn-primary"} onClick={onConfirm}>
           {confirmLabel}
         </button>
       </div>

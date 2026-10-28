@@ -32,6 +32,7 @@ export type Employee = {
   roleIds: Role[];
   groupIds: string[];
   active: boolean;
+  passwordResetSentAt?: string;
 };
 
 export type Task = {
