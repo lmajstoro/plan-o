@@ -2,6 +2,7 @@ import { useState, type PointerEvent as ReactPointerEvent, type ReactNode } from
 import { useNavigate } from "react-router-dom";
 import { TouchGanttBoard } from "../../components/gantt/TouchGanttBoard";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
+import { SaveStatus } from "../../components/ui/SaveStatus";
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../../components/icons";
 import { useAuth } from "../../context/AuthContext";
 import { formatCroatianDate } from "../../lib/dates";
@@ -48,6 +49,7 @@ export function TabletPlanPage() {
           onPrev={() => go(-1)}
           onNext={() => go(1)}
         />
+        <SaveStatus compact />
         <button type="button" className="btn-secondary h-11 px-4 text-base" onClick={goToday}>
           Danas
         </button>

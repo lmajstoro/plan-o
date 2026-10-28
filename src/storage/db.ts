@@ -2,7 +2,7 @@ import { createSeedDatabase } from "../data/seed";
 import { addWorkDays, formatDateKey, todayWorkDate } from "../lib/dates";
 import type { Database } from "../types";
 
-const DB_KEY = "plano-db";
+export const DB_KEY = "plano-db";
 const SEED_VERSION_KEY = "plano-seed-version";
 export const SEED_VERSION = "25";
 

@@ -8,6 +8,7 @@ import { toggleNoteTodo } from "../../lib/notes";
 import { SOPNICA_LOAD_MESSAGES, usePlanDay } from "../../lib/usePlanDay";
 import { NotesView } from "../../components/admin/NotesView";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
+import { SaveStatus } from "../../components/ui/SaveStatus";
 
 export function PlanRadaPage() {
   const {
@@ -35,25 +36,28 @@ export function PlanRadaPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Plan rada</h1>
           <p className="text-slate-500">Montaža i servis čilera i dizalica topline.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button type="button" className="btn-secondary" onClick={() => go(-1)} title="Prethodni radni dan">
-            <ChevronLeftIcon className="h-4 w-4" />
-          </button>
-          <div className="min-w-[220px] text-center">
-            <div className="font-semibold text-slate-900">{formatCroatianDate(current)}</div>
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+          <SaveStatus />
+          <div className="flex items-center gap-2">
+            <button type="button" className="btn-secondary" onClick={() => go(-1)} title="Prethodni radni dan">
+              <ChevronLeftIcon className="h-4 w-4" />
+            </button>
+            <div className="min-w-[220px] text-center">
+              <div className="font-semibold text-slate-900">{formatCroatianDate(current)}</div>
+            </div>
+            <button type="button" className="btn-secondary" onClick={() => go(1)} title="Sljedeći radni dan">
+              <ChevronRightIcon className="h-4 w-4" />
+            </button>
+            <button type="button" className="btn-secondary" onClick={goToday}>
+              Danas
+            </button>
+            <FullscreenButton className="btn-secondary px-2.5" />
           </div>
-          <button type="button" className="btn-secondary" onClick={() => go(1)} title="Sljedeći radni dan">
-            <ChevronRightIcon className="h-4 w-4" />
-          </button>
-          <button type="button" className="btn-secondary" onClick={goToday}>
-            Danas
-          </button>
-          <FullscreenButton className="btn-secondary px-2.5" />
         </div>
       </div>
 
