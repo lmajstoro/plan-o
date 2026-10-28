@@ -96,19 +96,22 @@ export function AdminLayout() {
       </div>
       <div className="hidden min-h-screen bg-slate-50 lg:flex">
         <aside
-          className={`flex shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 ${
-            collapsed ? "w-[72px]" : "w-60"
+          className={`relative flex shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 ease-out ${
+            collapsed ? "w-[68px]" : "w-60"
           }`}
         >
-          <Brand collapsed={collapsed} onToggle={toggleCollapsed} />
-          {nav}
-          <SidebarFooter
-            name={user?.name ?? ""}
-            email={user?.email ?? ""}
-            collapsed={collapsed}
-            onReset={reset}
-            onLogout={handleLogout}
-          />
+          <div className="flex flex-1 flex-col overflow-hidden whitespace-nowrap">
+            <Brand collapsed={collapsed} />
+            {nav}
+            <SidebarFooter
+              name={user?.name ?? ""}
+              email={user?.email ?? ""}
+              collapsed={collapsed}
+              onReset={reset}
+              onLogout={handleLogout}
+            />
+          </div>
+          <CollapseToggle collapsed={collapsed} onToggle={toggleCollapsed} />
         </aside>
         <main className="min-w-0 flex-1 p-6">
           <Outlet />
@@ -118,51 +121,56 @@ export function AdminLayout() {
   );
 }
 
-function Brand({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
-  const toggleLabel = collapsed ? "Proširi izbornik" : "Sklopi izbornik";
+function fade(collapsed: boolean) {
+  return `transition-opacity duration-200 ${collapsed ? "opacity-0" : "opacity-100"}`;
+}
+
+function CollapseToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  const label = collapsed ? "Proširi izbornik" : "Sklopi izbornik";
   return (
-    <div className={`relative flex items-center gap-3 py-5 ${collapsed ? "justify-center" : "px-5"}`}>
+    <button
+      type="button"
+      className="absolute -right-3 top-7 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-800"
+      aria-label={label}
+      title={label}
+      onClick={onToggle}
+    >
+      {collapsed ? <ChevronRightIcon className="h-3.5 w-3.5" /> : <ChevronLeftIcon className="h-3.5 w-3.5" />}
+    </button>
+  );
+}
+
+function Brand({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className="flex items-center gap-3 py-5 pl-3.5 pr-5">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-base font-bold text-white">P</div>
-      {collapsed ? null : (
-        <div className="min-w-0">
-          <div className="text-lg font-semibold leading-tight text-slate-900">Plan-O</div>
-          <div className="truncate text-sm text-slate-500">Čileri i dizalice topline</div>
-        </div>
-      )}
-      <button
-        type="button"
-        className="absolute -right-3 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-800"
-        aria-label={toggleLabel}
-        title={toggleLabel}
-        onClick={onToggle}
-      >
-        {collapsed ? <ChevronRightIcon className="h-3.5 w-3.5" /> : <ChevronLeftIcon className="h-3.5 w-3.5" />}
-      </button>
+      <div className={`min-w-0 ${fade(collapsed)}`}>
+        <div className="text-lg font-semibold leading-tight text-slate-900">Plan-O</div>
+        <div className="truncate text-sm text-slate-500">Čileri i dizalice topline</div>
+      </div>
     </div>
   );
 }
 
 function SectionLabel({ label, collapsed, first = false }: { label: string; collapsed: boolean; first?: boolean }) {
-  if (collapsed) return <div className={`mx-2 border-t border-slate-100 ${first ? "mb-1" : "my-2"}`} />;
   return (
-    <p className={`px-3 pb-1 text-sm font-semibold uppercase tracking-wide text-slate-400 ${first ? "pt-4" : "pt-5"}`}>{label}</p>
+    <div className={`relative px-3 pb-1 ${first ? "pt-4" : "pt-5"}`}>
+      <p className={`text-sm font-semibold uppercase tracking-wide text-slate-400 ${fade(collapsed)}`}>{label}</p>
+      <div className={`absolute inset-x-2 bottom-3 border-t border-slate-200 ${fade(!collapsed)}`} />
+    </div>
   );
 }
 
 function WorkOrdersNav({ collapsed }: { collapsed: boolean }) {
-  if (collapsed) {
-    return (
-      <>
-        <NavItem to="/administrator/radni-nalozi" label="Radni nalozi" icon={LayersIcon} end collapsed />
-        <NavItem to="/administrator/radni-nalozi/predlosci" label="Predlošci" icon={TemplateIcon} end collapsed />
-      </>
-    );
-  }
   return (
     <div>
-      <NavItem to="/administrator/radni-nalozi" label="Radni nalozi" icon={LayersIcon} end collapsed={false} />
-      <div className="ml-5 border-l border-slate-200 pl-1">
-        <NavItem to="/administrator/radni-nalozi/predlosci" label="Predlošci" icon={TemplateIcon} end nested collapsed={false} />
+      <NavItem to="/administrator/radni-nalozi" label="Radni nalozi" icon={LayersIcon} end collapsed={collapsed} />
+      <div
+        className={`border-l transition-[margin,padding,border-color] duration-200 ${
+          collapsed ? "ml-0 border-transparent pl-0" : "ml-5 border-slate-200 pl-1"
+        }`}
+      >
+        <NavItem to="/administrator/radni-nalozi/predlosci" label="Predlošci" icon={TemplateIcon} end nested collapsed={collapsed} />
       </div>
     </div>
   );
@@ -188,15 +196,14 @@ function NavItem({
       to={to}
       end={end}
       title={collapsed ? label : undefined}
-      aria-label={collapsed ? label : undefined}
       className={({ isActive }) =>
-        `flex items-center rounded-lg text-base font-medium ${
-          collapsed ? "justify-center py-2.5" : `gap-3 px-3 ${nested ? "py-2" : "py-2.5"}`
-        } ${isActive ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`
+        `flex items-center gap-3 rounded-lg px-3 text-base font-medium ${nested ? "py-2" : "py-2.5"} ${
+          isActive ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+        }`
       }
     >
       <Icon className="h-5 w-5 shrink-0" />
-      {collapsed ? null : label}
+      <span className={fade(collapsed)}>{label}</span>
     </NavLink>
   );
 }
@@ -214,43 +221,32 @@ function SidebarFooter({
   onReset: () => void;
   onLogout: () => void;
 }) {
-  const buttonClass = `flex w-full items-center rounded-lg py-2.5 text-base text-slate-600 hover:bg-slate-50 ${
-    collapsed ? "justify-center" : "gap-2 px-3"
-  }`;
+  const buttonClass = "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base text-slate-600 hover:bg-slate-50";
+  const initials = name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
+
   return (
     <div className="mt-auto space-y-2 border-t border-slate-100 p-3">
-      {collapsed ? (
-        <div
-          className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700"
-          title={`${name}\n${email}`}
-        >
-          {name
-            .split(" ")
-            .map((part) => part[0])
-            .join("")
-            .slice(0, 2)}
+      <div className="flex items-center gap-3 py-1 pl-1" title={collapsed ? `${name}\n${email}` : undefined}>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
+          {initials}
         </div>
-      ) : (
-        <div className="px-2 py-1">
-          <div className="text-base font-medium text-slate-800">{name}</div>
+        <div className={`min-w-0 ${fade(collapsed)}`}>
+          <div className="truncate text-sm font-medium text-slate-800">{name}</div>
           <div className="truncate text-sm text-slate-500">{email}</div>
         </div>
-      )}
-      <button
-        type="button"
-        className={buttonClass}
-        title={collapsed ? "Vrati demo podatke" : undefined}
-        aria-label="Vrati demo podatke"
-        onClick={onReset}
-      >
+      </div>
+      <button type="button" className={buttonClass} title={collapsed ? "Vrati demo podatke" : undefined} onClick={onReset}>
         <ResetIcon className="h-5 w-5 shrink-0" />
-        {collapsed ? null : "Vrati demo podatke"}
+        <span className={fade(collapsed)}>Vrati demo podatke</span>
       </button>
-      <button type="button" className={buttonClass} title={collapsed ? "Odjava" : undefined} aria-label="Odjava" onClick={onLogout}>
+      <button type="button" className={buttonClass} title={collapsed ? "Odjava" : undefined} onClick={onLogout}>
         <LogoutIcon className="h-5 w-5 shrink-0" />
-        {collapsed ? null : "Odjava"}
+        <span className={fade(collapsed)}>Odjava</span>
       </button>
     </div>
   );
 }
-
