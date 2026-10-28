@@ -23,7 +23,6 @@ const COLLAPSED_KEY = "plano-sidebar-collapsed";
 
 const overviewLinks = [
   { to: "/administrator", label: "Plan rada", icon: CalendarIcon, end: true },
-  { to: "/administrator/tablet-pregled", label: "Tablet prikaz", icon: TabletIcon, end: false },
 ];
 
 const catalogLinks = [
