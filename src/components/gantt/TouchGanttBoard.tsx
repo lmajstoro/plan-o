@@ -628,6 +628,7 @@ export function TouchGanttBoard({
           roleIds={createEmployee?.roleIds}
           onClose={() => setCreate(null)}
           onSave={saveCreate}
+          touch
         />
       ) : null}
 
@@ -644,6 +645,7 @@ export function TouchGanttBoard({
           onClose={() => setEdit(null)}
           onSave={saveEdit}
           onDelete={() => deleteAssignment(edit)}
+          touch
         />
       ) : null}
     </div>
