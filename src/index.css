@@ -58,3 +58,11 @@
 .animate-fade-in {
   animation: fade-in 0.35s ease;
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

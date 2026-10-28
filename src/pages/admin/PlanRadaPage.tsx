@@ -1,110 +1,36 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { GanttBoard } from "../../components/gantt/GanttBoard";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, LayersIcon } from "../../components/icons";
-import { useDb } from "../../context/DbContext";
-import {
-  addWorkDays,
-  formatCroatianDate,
-  formatDateKey,
-  parseDateKey,
-  todayWorkDate,
-} from "../../lib/dates";
-import { isEmployeeActive, isHoursConfirmed } from "../../lib/employee";
+import { formatCroatianDate } from "../../lib/dates";
 import { sortJobRoles } from "../../lib/roles";
 import { workOrderColor } from "../../lib/workOrders";
 import { toggleNoteTodo } from "../../lib/notes";
+import { SOPNICA_LOAD_MESSAGES, usePlanDay } from "../../lib/usePlanDay";
 import { NotesView } from "../../components/admin/NotesView";
 
-const SOPNICA_GROUP_ID = "wg-sopnica";
-const SOPNICA_LOAD_MS = 1000;
-const SOPNICA_LOAD_MESSAGES = [
-  "Učitavam zaposlenike",
-  "Raspodjeljujem zadatke",
-  "Usklađujem satnicu",
-  "Pripremam plan rada",
-];
-
 export function PlanRadaPage() {
-  const { db, update, reset } = useDb();
-  const [date, setDate] = useState(() => formatDateKey(todayWorkDate()));
-  const [groupFilter, setGroupFilter] = useState<string[]>([]);
-  const [roleFilter, setRoleFilter] = useState<string[]>([]);
+  const {
+    db,
+    update,
+    date,
+    current,
+    go,
+    goToday,
+    groupFilter,
+    roleFilter,
+    clearGroups,
+    clearRoles,
+    toggleGroup,
+    toggleRole,
+    allEmployees,
+    employees,
+    dayHasActuals,
+    confirmedEmployeeIds,
+    sopnicaLoading,
+    sopnicaStep,
+    commitEmployeeDay,
+  } = usePlanDay();
   const [legendOpen, setLegendOpen] = useState(false);
-  const [sopnicaStep, setSopnicaStep] = useState(0);
-  const [sopnicaReady, setSopnicaReady] = useState(false);
-  const current = parseDateKey(date);
-  const sopnicaOnly = groupFilter.length === 1 && groupFilter[0] === SOPNICA_GROUP_ID;
-  const sopnicaLoading = sopnicaOnly && !sopnicaReady;
-
-  useEffect(() => {
-    const yesterday = formatDateKey(addWorkDays(todayWorkDate(), -1));
-    if (!db.assignments.some((row) => row.date === yesterday && row.kind === "actual")) {
-      reset();
-    }
-  }, [db.assignments, reset]);
-
-  useEffect(() => {
-    if (!sopnicaOnly) {
-      setSopnicaReady(false);
-      setSopnicaStep(0);
-      return;
-    }
-
-    setSopnicaReady(false);
-    setSopnicaStep(0);
-    const timers = SOPNICA_LOAD_MESSAGES.slice(1).map((_, index) =>
-      window.setTimeout(() => setSopnicaStep(index + 1), (index + 1) * SOPNICA_LOAD_MS),
-    );
-    const done = window.setTimeout(() => setSopnicaReady(true), SOPNICA_LOAD_MESSAGES.length * SOPNICA_LOAD_MS);
-
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-      window.clearTimeout(done);
-    };
-  }, [sopnicaOnly]);
-
-  const allEmployees = useMemo(
-    () =>
-      [...db.employees]
-        .filter(isEmployeeActive)
-        .sort((a, b) => a.name.localeCompare(b.name, "hr")),
-    [db.employees],
-  );
-
-  const employees = useMemo(() => {
-    return allEmployees.filter((employee) => {
-      const matchesGroup =
-        groupFilter.length === 0 || employee.groupIds.some((id) => groupFilter.includes(id));
-      const matchesRole =
-        roleFilter.length === 0 || employee.roleIds.some((id) => roleFilter.includes(id));
-      return matchesGroup && matchesRole;
-    });
-  }, [allEmployees, groupFilter, roleFilter]);
-
-  const dayHasActuals = db.assignments.some((row) => row.date === date && row.kind === "actual");
-  const confirmedEmployeeIds = useMemo(
-    () =>
-      (db.dayStatuses ?? [])
-        .filter((row) => row.date === date && isHoursConfirmed(row.status))
-        .map((row) => row.employeeId),
-    [db.dayStatuses, date],
-  );
-
-  function go(delta: number) {
-    setDate(formatDateKey(addWorkDays(current, delta)));
-  }
-
-  function toggleGroup(id: string) {
-    setGroupFilter((currentFilter) =>
-      currentFilter.includes(id) ? currentFilter.filter((item) => item !== id) : [...currentFilter, id],
-    );
-  }
-
-  function toggleRole(id: string) {
-    setRoleFilter((currentFilter) =>
-      currentFilter.includes(id) ? currentFilter.filter((item) => item !== id) : [...currentFilter, id],
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -123,7 +49,7 @@ export function PlanRadaPage() {
           <button type="button" className="btn-secondary" onClick={() => go(1)} title="Sljedeći radni dan">
             <ChevronRightIcon className="h-4 w-4" />
           </button>
-          <button type="button" className="btn-secondary" onClick={() => setDate(formatDateKey(todayWorkDate()))}>
+          <button type="button" className="btn-secondary" onClick={goToday}>
             Danas
           </button>
         </div>
@@ -148,7 +74,7 @@ export function PlanRadaPage() {
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
                 roleFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
-              onClick={() => setRoleFilter([])}
+              onClick={clearRoles}
             >
               Sve
             </button>
@@ -178,7 +104,7 @@ export function PlanRadaPage() {
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
                 groupFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
-              onClick={() => setGroupFilter([])}
+              onClick={clearGroups}
             >
               Sve
             </button>
@@ -256,17 +182,7 @@ export function PlanRadaPage() {
               jobRoles={db.jobRoles}
               assignments={db.assignments}
               confirmedEmployeeIds={confirmedEmployeeIds}
-              onCommitEmployeeDay={(employeeId, next) => {
-                update((currentDb) => ({
-                  ...currentDb,
-                  assignments: [
-                    ...currentDb.assignments.filter(
-                      (row) => !(row.employeeId === employeeId && row.date === date && row.kind !== "actual"),
-                    ),
-                    ...next.map((row) => ({ ...row, kind: "planned" as const })),
-                  ],
-                }));
-              }}
+              onCommitEmployeeDay={commitEmployeeDay}
             />
           )}
         </div>

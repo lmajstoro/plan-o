@@ -23,6 +23,15 @@ export function CalendarIcon(props: IconProps) {
   );
 }
 
+export function TabletIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2" />
+      <path d="M18.5 12h.01" />
+    </svg>
+  );
+}
+
 export function UsersIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

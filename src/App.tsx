@@ -6,6 +6,8 @@ import { PlanRadaPage } from "./pages/admin/PlanRadaPage";
 import { PredlosciPage } from "./pages/admin/PredlosciPage";
 import { RadneSkupinePage } from "./pages/admin/RadneSkupinePage";
 import { RadniNaloziPage } from "./pages/admin/RadniNaloziPage";
+import { TabletPlanPage } from "./pages/admin/TabletPlanPage";
+import { TabletPreviewPage } from "./pages/admin/TabletPreviewPage";
 import { UlogePage } from "./pages/admin/UlogePage";
 import { ZadaciPage } from "./pages/admin/ZadaciPage";
 import { ZaposleniciPage } from "./pages/admin/ZaposleniciPage";
@@ -17,6 +19,14 @@ export default function App() {
       <Route path="/" element={<Navigate to="/prijava" replace />} />
       <Route path="/prijava" element={<LoginPage />} />
       <Route
+        path="/administrator/tablet"
+        element={
+          <RequireAdmin>
+            <TabletPlanPage />
+          </RequireAdmin>
+        }
+      />
+      <Route
         path="/administrator"
         element={
           <RequireAdmin>
@@ -25,6 +35,7 @@ export default function App() {
         }
       >
         <Route index element={<PlanRadaPage />} />
+        <Route path="tablet-pregled" element={<TabletPreviewPage />} />
         <Route path="zaposlenici" element={<ZaposleniciPage />} />
         <Route path="uloge" element={<UlogePage />} />
         <Route path="radne-skupine" element={<RadneSkupinePage />} />

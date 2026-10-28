@@ -1,9 +1,25 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
-import { BadgeIcon, CalendarIcon, ClipboardIcon, LayersIcon, LogoutIcon, ResetIcon, TagIcon, TemplateIcon, UsersIcon } from "../icons";
+import { useDeviceMode } from "../../lib/device";
+import { TabletPlanPage } from "../../pages/admin/TabletPlanPage";
+import {
+  BadgeIcon,
+  CalendarIcon,
+  ClipboardIcon,
+  LayersIcon,
+  LogoutIcon,
+  ResetIcon,
+  TabletIcon,
+  TagIcon,
+  TemplateIcon,
+  UsersIcon,
+} from "../icons";
 
-const overviewLinks = [{ to: "/administrator", label: "Plan rada", icon: CalendarIcon, end: true }];
+const overviewLinks = [
+  { to: "/administrator", label: "Plan rada", icon: CalendarIcon, end: true },
+  { to: "/administrator/tablet-pregled", label: "Tablet prikaz", icon: TabletIcon, end: false },
+];
 
 const catalogLinks = [
   { to: "/administrator/zadaci", label: "Zadaci", icon: ClipboardIcon, end: false },
@@ -16,10 +32,28 @@ export function AdminLayout() {
   const { user, logout } = useAuth();
   const { reset } = useDb();
   const navigate = useNavigate();
+  const device = useDeviceMode();
 
   function handleLogout() {
     logout();
     navigate("/prijava");
+  }
+
+  if (device === "tablet") return <TabletPlanPage />;
+
+  if (device === "tablet-portrait") {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-slate-50 px-6">
+        <TabletIcon className="h-14 w-14 text-slate-400" />
+        <p className="max-w-sm text-center text-lg font-medium text-slate-700">
+          Okreni tablet u položeni način za rad na planu.
+        </p>
+        <button type="button" className="btn-secondary" onClick={handleLogout}>
+          <LogoutIcon className="h-5 w-5" />
+          Odjava
+        </button>
+      </div>
+    );
   }
 
   const nav = (
