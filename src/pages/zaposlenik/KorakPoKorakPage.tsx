@@ -25,10 +25,10 @@ export function KorakPoKorakPage() {
   }
 
   return (
-    <EmployeeShell day={day} footer={<ConfirmFooter day={day} showError={!sheet} />}>
-      <PlanPanel day={day} />
+    <EmployeeShell day={day} fillViewport footer={<ConfirmFooter day={day} showError={!sheet} />}>
+      <PlanPanel day={day} className="max-h-[45%] shrink-0 overflow-y-auto" />
 
-      <section className="px-4 pt-3" aria-label="Tvoji sati">
+      <section className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3" aria-label="Tvoji sati">
         <h2 className="mb-2 text-base font-semibold text-slate-900">Tvoji sati</h2>
 
         {day.actuals.length === 0 ? (
@@ -68,22 +68,22 @@ export function KorakPoKorakPage() {
                       type="button"
                       disabled={!day.canEdit}
                       onClick={() => open({ kind: "edit", entry: row })}
-                      className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm hover:bg-slate-50 disabled:shadow-none disabled:hover:bg-white"
+                      className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-left shadow-sm hover:bg-slate-50 disabled:shadow-none disabled:hover:bg-white"
                     >
                       <span
-                        className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-1.5 text-base font-bold tabular-nums text-white"
+                        className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg px-1.5 text-sm font-bold tabular-nums text-white"
                         style={{ backgroundColor: workOrderColor(order, day.db.workOrderTemplates) }}
                       >
                         {order ? employeeOrderNumber(order) : "?"}
                       </span>
-                      <span className="min-w-0 flex-1">
+                      <span className="min-w-0 flex-1 leading-tight">
                         <span className="block truncate text-base font-semibold text-slate-900">{order?.name ?? "Nepoznat nalog"}</span>
                         <span className="block truncate text-sm text-slate-600">{taskLabel(task)}</span>
                         <span className="block text-sm tabular-nums text-slate-500">
                           {formatHour(row.startHour)} - {formatHour(blockEnd(row))}
                         </span>
                       </span>
-                      <span className="shrink-0 text-2xl font-bold tabular-nums text-slate-900">{row.durationHours} h</span>
+                      <span className="shrink-0 text-xl font-bold tabular-nums text-slate-900">{row.durationHours} h</span>
                       {day.canEdit ? <ChevronRightIcon className="h-5 w-5 shrink-0 text-slate-400" /> : null}
                     </button>
                   </li>
