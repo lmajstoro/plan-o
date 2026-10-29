@@ -81,6 +81,14 @@ export function DayCalendar({
             <div className="absolute -top-2 left-0 z-10 w-14 bg-white pr-2 text-right text-[11px] leading-none text-slate-400">
               {formatHour(hour)}
             </div>
+            {!readOnly && !occupied.has(hour) ? (
+              <span
+                className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-xs text-slate-300"
+                style={{ left: GUTTER + 10 }}
+              >
+                + {formatHour(hour)}
+              </span>
+            ) : null}
           </div>
         ))}
 
@@ -117,7 +125,7 @@ export function DayCalendar({
               ) : (
                 <div className="flex min-h-0 flex-col gap-1">
                   <div className="truncate text-base font-semibold leading-tight">
-                    {order ? `${employeeOrderNumber(order)} - ${order.name}` : ""}
+                    {order ? `${employeeOrderNumber(order)} ${order.name}` : "?"}
                   </div>
                   <div className="truncate text-sm leading-tight text-white/90">
                     {taskLabel(task)}
