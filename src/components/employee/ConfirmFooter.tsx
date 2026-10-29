@@ -17,28 +17,22 @@ export function ConfirmFooter({ day, showError = true }: Props) {
 
   if (day.restDay) return null;
 
-  const totals = (
-    <div className="flex items-baseline justify-between text-sm text-slate-600">
-      <span>
-        Upisano <HoursValue hours={day.workedHours} tone={day.workedTone} />
-      </span>
-      <span>
-        Plan <span className="font-medium tabular-nums text-slate-700">{day.plannedHours} h</span>
-      </span>
-    </div>
+  const worked = (
+    <span className="text-sm text-slate-600">
+      Upisano <HoursValue hours={day.workedHours} tone={day.workedTone} />
+    </span>
   );
 
   if (day.confirmed) {
     return (
-      <div className="space-y-2">
-        <p className="flex items-center justify-center gap-2 text-sm font-medium text-emerald-700">
-          <CheckIcon className="h-5 w-5" />
-          {day.hourStatus === "uredeni_i_potvrdeni" ? "Sati su uređeni i potvrđeni" : "Sati su potvrđeni"}
+      <div className="flex items-center justify-between gap-3">
+        <p className="flex min-w-0 items-center gap-2 text-sm font-medium text-emerald-700">
+          <CheckIcon className="h-5 w-5 shrink-0" />
+          <span className="truncate">Potvrđeno, {day.workedHours} h</span>
         </p>
-        {totals}
         {day.editable ? (
-          <button type="button" className="btn-secondary h-12 w-full text-base text-red-700" onClick={day.unconfirm}>
-            Poništi potvrdu
+          <button type="button" className="btn-secondary h-11 shrink-0 px-3 text-red-700" onClick={day.unconfirm}>
+            Poništi
           </button>
         ) : null}
       </div>
@@ -74,27 +68,24 @@ export function ConfirmFooter({ day, showError = true }: Props) {
 
   return (
     <div className="space-y-2">
-      {totals}
       {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-      {!error && blocker ? (
-        <p className={`text-sm ${blocker === EMPTY_DAY_MESSAGE ? "text-slate-500" : "text-red-700"}`}>{blocker}</p>
-      ) : null}
-      {!error && !blocker && offTarget ? (
-        <p className="text-sm text-amber-700">
-          {day.workedHours > EXPECTED_HOURS
-            ? `Upisano je više od uobičajenih ${EXPECTED_HOURS} h.`
-            : `Upisano je manje od uobičajenih ${EXPECTED_HOURS} h.`}
-        </p>
-      ) : null}
-      <button
-        type="button"
-        className="btn-success h-12 w-full text-base disabled:cursor-not-allowed disabled:opacity-40"
-        disabled={Boolean(blocker)}
-        onClick={onConfirm}
-      >
-        <CheckIcon className="h-5 w-5" />
-        Potvrdi sate
-      </button>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          {worked}
+          {!error && blocker ? (
+            <p className={`text-sm ${blocker === EMPTY_DAY_MESSAGE ? "text-slate-500" : "text-red-700"}`}>{blocker}</p>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className="btn-success h-12 shrink-0 px-4 text-base disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={Boolean(blocker)}
+          onClick={onConfirm}
+        >
+          <CheckIcon className="h-5 w-5" />
+          Potvrdi sate
+        </button>
+      </div>
 
       {askConfirm ? (
         <ConfirmDialog

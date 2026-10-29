@@ -28,8 +28,8 @@ export function KorakPoKorakPage() {
     <EmployeeShell day={day} footer={<ConfirmFooter day={day} showError={!sheet} />}>
       <PlanPanel day={day} />
 
-      <section className="px-4 pt-4" aria-label="Tvoji sati">
-        <h2 className="mb-3 text-base font-semibold text-slate-900">Tvoji sati</h2>
+      <section className="px-4 pt-3" aria-label="Tvoji sati">
+        <h2 className="mb-2 text-base font-semibold text-slate-900">Tvoji sati</h2>
 
         {day.actuals.length === 0 ? (
           day.canEdit ? (
@@ -68,7 +68,7 @@ export function KorakPoKorakPage() {
                       type="button"
                       disabled={!day.canEdit}
                       onClick={() => open({ kind: "edit", entry: row })}
-                      className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-left shadow-sm hover:bg-slate-50 disabled:shadow-none disabled:hover:bg-white"
+                      className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm hover:bg-slate-50 disabled:shadow-none disabled:hover:bg-white"
                     >
                       <span
                         className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-1.5 text-base font-bold tabular-nums text-white"

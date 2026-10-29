@@ -1,17 +1,11 @@
 import { useState, type ReactNode } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "../ui/Modal";
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../icons";
 import { formatCroatianDate } from "../../lib/dates";
 import { assignedRoles } from "../../lib/roles";
 import { REST_DAY_MESSAGE } from "../../lib/employee";
 import { HOURS_TONE_TEXT, type EmployeeDay } from "../../lib/useEmployeeDay";
-
-export const EMPLOYEE_VARIANTS = [
-  { id: "1", label: "Kalendar" },
-  { id: "2", label: "Korak po korak" },
-  { id: "3", label: "Sat po sat" },
-] as const;
 
 type Props = {
   day: EmployeeDay;
@@ -52,17 +46,6 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
     );
   }
 
-  const bannerClass = day.confirmed
-    ? "bg-emerald-50 text-emerald-800"
-    : day.tone === "live"
-      ? "bg-blue-50 text-blue-900"
-      : "bg-slate-100 text-slate-600";
-  const bannerText = day.confirmed
-    ? day.hourStatus === "uredeni_i_potvrdeni"
-      ? "Sati su potvrđeni, razlikuju se od plana."
-      : "Sati su potvrđeni, isti kao plan."
-    : day.modeLabel;
-
   return (
     <div
       className={`mx-auto flex w-full max-w-md flex-col bg-white shadow-sm md:max-w-lg ${
@@ -89,7 +72,6 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <VariantSwitcher />
             <button
               type="button"
               className="inline-flex items-center gap-1 rounded-lg px-2 py-2 text-sm text-slate-600 hover:bg-slate-100"
@@ -132,8 +114,6 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
             <ChevronRightIcon className="h-5 w-5" />
           </button>
         </div>
-
-        {day.restDay ? null : <div className={`px-4 py-2 text-sm ${bannerClass}`}>{bannerText}</div>}
       </header>
 
       <main className={fillViewport ? "flex min-h-0 flex-1 flex-col" : "flex-1 pb-6"}>
@@ -149,7 +129,7 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
 
       {footer && !day.restDay ? (
         <div
-          className={`z-40 shrink-0 border-t border-slate-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${
+          className={`z-40 shrink-0 border-t border-slate-200 bg-white px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${
             fillViewport ? "" : "sticky bottom-0"
           }`}
         >
@@ -170,29 +150,6 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
         />
       ) : null}
     </div>
-  );
-}
-
-function VariantSwitcher() {
-  const location = useLocation();
-  return (
-    <nav aria-label="Prikaz unosa sati" className="flex items-center rounded-lg bg-slate-100 p-0.5 text-xs">
-      <span className="hidden px-1.5 text-slate-500 sm:inline">Prikaz</span>
-      {EMPLOYEE_VARIANTS.map((variant) => (
-        <NavLink
-          key={variant.id}
-          to={{ pathname: `/zaposlenik/${variant.id}`, search: location.search }}
-          title={`Prikaz ${variant.id}: ${variant.label}`}
-          className={({ isActive }) =>
-            `flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-semibold ${
-              isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
-            }`
-          }
-        >
-          {variant.id}
-        </NavLink>
-      ))}
-    </nav>
   );
 }
 

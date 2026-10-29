@@ -6,7 +6,6 @@ import { addCalendarDays, formatDateKey, formatHour, parseDateKey } from "./date
 import {
   canViewDay,
   clearDayStatus,
-  dayModeLabel,
   dayTone,
   findEmployeeForUser,
   hourStatusFor,
@@ -324,7 +323,6 @@ export function useEmployeeDay() {
     restDay,
     editable,
     tone,
-    modeLabel: dayModeLabel(date),
     hourStatus,
     confirmed,
     canEdit,

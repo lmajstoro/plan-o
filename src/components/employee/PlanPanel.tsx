@@ -26,7 +26,7 @@ export function PlanPanel({ day, collapsible = false, className = "" }: Props) {
   );
 
   return (
-    <section className={`shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 ${className}`} aria-label="Plan za ovaj dan">
+    <section className={`shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-2 ${className}`} aria-label="Plan za ovaj dan">
       {collapsible ? (
         <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => setOpen(!open)} aria-expanded={open}>
           {heading}
@@ -40,24 +40,23 @@ export function PlanPanel({ day, collapsible = false, className = "" }: Props) {
         day.planned.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">Za ovaj dan nema plana.</p>
         ) : (
-          <ul className="mt-2 space-y-1.5">
+          <ul className="mt-1.5 space-y-1">
             {day.planned.map((row) => {
               const order = day.orderById(row.workOrderId);
               const task = day.taskById(row.taskId);
+              const label = order ? `${employeeOrderNumber(order)} ${order.name}` : "Nepoznat nalog";
               return (
-                <li key={row.id} className="flex items-start gap-2.5 text-sm">
+                <li key={row.id} className="flex items-center gap-2 text-sm" title={taskLabel(task)}>
                   <span
-                    className="mt-1 h-3 w-1 shrink-0 rounded-full"
+                    className="h-3 w-1 shrink-0 rounded-full"
                     style={{ backgroundColor: workOrderColor(order, day.db.workOrderTemplates) }}
                   />
-                  <span className="w-[6.5rem] shrink-0 tabular-nums text-slate-600">
-                    {formatHour(row.startHour)} - {formatHour(blockEnd(row))}
+                  <span className="w-[6.25rem] shrink-0 tabular-nums text-slate-600">
+                    {formatHour(row.startHour)}-{formatHour(blockEnd(row))}
                   </span>
-                  <span className="min-w-0 flex-1 text-slate-700">
-                    <span className="font-medium text-slate-800">
-                      {order ? `${employeeOrderNumber(order)} ${order.name}` : "Nepoznat nalog"}
-                    </span>
-                    <span className="block truncate text-xs text-slate-500">{taskLabel(task)}</span>
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="font-medium text-slate-800">{label}</span>
+                    {taskLabel(task) ? <span className="text-slate-500"> · {taskLabel(task)}</span> : null}
                   </span>
                   <span className="shrink-0 tabular-nums text-slate-500">{row.durationHours} h</span>
                 </li>

@@ -1,5 +1,5 @@
-import { useEffect, type ReactNode, type SVGProps } from "react";
-import { ChevronLeftIcon, CloseIcon, PlusIcon } from "../icons";
+import { useEffect, type ReactNode } from "react";
+import { ChevronLeftIcon, CloseIcon } from "../icons";
 import { useLockPageScroll } from "../../lib/scrollLock";
 import { employeeOrderNumber, taskLabel, workOrderColor } from "../../lib/workOrders";
 import type { EmployeeDay } from "../../lib/useEmployeeDay";
@@ -63,14 +63,6 @@ export function BottomSheet({
         )}
       </div>
     </div>
-  );
-}
-
-export function MinusIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" {...props}>
-      <path d="M5 12h14" />
-    </svg>
   );
 }
 
@@ -210,53 +202,6 @@ export function ChoiceGrid<T extends number>({
           {render(value)}
         </button>
       ))}
-    </div>
-  );
-}
-
-export function Stepper({
-  label,
-  display,
-  onMinus,
-  onPlus,
-  minusDisabled,
-  plusDisabled,
-  minusLabel,
-  plusLabel,
-}: {
-  label: string;
-  display: ReactNode;
-  onMinus: () => void;
-  onPlus: () => void;
-  minusDisabled?: boolean;
-  plusDisabled?: boolean;
-  minusLabel: string;
-  plusLabel: string;
-}) {
-  return (
-    <div>
-      <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
-      <div className="flex items-stretch overflow-hidden rounded-xl border border-slate-200">
-        <button
-          type="button"
-          className="flex h-14 w-14 shrink-0 items-center justify-center bg-slate-50 text-slate-700 hover:bg-slate-100 disabled:opacity-30"
-          onClick={onMinus}
-          disabled={minusDisabled}
-          aria-label={minusLabel}
-        >
-          <MinusIcon className="h-6 w-6" />
-        </button>
-        <div className="flex min-w-0 flex-1 items-center justify-center text-xl font-semibold tabular-nums text-slate-900">{display}</div>
-        <button
-          type="button"
-          className="flex h-14 w-14 shrink-0 items-center justify-center bg-slate-50 text-slate-700 hover:bg-slate-100 disabled:opacity-30"
-          onClick={onPlus}
-          disabled={plusDisabled}
-          aria-label={plusLabel}
-        >
-          <PlusIcon className="h-6 w-6" />
-        </button>
-      </div>
     </div>
   );
 }

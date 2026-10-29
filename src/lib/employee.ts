@@ -65,14 +65,6 @@ export function dayAssignments(assignments: Assignment[], employeeId: string, da
   return mine.filter((row) => row.kind !== "actual");
 }
 
-export function dayModeLabel(dateKey: string): string {
-  if (isRestDay(dateKey)) return REST_DAY_MESSAGE;
-  if (dateKey === todayKey()) return "Možeš urediti današnji dan";
-  if (isEditableDay(dateKey)) return "Možeš urediti jučerašnji dan";
-  if (dateKey > todayKey()) return "Samo pregled, nadolazeći dan";
-  return "Samo pregled, prethodni dan";
-}
-
 export function hourStatusFor(statuses: DayStatus[] | undefined, employeeId: string, date: string): HourStatus {
   return statuses?.find((row) => row.employeeId === employeeId && row.date === date)?.status ?? "nisu_uneseni";
 }
