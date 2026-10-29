@@ -3,12 +3,13 @@ import { GanttBoard } from "../../components/gantt/GanttBoard";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, LayersIcon } from "../../components/icons";
 import { formatCroatianDate } from "../../lib/dates";
 import { sortJobRoles } from "../../lib/roles";
-import { workOrderColor } from "../../lib/workOrders";
+import { workOrderCode, workOrderColor } from "../../lib/workOrders";
 import { toggleNoteTodo } from "../../lib/notes";
 import { SOPNICA_LOAD_MESSAGES, usePlanDay } from "../../lib/usePlanDay";
 import { NotesView } from "../../components/admin/NotesView";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
 import { SaveStatus } from "../../components/ui/SaveStatus";
+import { Switch } from "../../components/ui/Switch";
 
 export function PlanRadaPage() {
   const {
@@ -27,6 +28,8 @@ export function PlanRadaPage() {
     allEmployees,
     employees,
     dayHasActuals,
+    showPlanned,
+    toggleShowPlanned,
     confirmedEmployeeIds,
     sopnicaLoading,
     sopnicaStep,
@@ -62,8 +65,17 @@ export function PlanRadaPage() {
       </div>
 
       {dayHasActuals ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          Ovaj dan ima korekcije zaposlenika: <span className="font-semibold">gornji red je plan</span>, <span className="font-semibold">donji red je ostvareno</span>.
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          {showPlanned ? (
+            <span>
+              Gdje se unos zaposlenika razlikuje od plana, <span className="font-semibold">gornji red je plan</span>, a <span className="font-semibold">donji red ostvareno</span>.
+            </span>
+          ) : (
+            <span>
+              Prikazano je samo <span className="font-semibold">ostvareno</span>, onako kako su zaposlenici unijeli sate.
+            </span>
+          )}
+          <Switch checked={showPlanned} label="Prikaži planirano" onToggle={toggleShowPlanned} className="text-amber-950" />
         </div>
       ) : (
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
@@ -188,6 +200,7 @@ export function PlanRadaPage() {
               jobRoles={db.jobRoles}
               assignments={db.assignments}
               confirmedEmployeeIds={confirmedEmployeeIds}
+              showPlanned={showPlanned || !dayHasActuals}
               onCommitEmployeeDay={commitEmployeeDay}
             />
           )}
@@ -212,7 +225,7 @@ export function PlanRadaPage() {
                   <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: workOrderColor(order, db.workOrderTemplates) }} />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-slate-900">
-                      <span className="font-mono text-slate-500">{order.code}</span> {order.name}
+                      <span className="font-mono text-slate-500">{workOrderCode(order)}</span> {order.name}
                     </div>
                     <NotesView
                       value={order.description}

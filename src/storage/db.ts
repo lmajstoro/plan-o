@@ -4,7 +4,7 @@ import type { Database } from "../types";
 
 export const DB_KEY = "plano-db";
 const SEED_VERSION_KEY = "plano-seed-version";
-export const SEED_VERSION = "25";
+export const SEED_VERSION = "27";
 
 function writeSeed(): Database {
   const seeded = createSeedDatabase();
@@ -20,7 +20,13 @@ function hasRecentActuals(db: Database): boolean {
 
 function hasWorkOrderSchema(db: Database): boolean {
   return db.workOrders.every(
-    (row) => Boolean(row.status) && Array.isArray(row.taskIds) && typeof row.archived === "boolean",
+    (row) =>
+      Boolean(row.status) &&
+      Array.isArray(row.taskIds) &&
+      typeof row.archived === "boolean" &&
+      Number.isInteger(row.number) &&
+      Number.isInteger(row.year) &&
+      typeof row.erpCode === "string",
   );
 }
 

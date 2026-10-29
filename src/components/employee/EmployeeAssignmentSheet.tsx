@@ -3,7 +3,7 @@ import { CloseIcon } from "../icons";
 import { formatHour } from "../../lib/dates";
 import { DAY_END, DAY_START, EXPECTED_HOURS, hourColumns } from "../../lib/gantt";
 import { useLockPageScroll } from "../../lib/scrollLock";
-import { sortWorkOrdersForEmployeeDay, taskLabel, tasksForWorkOrder } from "../../lib/workOrders";
+import { employeeOrderNumber, sortWorkOrdersForEmployeeDay, taskLabel, tasksForWorkOrder } from "../../lib/workOrders";
 import type { Role, Task, WorkOrder } from "../../types";
 
 type Props = {
@@ -133,7 +133,7 @@ export function EmployeeAssignmentSheet({
               <select className="input text-base" required value={workOrderId} onChange={(event) => setWorkOrderId(event.target.value)}>
                 {orders.map((order) => (
                   <option key={order.id} value={order.id}>
-                    {order.code} {order.name}
+                    {employeeOrderNumber(order)} {order.name}
                   </option>
                 ))}
               </select>

@@ -60,14 +60,24 @@ export function workOrderStatusClass(status: WorkOrderStatus, archived: boolean)
   return "bg-amber-50 text-amber-800";
 }
 
-export function workOrderNumber(code: string): number {
-  const match = /^RN-(\d+)$/i.exec(code.trim());
-  return match ? Number(match[1]) : 0;
+export const ERP_CODE_PATTERN = /^[A-Z0-9]{8}$/;
+
+type OrderNumbering = Pick<WorkOrder, "number" | "year">;
+
+export function employeeOrderNumber(order: Pick<WorkOrder, "number">): string {
+  return String(order.number).padStart(2, "0");
 }
 
-export function nextWorkOrderCode(orders: WorkOrder[]): string {
-  const next = Math.max(0, ...orders.map((order) => workOrderNumber(order.code))) + 1;
-  return `RN-${String(next).padStart(2, "0")}`;
+export function workOrderCode(order: OrderNumbering): string {
+  return `RN-${employeeOrderNumber(order)}/${String(order.year % 100).padStart(2, "0")}`;
+}
+
+export function nextWorkOrderNumber(orders: OrderNumbering[], year: number): number {
+  return Math.max(0, ...orders.filter((order) => order.year === year).map((order) => order.number)) + 1;
+}
+
+function compareByCode(a: OrderNumbering, b: OrderNumbering): number {
+  return a.year - b.year || a.number - b.number;
 }
 
 export function sortWorkOrders(orders: WorkOrder[]): WorkOrder[] {
@@ -77,9 +87,7 @@ export function sortWorkOrders(orders: WorkOrder[]): WorkOrder[] {
     if (archivedA !== archivedB) return archivedA ? 1 : -1;
     const rank = (STATUS_RANK[a.status] ?? 99) - (STATUS_RANK[b.status] ?? 99);
     if (rank !== 0) return rank;
-    const byNumber = workOrderNumber(a.code) - workOrderNumber(b.code);
-    if (byNumber !== 0) return byNumber;
-    return a.code.localeCompare(b.code, "hr");
+    return compareByCode(a, b);
   });
 }
 
@@ -102,11 +110,7 @@ export function sortWorkOrdersForEmployeeDay(
     .sort((a, b) => (dayIndex.get(a.id) ?? 0) - (dayIndex.get(b.id) ?? 0));
   const rest = selectable
     .filter((order) => !dayIndex.has(order.id))
-    .sort((a, b) => {
-      const byNumber = workOrderNumber(b.code) - workOrderNumber(a.code);
-      if (byNumber !== 0) return byNumber;
-      return b.code.localeCompare(a.code, "hr");
-    });
+    .sort((a, b) => compareByCode(b, a));
   return [...onDay, ...rest];
 }
 

@@ -138,6 +138,16 @@ export function fitAroundTarget<T extends Timed>(blocks: T[], targetId: string):
   return next;
 }
 
+type WorkBlock = Pick<Timed, "startHour" | "durationHours"> & { workOrderId: string; taskId: string };
+
+export function sameWorkBlocks(a: WorkBlock[], b: WorkBlock[]): boolean {
+  if (a.length !== b.length) return false;
+  const key = (block: WorkBlock) => `${block.startHour}|${block.durationHours}|${block.workOrderId}|${block.taskId}`;
+  const left = a.map(key).sort();
+  const right = b.map(key).sort();
+  return left.every((value, index) => value === right[index]);
+}
+
 export function blocksShifted<T extends Timed>(before: T[], after: T[]): boolean {
   const starts = new Map(before.map((block) => [block.id, block.startHour]));
   return after.some((block) => starts.get(block.id) !== block.startHour);

@@ -18,6 +18,7 @@ export function usePlanDay() {
   const [date, setDate] = useState(() => formatDateKey(todayWorkDate()));
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
   const [roleFilter, setRoleFilter] = useState<string[]>([]);
+  const [showPlanned, setShowPlanned] = useState(true);
   const [sopnicaStep, setSopnicaStep] = useState(0);
   const [sopnicaReady, setSopnicaReady] = useState(false);
   const current = parseDateKey(date);
@@ -126,6 +127,8 @@ export function usePlanDay() {
     allEmployees,
     employees,
     dayHasActuals,
+    showPlanned,
+    toggleShowPlanned: () => setShowPlanned((value) => !value),
     confirmedEmployeeIds,
     sopnicaLoading,
     sopnicaStep,

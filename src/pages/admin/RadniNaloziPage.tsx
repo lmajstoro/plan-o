@@ -2,10 +2,12 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import {
-  nextWorkOrderCode,
+  ERP_CODE_PATTERN,
+  nextWorkOrderNumber,
   sortTemplates,
   sortWorkOrders,
   templateName,
+  workOrderCode,
   workOrderColor,
   WORK_ORDER_COLOR_LABELS,
   WORK_ORDER_COLORS,
@@ -22,10 +24,13 @@ import { EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
 import { compactNotes, toggleNoteTodo } from "../../lib/notes";
+import { calendarToday } from "../../lib/dates";
 import type { WorkOrder, WorkOrderStatus } from "../../types";
 
 type FormState = {
-  code: string;
+  number: number;
+  year: number;
+  erpCode: string;
   name: string;
   description: string;
   templateId: string;
@@ -35,7 +40,9 @@ type FormState = {
 };
 
 const emptyForm: FormState = {
-  code: "",
+  number: 0,
+  year: 0,
+  erpCode: "",
   name: "",
   description: "",
   templateId: "",
@@ -65,9 +72,11 @@ export function RadniNaloziPage() {
 
   function openCreate() {
     const first = templates[0];
+    const year = calendarToday().getFullYear();
     setForm({
       ...emptyForm,
-      code: nextWorkOrderCode(db.workOrders),
+      number: nextWorkOrderNumber(db.workOrders, year),
+      year,
       templateId: first?.id ?? "",
       color: first?.color ?? WORK_ORDER_COLORS[0],
     });
@@ -78,7 +87,9 @@ export function RadniNaloziPage() {
   function openEdit(order: WorkOrder) {
     const template = templates.find((row) => row.id === order.templateId);
     setForm({
-      code: order.code,
+      number: order.number,
+      year: order.year,
+      erpCode: order.erpCode,
       name: order.name,
       description: order.description,
       templateId: order.templateId,
@@ -152,6 +163,14 @@ export function RadniNaloziPage() {
       setFormError("Odaberite predložak. Nalog naslijedi njegovu boju i zadatke, pa ih možeš mijenjati.");
       return;
     }
+    if (!ERP_CODE_PATTERN.test(form.erpCode)) {
+      setFormError("ERP šifra ima točno 8 znakova: slova bez dijakritika i brojke.");
+      return;
+    }
+    if (db.workOrders.some((row) => row.erpCode === form.erpCode && row.id !== editing?.id)) {
+      setFormError("Nalog s tom ERP šifrom već postoji.");
+      return;
+    }
     const color = form.color || selectedTemplate?.color || "#334155";
     const description = compactNotes(form.description);
     if (editing) {
@@ -195,7 +214,7 @@ export function RadniNaloziPage() {
       <Header title="Radni nalozi" actionLabel="Novi radni nalog" onAction={openCreate} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-slate-500">
-          Novi nalog se kreira iz predloška i dobiva broj RN. Boju i zadatke naslijedi, pa ih možeš mijenjati na nalogu.
+          Novi nalog se kreira iz predloška i dobiva sljedeći broj RN u tekućoj godini. Boju i zadatke naslijedi, pa ih možeš mijenjati na nalogu.
         </p>
         <button
           type="button"
@@ -208,10 +227,11 @@ export function RadniNaloziPage() {
         </button>
       </div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full min-w-[980px] text-left text-sm">
+        <table className="w-full min-w-[1080px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3 font-medium">Radni nalog</th>
+              <th className="px-4 py-3 font-medium">ERP šifra</th>
               <th className="px-4 py-3 font-medium">Naziv</th>
               <th className="px-4 py-3 font-medium">Predložak</th>
               <th className="px-4 py-3 font-medium">Napomene</th>
@@ -223,7 +243,7 @@ export function RadniNaloziPage() {
           <tbody>
             {paging.pageRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                   Nema naloga za prikaz.
                 </td>
               </tr>
@@ -231,11 +251,12 @@ export function RadniNaloziPage() {
               paging.pageRows.map((row) => (
               <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${row.archived ? "bg-slate-50 text-slate-500" : ""}`}>
                 <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-2 font-mono font-medium text-slate-900">
+                  <span className="inline-flex items-center gap-2 whitespace-nowrap font-mono font-medium text-slate-900">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: workOrderColor(row, db.workOrderTemplates) }} />
-                    {row.code}
+                    {workOrderCode(row)}
                   </span>
                 </td>
+                <td className="px-4 py-3 font-mono text-slate-600">{row.erpCode}</td>
                 <td className="px-4 py-3 font-medium text-slate-800">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">{templateName(db.workOrderTemplates, row.templateId)}</td>
                 <td className="max-w-sm px-4 py-3 text-slate-600">
@@ -294,7 +315,23 @@ export function RadniNaloziPage() {
             ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Radni nalog">
-                <input className="input bg-slate-50" required value={form.code} readOnly />
+                <input className="input bg-slate-50" value={workOrderCode(form)} readOnly />
+              </Field>
+              <Field label="Godina">
+                <input className="input bg-slate-50" value={`${form.year}.`} readOnly />
+              </Field>
+              <Field label="ERP šifra">
+                <input
+                  className="input font-mono"
+                  required
+                  maxLength={8}
+                  placeholder="npr. KT4821AX"
+                  value={form.erpCode}
+                  onChange={(e) => {
+                    setForm({ ...form, erpCode: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") });
+                    setFormError("");
+                  }}
+                />
               </Field>
               <Field label="Status">
                 <select
@@ -375,7 +412,7 @@ export function RadniNaloziPage() {
 
       {tasksOrder ? (
         <TaskSelectModal
-          title={`Zadaci naloga ${tasksOrder.code}`}
+          title={`Zadaci naloga ${workOrderCode(tasksOrder)}`}
           description={`Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi koje nalog ${tasksOrder.name} smije koristiti.`}
           tasks={db.tasks}
           jobRoles={db.jobRoles}

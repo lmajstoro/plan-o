@@ -35,6 +35,7 @@ function plan(employeeId: string, date: string, prefix: string, slots: Slot[], k
 
 export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Database {
   const today = parseDateKey(dateKey);
+  const year = today.getFullYear();
   const prev1 = formatDateKey(addWorkDays(today, -1));
   const prev2 = formatDateKey(addWorkDays(today, -2));
   const next1 = formatDateKey(addWorkDays(today, 1));
@@ -140,7 +141,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   const workOrders: WorkOrder[] = [
     {
       id: "wo-ro-01",
-      code: "RN-01",
+      number: 1,
+      year,
+      erpCode: "KT4821AX",
       name: "Razvodni ormarić",
       description: "Ugradnja i ožičenje razvodnog ormarića za čiler ili dizalicu topline.\n\n- [x] Provjeri napon na mjestu\n- [ ] Pripremi nosače\n- [ ] Spoji kabele",
       color: "#2563eb",
@@ -151,7 +154,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-pc-01",
-      code: "RN-02",
+      number: 2,
+      year,
+      erpCode: "PC7305LM",
       name: "Pumpa čilera",
       description: "Montaža i servis cirkulacijske pumpe na krugu čilera.\n\n- [ ] Isklopi pumpu\n- [ ] Zamijeni brtvu\n- [ ] Testiraj protok",
       color: "#16a34a",
@@ -162,7 +167,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-vj-01",
-      code: "RN-03",
+      number: 3,
+      year,
+      erpCode: "VJ2196RT",
       name: "Vanjska jedinica",
       description: "Postavljanje vanjske jedinice dizalice topline.",
       color: "#ea580c",
@@ -173,7 +180,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-hm-01",
-      code: "RN-04",
+      number: 4,
+      year,
+      erpCode: "HM5540ZD",
       name: "Hidraulički modul",
       description: "Spoj hidrauličkog modula, ventila i cjevovoda.",
       color: "#ca8a04",
@@ -184,7 +193,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-kc-01",
-      code: "RN-05",
+      number: 5,
+      year,
+      erpCode: "KC8812PB",
       name: "Kondenzator čilera",
       description: "Rad na kondenzatorskoj jedinici rashladnog agregata.",
       color: "#dc2626",
@@ -195,7 +206,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-ep-01",
-      code: "RN-06",
+      number: 6,
+      year,
+      erpCode: "EP3307WN",
       name: "Ekspanzijska posuda",
       description: "Ugradnja i provjera ekspanzijske posude na hidrauličkom krugu.",
       color: "#ca8a04",
@@ -206,7 +219,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-fs-01",
-      code: "RN-07",
+      number: 7,
+      year,
+      erpCode: "FS6623QK",
       name: "Filter-sušač",
       description: "Zamjena filter-sušača u rashladnom krugu.",
       color: "#dc2626",
@@ -217,7 +232,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-uj-01",
-      code: "RN-08",
+      number: 8,
+      year,
+      erpCode: "UJ4478HV",
       name: "Unutarnja jedinica",
       description: "Montaža unutarnje jedinice dizalice topline.",
       color: "#7c3aed",
@@ -228,7 +245,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-ix-01",
-      code: "RN-09",
+      number: 9,
+      year,
+      erpCode: "IX1954CE",
       name: "Izmjenjivač topline",
       description: "Servis pločastog izmjenjivača na čileru ili dizalici.",
       color: "#dc2626",
@@ -239,7 +258,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     },
     {
       id: "wo-fx-01",
-      code: "RN-10",
+      number: 10,
+      year,
+      erpCode: "FX9037TS",
       name: "Flexi P8",
       description: "CO2 jedinica, ista boja na planu kao ostali CO2 nalozi.",
       color: "#ea580c",
@@ -314,6 +335,18 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
       { workOrderId: "wo-hm-01", taskId: "task-sv-02", startHour: 11, durationHours: 2 },
       { workOrderId: "wo-fs-01", taskId: "task-sv-02", startHour: 13, durationHours: 2 },
       { workOrderId: "wo-kc-01", taskId: "task-sv-03", startHour: 15, durationHours: 2 },
+    ], "actual"),
+    ...plan("emp-4", prev1, "asg-a1-emp4", [
+      { workOrderId: "wo-pc-01", taskId: "task-sv-03", startHour: 7, durationHours: 5 },
+      { workOrderId: "wo-ro-01", taskId: "task-sv-02", startHour: 12, durationHours: 3 },
+    ], "actual"),
+    ...plan("emp-6", prev1, "asg-a1-emp6", [
+      { workOrderId: "wo-vj-01", taskId: "task-el-02", startHour: 7, durationHours: 4 },
+      { workOrderId: "wo-kc-01", taskId: "task-el-03", startHour: 11, durationHours: 4 },
+    ], "actual"),
+    ...plan("emp-7", prev1, "asg-a1-emp7", [
+      { workOrderId: "wo-ro-01", taskId: "task-sv-03", startHour: 7, durationHours: 6 },
+      { workOrderId: "wo-vj-01", taskId: "task-sv-03", startHour: 13, durationHours: 2 },
     ], "actual"),
 
     ...plan("emp-1", prev2, "asg-p2-emp1", [

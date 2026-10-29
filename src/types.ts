@@ -53,7 +53,9 @@ export type WorkOrderStatus = "otvoren" | "u_tijeku" | "zavrsen";
 
 export type WorkOrder = {
   id: string;
-  code: string;
+  number: number;
+  year: number;
+  erpCode: string;
   name: string;
   description: string;
   color: string;

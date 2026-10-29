@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
 import { formatHour } from "../../lib/dates";
-import { selectableWorkOrders, taskLabel, tasksForWorkOrder } from "../../lib/workOrders";
+import { selectableWorkOrders, taskLabel, tasksForWorkOrder, workOrderCode } from "../../lib/workOrders";
 import { Modal } from "../ui/Modal";
 import { PickerSelect } from "../ui/PickerSelect";
 import type { Role, Task, WorkOrder } from "../../types";
@@ -75,14 +75,14 @@ export function AssignmentModal({
             {touch ? (
               <PickerSelect
                 value={workOrderId}
-                options={orders.map((order) => ({ value: order.id, label: `${order.code} ${order.name}` }))}
+                options={orders.map((order) => ({ value: order.id, label: `${workOrderCode(order)} ${order.name}` }))}
                 onChange={setWorkOrderId}
               />
             ) : (
               <select className="input" required value={workOrderId} onChange={(event) => setWorkOrderId(event.target.value)}>
                 {orders.map((order) => (
                   <option key={order.id} value={order.id}>
-                    {order.code} {order.name}
+                    {workOrderCode(order)} {order.name}
                   </option>
                 ))}
               </select>
