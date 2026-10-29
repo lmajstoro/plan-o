@@ -40,25 +40,28 @@ export function PlanPanel({ day, collapsible = false, className = "" }: Props) {
         day.planned.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">Za ovaj dan nema plana.</p>
         ) : (
-          <ul className="mt-1.5 space-y-1">
+          <ul className="mt-1.5 space-y-1.5">
             {day.planned.map((row) => {
               const order = day.orderById(row.workOrderId);
               const task = day.taskById(row.taskId);
               const label = order ? `${employeeOrderNumber(order)} ${order.name}` : "Nepoznat nalog";
+              const taskText = taskLabel(task);
               return (
-                <li key={row.id} className="flex items-center gap-2 text-sm" title={taskLabel(task)}>
+                <li key={row.id} className="flex gap-2 text-sm">
                   <span
-                    className="h-3 w-1 shrink-0 rounded-full"
+                    className="mt-1.5 h-3 w-1 shrink-0 rounded-full"
                     style={{ backgroundColor: workOrderColor(order, day.db.workOrderTemplates) }}
                   />
-                  <span className="w-[6.25rem] shrink-0 tabular-nums text-slate-600">
-                    {formatHour(row.startHour)}-{formatHour(blockEnd(row))}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">
-                    <span className="font-medium text-slate-800">{label}</span>
-                    {taskLabel(task) ? <span className="text-slate-500"> · {taskLabel(task)}</span> : null}
-                  </span>
-                  <span className="shrink-0 tabular-nums text-slate-500">{row.durationHours} h</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="shrink-0 tabular-nums text-slate-600">
+                        {formatHour(row.startHour)}-{formatHour(blockEnd(row))}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-medium text-slate-800">{label}</span>
+                      <span className="shrink-0 tabular-nums text-slate-500">{row.durationHours} h</span>
+                    </div>
+                    {taskText ? <p className="text-slate-600">{taskText}</p> : null}
+                  </div>
                 </li>
               );
             })}
