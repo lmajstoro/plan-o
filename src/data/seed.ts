@@ -270,9 +270,9 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
       archived: false,
       taskIds: [...allTaskIds],
     },
-  ] satisfies Array<Omit<WorkOrder, "checklistItemIds">>).map((order) => ({
+  ] satisfies Array<Omit<WorkOrder, "checklist">>).map((order) => ({
     ...order,
-    checklistItemIds: [...checklistItemIds],
+    checklist: checklistItemIds.map((itemId) => ({ itemId, mark: "prazno" as const })),
   }));
 
   const assignments: Assignment[] = [

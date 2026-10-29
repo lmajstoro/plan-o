@@ -41,7 +41,8 @@ export default function App() {
         <Route path="uloge" element={<UlogePage />} />
         <Route path="radne-skupine" element={<RadneSkupinePage />} />
         <Route path="zadaci" element={<ZadaciPage />} />
-        <Route path="checkliste" element={<ChecklistePage />} />
+        <Route path="kontrola-kvalitete" element={<ChecklistePage />} />
+        <Route path="checkliste" element={<Navigate to="/administrator/kontrola-kvalitete" replace />} />
         <Route path="radni-nalozi" element={<RadniNaloziPage />} />
         <Route path="radni-nalozi/predlosci" element={<PredlosciPage />} />
         <Route path="predlosci" element={<Navigate to="/administrator/radni-nalozi/predlosci" replace />} />

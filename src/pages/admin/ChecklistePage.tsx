@@ -81,7 +81,7 @@ export function ChecklistePage() {
       checklistItems: current.checklistItems.filter((row) => row.id !== removeId),
       workOrders: current.workOrders.map((order) => ({
         ...order,
-        checklistItemIds: (order.checklistItemIds ?? []).filter((id) => id !== removeId),
+        checklist: (order.checklist ?? []).filter((entry) => entry.itemId !== removeId),
       })),
     }));
     setRemoveId(null);
@@ -91,9 +91,9 @@ export function ChecklistePage() {
 
   return (
     <div>
-      <Header title="Checkliste" actionLabel="Nova stavka" onAction={openCreate} />
+      <Header title="Kontrola kvalitete" actionLabel="Nova stavka" onAction={openCreate} />
       <p className="mb-4 text-slate-500">
-        Šifarnik stavki kontrole kvalitete. Svaki novi radni nalog preuzima cijelu listu, a na nalogu se stavke mogu maknuti ili vratiti.
+        Šifarnik stavki kontrole kvalitete. Svaki novi radni nalog preuzima cijelu listu praznu. Na nalogu se stavka potvrđuje kad je provjerena, ili se označi da ne postoji na uređaju.
       </p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
@@ -174,7 +174,7 @@ export function ChecklistePage() {
       {removeId ? (
         <ConfirmDialog
           title="Obriši stavku"
-          message="Stavka će se ukloniti iz šifarnika, predložaka i radnih naloga."
+          message="Stavka će se ukloniti iz šifarnika i s radnih naloga."
           onClose={() => setRemoveId(null)}
           onConfirm={confirmRemove}
         />

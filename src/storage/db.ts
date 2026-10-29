@@ -4,7 +4,7 @@ import type { Database } from "../types";
 
 export const DB_KEY = "plano-db";
 const SEED_VERSION_KEY = "plano-seed-version";
-export const SEED_VERSION = "30";
+export const SEED_VERSION = "31";
 
 function writeSeed(): Database {
   const seeded = createSeedDatabase();
@@ -27,7 +27,8 @@ function hasWorkOrderSchema(db: Database): boolean {
       Number.isInteger(row.number) &&
       Number.isInteger(row.year) &&
       typeof row.erpCode === "string" &&
-      Array.isArray(row.checklistItemIds),
+      Array.isArray(row.checklist) &&
+      row.checklist.every((entry) => entry.mark === "prazno" || entry.mark === "potvrdeno" || entry.mark === "nema"),
   );
 }
 

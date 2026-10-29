@@ -48,6 +48,13 @@ export type ChecklistItem = {
   description: string;
 };
 
+export type ChecklistMark = "prazno" | "potvrdeno" | "nema";
+
+export type WorkOrderChecklistEntry = {
+  itemId: string;
+  mark: ChecklistMark;
+};
+
 export type WorkOrderTemplate = {
   id: string;
   name: string;
@@ -69,7 +76,7 @@ export type WorkOrder = {
   status: WorkOrderStatus;
   archived: boolean;
   taskIds: string[];
-  checklistItemIds: string[];
+  checklist: WorkOrderChecklistEntry[];
 };
 
 export type AssignmentKind = "planned" | "actual";
