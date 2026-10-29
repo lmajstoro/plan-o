@@ -249,6 +249,16 @@ export function TemplateIcon(props: IconProps) {
   );
 }
 
+export function QualityIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="6" y="3.5" width="12" height="17" rx="2" />
+      <path d="M9 3.5h6v2.2H9z" />
+      <path d="M8.5 12.2 10.4 14l4.1-4.2" />
+    </svg>
+  );
+}
+
 export function ListChecksIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

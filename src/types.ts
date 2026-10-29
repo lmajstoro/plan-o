@@ -42,6 +42,12 @@ export type Task = {
   role: Role;
 };
 
+export type ChecklistItem = {
+  id: string;
+  code: string;
+  description: string;
+};
+
 export type WorkOrderTemplate = {
   id: string;
   name: string;
@@ -63,6 +69,7 @@ export type WorkOrder = {
   status: WorkOrderStatus;
   archived: boolean;
   taskIds: string[];
+  checklistItemIds: string[];
 };
 
 export type AssignmentKind = "planned" | "actual";
@@ -87,6 +94,7 @@ export type DayStatus = {
 export type Database = {
   employees: Employee[];
   tasks: Task[];
+  checklistItems: ChecklistItem[];
   workOrders: WorkOrder[];
   workOrderTemplates: WorkOrderTemplate[];
   workGroups: WorkGroup[];

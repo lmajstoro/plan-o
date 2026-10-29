@@ -12,6 +12,7 @@ import {
   ClipboardIcon,
   LayersIcon,
   LogoutIcon,
+  QualityIcon,
   ResetIcon,
   TabletIcon,
   TagIcon,
@@ -27,6 +28,7 @@ const overviewLinks = [
 
 const catalogLinks = [
   { to: "/administrator/zadaci", label: "Zadaci", icon: ClipboardIcon, end: false },
+  { to: "/administrator/checkliste", label: "Checkliste", icon: QualityIcon, end: false },
   { to: "/administrator/zaposlenici", label: "Zaposlenici", icon: UsersIcon, end: false },
   { to: "/administrator/uloge", label: "Uloge", icon: BadgeIcon, end: false },
   { to: "/administrator/radne-skupine", label: "Radne skupine", icon: TagIcon, end: false },

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAdmin, RequireEmployee } from "./components/auth/Guards";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { LoginPage } from "./pages/LoginPage";
+import { ChecklistePage } from "./pages/admin/ChecklistePage";
 import { PlanRadaPage } from "./pages/admin/PlanRadaPage";
 import { PredlosciPage } from "./pages/admin/PredlosciPage";
 import { RadneSkupinePage } from "./pages/admin/RadneSkupinePage";
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="uloge" element={<UlogePage />} />
         <Route path="radne-skupine" element={<RadneSkupinePage />} />
         <Route path="zadaci" element={<ZadaciPage />} />
+        <Route path="checkliste" element={<ChecklistePage />} />
         <Route path="radni-nalozi" element={<RadniNaloziPage />} />
         <Route path="radni-nalozi/predlosci" element={<PredlosciPage />} />
         <Route path="predlosci" element={<Navigate to="/administrator/radni-nalozi/predlosci" replace />} />

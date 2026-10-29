@@ -1,3 +1,4 @@
+import { checklistItemIds, checklistItems } from "./checklists";
 import { addWorkDays, formatDateKey, parseDateKey, todayWorkDate } from "../lib/dates";
 import type { Assignment, Database, DemoAccount, WorkOrder } from "../types";
 
@@ -138,7 +139,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     { id: "tpl-hidraulika", name: "Hidraulika", color: "#ca8a04", taskIds: [...allTaskIds] },
   ];
 
-  const workOrders: WorkOrder[] = [
+  const workOrders: WorkOrder[] = ([
     {
       id: "wo-ro-01",
       number: 1,
@@ -269,7 +270,10 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
       archived: false,
       taskIds: [...allTaskIds],
     },
-  ];
+  ] satisfies Array<Omit<WorkOrder, "checklistItemIds">>).map((order) => ({
+    ...order,
+    checklistItemIds: [...checklistItemIds],
+  }));
 
   const assignments: Assignment[] = [
     ...plan("emp-1", dateKey, "asg-t-emp1", [
@@ -382,6 +386,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
   return {
     employees,
     tasks,
+    checklistItems,
     workOrders,
     workOrderTemplates,
     workGroups,

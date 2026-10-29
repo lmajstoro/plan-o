@@ -16,11 +16,12 @@ import {
   workOrderStatusClass,
 } from "../../lib/workOrders";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { ChecklistSelectModal } from "../../components/admin/ChecklistSelectModal";
 import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { NotesEditor } from "../../components/admin/NotesEditor";
 import { NotesView } from "../../components/admin/NotesView";
 import { PaginationBar } from "../../components/admin/PaginationBar";
-import { EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
+import { EditIcon, ListChecksIcon, QualityIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
 import { compactNotes, toggleNoteTodo } from "../../lib/notes";
@@ -59,6 +60,7 @@ export function RadniNaloziPage() {
   const [formError, setFormError] = useState("");
   const [archiveTarget, setArchiveTarget] = useState<WorkOrder | null>(null);
   const [tasksOrder, setTasksOrder] = useState<WorkOrder | null>(null);
+  const [checklistOrder, setChecklistOrder] = useState<WorkOrder | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
   const templates = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
@@ -128,6 +130,15 @@ export function RadniNaloziPage() {
     closeTasks();
   }
 
+  function saveChecklist(checklistItemIds: string[]) {
+    if (!checklistOrder) return;
+    update((current) => ({
+      ...current,
+      workOrders: current.workOrders.map((row) => (row.id === checklistOrder.id ? { ...row, checklistItemIds } : row)),
+    }));
+    setChecklistOrder(null);
+  }
+
   function requestArchiveToggle(order: WorkOrder) {
     if (order.archived) {
       toggleArchived(order);
@@ -188,11 +199,14 @@ export function RadniNaloziPage() {
       setFormError("Predložak nema zadataka. Dodajte ih na predlošku pa kreirajte nalog.");
       return;
     }
+    const inheritedChecklistIds = [...db.checklistItems]
+      .sort((a, b) => a.code.localeCompare(b.code, "hr"))
+      .map((item) => item.id);
     update((current) => ({
       ...current,
       workOrders: [
         ...current.workOrders,
-        { id: newId("wo"), ...form, description, color, taskIds: inheritedTaskIds },
+        { id: newId("wo"), ...form, description, color, taskIds: inheritedTaskIds, checklistItemIds: inheritedChecklistIds },
       ],
     }));
     setCreating(false);
@@ -214,7 +228,7 @@ export function RadniNaloziPage() {
       <Header title="Radni nalozi" actionLabel="Novi radni nalog" onAction={openCreate} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-slate-500">
-          Novi nalog se kreira iz predloška i dobiva sljedeći broj RN u tekućoj godini. Boju i zadatke naslijedi, pa ih možeš mijenjati na nalogu.
+          Novi nalog se kreira iz predloška i dobiva sljedeći broj RN u tekućoj godini. Boju i zadatke naslijedi s predloška, a listu kontrole kvalitete iz šifarnika. Na nalogu ih možeš mijenjati.
         </p>
         <button
           type="button"
@@ -237,13 +251,14 @@ export function RadniNaloziPage() {
               <th className="px-4 py-3 font-medium">Napomene</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Zadaci</th>
+              <th className="px-4 py-3 font-medium">Kontrola</th>
               <th className="px-4 py-3 font-medium text-right">Akcije</th>
             </tr>
           </thead>
           <tbody>
             {paging.pageRows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
                   Nema naloga za prikaz.
                 </td>
               </tr>
@@ -272,6 +287,7 @@ export function RadniNaloziPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-slate-600">{row.taskIds?.length ?? 0}</td>
+                <td className="px-4 py-3 text-slate-600">{row.checklistItemIds?.length ?? 0}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
                     <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
@@ -279,6 +295,9 @@ export function RadniNaloziPage() {
                     </button>
                     <button type="button" className="icon-btn" onClick={() => openTasks(row)} title="Uredi zadatke">
                       <ListChecksIcon className="h-4 w-4" />
+                    </button>
+                    <button type="button" className="icon-btn" onClick={() => setChecklistOrder(row)} title="Uredi kontrolu kvalitete">
+                      <QualityIcon className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
@@ -386,7 +405,7 @@ export function RadniNaloziPage() {
               <p className="mt-1.5 text-xs text-slate-500">
                 {creating
                   ? "Novi nalog preuzima boju predloška. Možeš je odmah ili kasnije promijeniti."
-                  : "Zadaci se uređuju zasebnom akcijom."}
+                  : "Zadaci i kontrola kvalitete uređuju se zasebnim akcijama."}
               </p>
             </Field>
             <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -419,6 +438,17 @@ export function RadniNaloziPage() {
           initialSelectedIds={tasksOrder.taskIds ?? []}
           onClose={closeTasks}
           onSave={saveTasks}
+        />
+      ) : null}
+
+      {checklistOrder ? (
+        <ChecklistSelectModal
+          title={`Kontrola kvalitete naloga ${workOrderCode(checklistOrder)}`}
+          description="Stavke se uređuju u šifarniku Checkliste. Ovdje makni one koje ne vrijede za ovaj nalog ili ih vrati."
+          items={db.checklistItems}
+          initialSelectedIds={checklistOrder.checklistItemIds ?? []}
+          onClose={() => setChecklistOrder(null)}
+          onSave={saveChecklist}
         />
       ) : null}
 
