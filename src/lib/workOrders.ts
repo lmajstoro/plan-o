@@ -65,6 +65,10 @@ export function workOrderNumber(code: string): number {
   return match ? Number(match[1]) : 0;
 }
 
+export function employeeOrderNumber(order: Pick<WorkOrder, "code">): string {
+  return order.code.trim().replace(/^RN-/i, "");
+}
+
 export function nextWorkOrderCode(orders: WorkOrder[]): string {
   const next = Math.max(0, ...orders.map((order) => workOrderNumber(order.code))) + 1;
   return `RN-${String(next).padStart(2, "0")}`;

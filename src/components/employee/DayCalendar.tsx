@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import { CORE_END, CORE_START, DAY_END, DAY_START, blockEnd, hourColumns, occupiedHours } from "../../lib/gantt";
 import { formatHour } from "../../lib/dates";
-import { taskLabel, workOrderColor } from "../../lib/workOrders";
+import { employeeOrderNumber, taskLabel, workOrderColor } from "../../lib/workOrders";
 import type { Assignment, Task, WorkOrder, WorkOrderTemplate } from "../../types";
 
 const HOURS = hourColumns();
@@ -81,6 +81,14 @@ export function DayCalendar({
             <div className="absolute -top-2 left-0 z-10 w-14 bg-white pr-2 text-right text-[11px] leading-none text-slate-400">
               {formatHour(hour)}
             </div>
+            {!readOnly && !occupied.has(hour) ? (
+              <span
+                className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-xs text-slate-300"
+                style={{ left: GUTTER + 10 }}
+              >
+                + {formatHour(hour)}
+              </span>
+            ) : null}
           </div>
         ))}
 
@@ -108,7 +116,7 @@ export function DayCalendar({
             >
               {compact ? (
                 <div className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-none">
-                  <span className="shrink-0">{order?.code ?? "?"}</span>
+                  <span className="shrink-0">{order ? employeeOrderNumber(order) : "?"}</span>
                   <span className="min-w-0 truncate font-medium text-white/90">{task?.code}</span>
                   <span className="ml-auto shrink-0 font-medium tabular-nums text-white/90">
                     {formatHour(assignment.startHour)} - {formatHour(blockEnd(assignment))} {assignment.durationHours}h
@@ -117,7 +125,7 @@ export function DayCalendar({
               ) : (
                 <div className="flex min-h-0 flex-col gap-1">
                   <div className="truncate text-base font-semibold leading-tight">
-                    {[order?.code, order?.name].filter(Boolean).join(" - ")}
+                    {order ? `${employeeOrderNumber(order)} ${order.name}` : "?"}
                   </div>
                   <div className="truncate text-sm leading-tight text-white/90">
                     {taskLabel(task)}

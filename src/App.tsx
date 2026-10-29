@@ -11,7 +11,9 @@ import { TabletPreviewPage } from "./pages/admin/TabletPreviewPage";
 import { UlogePage } from "./pages/admin/UlogePage";
 import { ZadaciPage } from "./pages/admin/ZadaciPage";
 import { ZaposleniciPage } from "./pages/admin/ZaposleniciPage";
-import { EmployeeDayPage } from "./pages/zaposlenik/EmployeeDayPage";
+import { KalendarUnosPage } from "./pages/zaposlenik/KalendarUnosPage";
+import { KorakPoKorakPage } from "./pages/zaposlenik/KorakPoKorakPage";
+import { SatPoSatPage } from "./pages/zaposlenik/SatPoSatPage";
 
 export default function App() {
   return (
@@ -44,14 +46,32 @@ export default function App() {
         <Route path="radni-nalozi/predlosci" element={<PredlosciPage />} />
         <Route path="predlosci" element={<Navigate to="/administrator/radni-nalozi/predlosci" replace />} />
       </Route>
+      <Route path="/zaposlenik" element={<Navigate to="/zaposlenik/1" replace />} />
       <Route
-        path="/zaposlenik"
+        path="/zaposlenik/1"
         element={
           <RequireEmployee>
-            <EmployeeDayPage />
+            <KalendarUnosPage />
           </RequireEmployee>
         }
       />
+      <Route
+        path="/zaposlenik/2"
+        element={
+          <RequireEmployee>
+            <KorakPoKorakPage />
+          </RequireEmployee>
+        }
+      />
+      <Route
+        path="/zaposlenik/3"
+        element={
+          <RequireEmployee>
+            <SatPoSatPage />
+          </RequireEmployee>
+        }
+      />
+      <Route path="/zaposlenik/*" element={<Navigate to="/zaposlenik/1" replace />} />
       <Route path="*" element={<Navigate to="/prijava" replace />} />
     </Routes>
   );
