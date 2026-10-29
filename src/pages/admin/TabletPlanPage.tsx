@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { TouchGanttBoard } from "../../components/gantt/TouchGanttBoard";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
 import { SaveStatus } from "../../components/ui/SaveStatus";
-import { Switch } from "../../components/ui/Switch";
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../../components/icons";
 import { useAuth } from "../../context/AuthContext";
 import { formatCroatianDate } from "../../lib/dates";
@@ -27,8 +26,6 @@ export function TabletPlanPage() {
     toggleRole,
     employees,
     dayHasActuals,
-    showPlanned,
-    toggleShowPlanned,
     confirmedEmployeeIds,
     sopnicaLoading,
     sopnicaStep,
@@ -48,18 +45,10 @@ export function TabletPlanPage() {
         <DaySwiper
           dateKey={date}
           label={formatCroatianDate(current)}
-          hint={dayHasActuals ? (showPlanned ? "Kod razlika: gore plan, dolje ostvareno" : "Prikazano samo ostvareno") : undefined}
+          hint={dayHasActuals ? "Gornji red je plan, donji ostvareno" : undefined}
           onPrev={() => go(-1)}
           onNext={() => go(1)}
         />
-        {dayHasActuals ? (
-          <Switch
-            checked={showPlanned}
-            label="Planirano"
-            onToggle={toggleShowPlanned}
-            className="h-11 border border-slate-200 px-3 text-base text-slate-700"
-          />
-        ) : null}
         <SaveStatus compact />
         <button type="button" className="btn-secondary h-11 px-4 text-base" onClick={goToday}>
           Danas
@@ -117,7 +106,6 @@ export function TabletPlanPage() {
             jobRoles={db.jobRoles}
             assignments={db.assignments}
             confirmedEmployeeIds={confirmedEmployeeIds}
-            showPlanned={showPlanned || !dayHasActuals}
             onCommitEmployeeDay={commitEmployeeDay}
           />
         )}

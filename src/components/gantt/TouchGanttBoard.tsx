@@ -14,7 +14,6 @@ import {
   newId,
   occupiedHours,
   resizeBlock,
-  sameWorkBlocks,
   shiftChain,
   totalHours,
   workGaps,
@@ -63,7 +62,6 @@ type Props = {
   jobRoles: JobRole[];
   assignments: Assignment[];
   confirmedEmployeeIds?: string[];
-  showPlanned?: boolean;
   onCommitEmployeeDay: (employeeId: string, next: Assignment[]) => void;
 };
 
@@ -80,7 +78,6 @@ export function TouchGanttBoard({
   jobRoles,
   assignments,
   confirmedEmployeeIds = [],
-  showPlanned = true,
   onCommitEmployeeDay,
 }: Props) {
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -101,12 +98,11 @@ export function TouchGanttBoard({
     }
     return map;
   }, [assignments, date, employees]);
-  const dayHasActuals = assignments.some((row) => row.date === date && row.kind === "actual");
 
   useEffect(() => {
     setPicked(null);
     setRange(null);
-  }, [date, showPlanned]);
+  }, [date]);
 
   function plannedFor(employeeId: string): Assignment[] {
     if (draft?.employeeId === employeeId) return draft.assignments;
@@ -461,11 +457,8 @@ export function TouchGanttBoard({
           {employees.map((employee) => {
             const planned = plannedFor(employee.id);
             const actuals = actualFor(employee.id);
-            const actualsOnly = !showPlanned;
-            const asPlanned = actuals.length > 0 && sameWorkBlocks(planned, actuals);
-            const notEntered = dayHasActuals && actuals.length === 0;
-            const split = !actualsOnly && actuals.length > 0 && !asPlanned;
-            const displayBlocks = actualsOnly || split ? actuals : planned;
+            const split = actuals.length > 0;
+            const displayBlocks = split ? actuals : planned;
             const displayHours = totalHours(displayBlocks);
             const planHours = totalHours(planned);
             const gaps = workGaps(displayBlocks);
@@ -512,8 +505,6 @@ export function TouchGanttBoard({
                         {split && planHours !== displayHours ? `${planHours} → ${displayHours} h` : `${displayHours} h`}
                       </span>
                     )}
-                    {asPlanned ? <span className="text-slate-500">· po planu</span> : null}
-                    {notEntered ? <span className="text-amber-700">· nije uneseno</span> : null}
                     {confirmed ? <span className="font-semibold text-emerald-700">Potvrđeno</span> : null}
                   </div>
                   {gaps.length > 0 ? (
@@ -524,22 +515,7 @@ export function TouchGanttBoard({
                 </div>
 
                 <div className="flex flex-col" style={{ width: TIMELINE_WIDTH, height: ROW_HEIGHT }}>
-                  {actualsOnly ? (
-                    <div className="relative" style={{ height: ROW_HEIGHT }}>
-                      <LaneGrid />
-                      {actuals.length === 0 ? (
-                        <div className="pointer-events-none absolute inset-0 z-[5] flex items-center pl-4 text-sm text-slate-400">
-                          Zaposlenik još nije unio sate za ovaj dan.
-                        </div>
-                      ) : null}
-                      {workGaps(actuals).map((gap) => (
-                        <GapMark key={`og-${gap.start}-${gap.end}`} start={gap.start} end={gap.end} />
-                      ))}
-                      {actuals.map((assignment) => renderBlock(employee.id, assignment, false, false, false))}
-                    </div>
-                  ) : null}
                   <div
-                    hidden={actualsOnly}
                     data-touch-timeline={employee.id}
                     className="relative"
                     style={{ height: split ? SPLIT_LANE : ROW_HEIGHT }}

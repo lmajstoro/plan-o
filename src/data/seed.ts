@@ -336,18 +336,6 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
       { workOrderId: "wo-fs-01", taskId: "task-sv-02", startHour: 13, durationHours: 2 },
       { workOrderId: "wo-kc-01", taskId: "task-sv-03", startHour: 15, durationHours: 2 },
     ], "actual"),
-    ...plan("emp-4", prev1, "asg-a1-emp4", [
-      { workOrderId: "wo-pc-01", taskId: "task-sv-03", startHour: 7, durationHours: 5 },
-      { workOrderId: "wo-ro-01", taskId: "task-sv-02", startHour: 12, durationHours: 3 },
-    ], "actual"),
-    ...plan("emp-6", prev1, "asg-a1-emp6", [
-      { workOrderId: "wo-vj-01", taskId: "task-el-02", startHour: 7, durationHours: 4 },
-      { workOrderId: "wo-kc-01", taskId: "task-el-03", startHour: 11, durationHours: 4 },
-    ], "actual"),
-    ...plan("emp-7", prev1, "asg-a1-emp7", [
-      { workOrderId: "wo-ro-01", taskId: "task-sv-03", startHour: 7, durationHours: 6 },
-      { workOrderId: "wo-vj-01", taskId: "task-sv-03", startHour: 13, durationHours: 2 },
-    ], "actual"),
 
     ...plan("emp-1", prev2, "asg-p2-emp1", [
       { workOrderId: "wo-ro-01", taskId: "task-mk-01", startHour: 7, durationHours: 4 },

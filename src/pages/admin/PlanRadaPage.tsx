@@ -9,7 +9,6 @@ import { SOPNICA_LOAD_MESSAGES, usePlanDay } from "../../lib/usePlanDay";
 import { NotesView } from "../../components/admin/NotesView";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
 import { SaveStatus } from "../../components/ui/SaveStatus";
-import { Switch } from "../../components/ui/Switch";
 
 export function PlanRadaPage() {
   const {
@@ -28,8 +27,6 @@ export function PlanRadaPage() {
     allEmployees,
     employees,
     dayHasActuals,
-    showPlanned,
-    toggleShowPlanned,
     confirmedEmployeeIds,
     sopnicaLoading,
     sopnicaStep,
@@ -65,17 +62,8 @@ export function PlanRadaPage() {
       </div>
 
       {dayHasActuals ? (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          {showPlanned ? (
-            <span>
-              Gdje se unos zaposlenika razlikuje od plana, <span className="font-semibold">gornji red je plan</span>, a <span className="font-semibold">donji red ostvareno</span>.
-            </span>
-          ) : (
-            <span>
-              Prikazano je samo <span className="font-semibold">ostvareno</span>, onako kako su zaposlenici unijeli sate.
-            </span>
-          )}
-          <Switch checked={showPlanned} label="Prikaži planirano" onToggle={toggleShowPlanned} className="text-amber-950" />
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          Ovaj dan ima korekcije zaposlenika: <span className="font-semibold">gornji red je plan</span>, <span className="font-semibold">donji red je ostvareno</span>.
         </div>
       ) : (
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
@@ -200,7 +188,6 @@ export function PlanRadaPage() {
               jobRoles={db.jobRoles}
               assignments={db.assignments}
               confirmedEmployeeIds={confirmedEmployeeIds}
-              showPlanned={showPlanned || !dayHasActuals}
               onCommitEmployeeDay={commitEmployeeDay}
             />
           )}

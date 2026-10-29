@@ -13,7 +13,6 @@ import {
   newId,
   occupiedHours,
   resizeBlock,
-  sameWorkBlocks,
   shiftChain,
   totalHours,
   workGaps,
@@ -63,7 +62,6 @@ type Props = {
   assignments: Assignment[];
   copySources: Employee[];
   confirmedEmployeeIds?: string[];
-  showPlanned?: boolean;
   onCommitEmployeeDay: (employeeId: string, next: Assignment[]) => void;
 };
 
@@ -77,7 +75,6 @@ export function GanttBoard({
   assignments,
   copySources,
   confirmedEmployeeIds = [],
-  showPlanned = true,
   onCommitEmployeeDay,
 }: Props) {
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -106,7 +103,6 @@ export function GanttBoard({
     }
     return map;
   }, [assignments, date, employees]);
-  const dayHasActuals = assignments.some((row) => row.date === date && row.kind === "actual");
 
   function allFor(employeeId: string): Assignment[] {
     return byEmployee[employeeId] ?? [];
@@ -392,11 +388,8 @@ export function GanttBoard({
         {employees.map((employee) => {
           const planned = plannedFor(employee.id);
           const actuals = actualFor(employee.id);
-          const actualsOnly = !showPlanned;
-          const asPlanned = actuals.length > 0 && sameWorkBlocks(planned, actuals);
-          const notEntered = dayHasActuals && actuals.length === 0;
-          const split = !actualsOnly && actuals.length > 0 && !asPlanned;
-          const displayBlocks = actualsOnly || split ? actuals : planned;
+          const split = actuals.length > 0;
+          const displayBlocks = split ? actuals : planned;
           const displayHours = totalHours(displayBlocks);
           const planHours = totalHours(planned);
           const gaps = workGaps(displayBlocks);
@@ -471,8 +464,6 @@ export function GanttBoard({
                     </div>
                     <div className="text-xs text-slate-500">
                       {split && planHours !== displayHours ? `${planHours} → ${displayHours} h` : `${displayHours} h`}
-                      {asPlanned ? <span className="ml-1">· po planu</span> : null}
-                      {notEntered ? <span className="ml-1 font-medium text-amber-700">· nije uneseno</span> : null}
                       {confirmedEmployeeIds.includes(employee.id) ? (
                         <span className="ml-1 font-semibold text-emerald-700">Potvrđeno</span>
                       ) : null}
@@ -494,10 +485,65 @@ export function GanttBoard({
               </div>
 
               <div className="flex flex-col" style={{ width: TIMELINE_WIDTH, height: ROW_HEIGHT }}>
-                {actualsOnly ? (
-                  <div className="relative" style={{ height: ROW_HEIGHT }}>
+                <div
+                  data-timeline={employee.id}
+                  className="relative cursor-crosshair select-none"
+                  style={{ height: split ? SPLIT_LANE : ROW_HEIGHT }}
+                  onPointerDown={(event) => beginSelect(employee.id, event)}
+                  onPointerMove={moveSelect}
+                  onPointerUp={endSelect}
+                >
+                  {split ? (
+                    <span className="pointer-events-none absolute left-0.5 top-0.5 z-20 rounded bg-white/80 px-0.5 text-[8px] font-bold uppercase leading-none text-slate-400">
+                      Plan
+                    </span>
+                  ) : null}
+                  <div
+                    className="pointer-events-none absolute inset-y-0 bg-blue-50/40"
+                    style={{
+                      left: (CORE_START - DAY_START) * HOUR_WIDTH,
+                      width: (CORE_END - CORE_START) * HOUR_WIDTH,
+                    }}
+                  />
+                  {HOURS.map((hour) => (
                     <div
-                      className="pointer-events-none absolute inset-y-0 bg-blue-50/40"
+                      key={hour}
+                      className="absolute inset-y-0 border-r border-slate-100 last:border-r-0"
+                      style={{ left: (hour - DAY_START) * HOUR_WIDTH, width: HOUR_WIDTH }}
+                    />
+                  ))}
+                  {selectedRange ? (
+                    <div
+                      className="pointer-events-none absolute top-1 bottom-1 z-10 flex items-center justify-center rounded-md bg-blue-600/20 ring-1 ring-blue-500"
+                      style={{
+                        left: (selectedRange.start - DAY_START) * HOUR_WIDTH + 2,
+                        width: (selectedRange.end - selectedRange.start) * HOUR_WIDTH - 4,
+                      }}
+                    >
+                      <span className="rounded bg-blue-700 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
+                        {selectedRange.end - selectedRange.start} h
+                      </span>
+                    </div>
+                  ) : null}
+                  {plannedGaps.map((gap) => (
+                    <div
+                      key={`pg-${gap.start}-${gap.end}`}
+                      className="pointer-events-none absolute top-1 bottom-1 z-[5] rounded-md bg-amber-200/40 ring-1 ring-dashed ring-amber-400"
+                      style={{
+                        left: (gap.start - DAY_START) * HOUR_WIDTH + 2,
+                        width: (gap.end - gap.start) * HOUR_WIDTH - 4,
+                      }}
+                    />
+                  ))}
+                  {planned.map((assignment) => renderBlock(employee.id, assignment, true, split, split))}
+                </div>
+                {split ? (
+                  <div className="relative border-t border-slate-200 bg-slate-50/70" style={{ height: SPLIT_LANE }}>
+                    <span className="pointer-events-none absolute left-0.5 top-0.5 z-20 rounded bg-white/90 px-0.5 text-[8px] font-bold uppercase leading-none text-slate-700">
+                      Ostv.
+                    </span>
+                    <div
+                      className="pointer-events-none absolute inset-y-0 bg-blue-50/30"
                       style={{
                         left: (CORE_START - DAY_START) * HOUR_WIDTH,
                         width: (CORE_END - CORE_START) * HOUR_WIDTH,
@@ -505,19 +551,14 @@ export function GanttBoard({
                     />
                     {HOURS.map((hour) => (
                       <div
-                        key={`o-${hour}`}
+                        key={`a-${hour}`}
                         className="absolute inset-y-0 border-r border-slate-100 last:border-r-0"
                         style={{ left: (hour - DAY_START) * HOUR_WIDTH, width: HOUR_WIDTH }}
                       />
                     ))}
-                    {actuals.length === 0 ? (
-                      <div className="pointer-events-none absolute inset-0 z-[5] flex items-center pl-4 text-sm text-slate-400">
-                        Zaposlenik još nije unio sate za ovaj dan.
-                      </div>
-                    ) : null}
                     {actualGaps.map((gap) => (
                       <div
-                        key={`og-${gap.start}-${gap.end}`}
+                        key={`ag-${gap.start}-${gap.end}`}
                         className="pointer-events-none absolute top-1 bottom-1 z-[5] rounded-md bg-amber-200/40 ring-1 ring-dashed ring-amber-400"
                         style={{
                           left: (gap.start - DAY_START) * HOUR_WIDTH + 2,
@@ -525,96 +566,9 @@ export function GanttBoard({
                         }}
                       />
                     ))}
-                    {actuals.map((assignment) => renderBlock(employee.id, assignment, false, false, false))}
+                    {actuals.map((assignment) => renderBlock(employee.id, assignment, false, false, true))}
                   </div>
-                ) : (
-                  <>
-                    <div
-                      data-timeline={employee.id}
-                      className="relative cursor-crosshair select-none"
-                      style={{ height: split ? SPLIT_LANE : ROW_HEIGHT }}
-                      onPointerDown={(event) => beginSelect(employee.id, event)}
-                      onPointerMove={moveSelect}
-                      onPointerUp={endSelect}
-                    >
-                      {split ? (
-                        <span className="pointer-events-none absolute left-0.5 top-0.5 z-20 rounded bg-white/80 px-0.5 text-[8px] font-bold uppercase leading-none text-slate-400">
-                          Plan
-                        </span>
-                      ) : null}
-                      <div
-                        className="pointer-events-none absolute inset-y-0 bg-blue-50/40"
-                        style={{
-                          left: (CORE_START - DAY_START) * HOUR_WIDTH,
-                          width: (CORE_END - CORE_START) * HOUR_WIDTH,
-                        }}
-                      />
-                      {HOURS.map((hour) => (
-                        <div
-                          key={hour}
-                          className="absolute inset-y-0 border-r border-slate-100 last:border-r-0"
-                          style={{ left: (hour - DAY_START) * HOUR_WIDTH, width: HOUR_WIDTH }}
-                        />
-                      ))}
-                      {selectedRange ? (
-                        <div
-                          className="pointer-events-none absolute top-1 bottom-1 z-10 flex items-center justify-center rounded-md bg-blue-600/20 ring-1 ring-blue-500"
-                          style={{
-                            left: (selectedRange.start - DAY_START) * HOUR_WIDTH + 2,
-                            width: (selectedRange.end - selectedRange.start) * HOUR_WIDTH - 4,
-                          }}
-                        >
-                          <span className="rounded bg-blue-700 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
-                            {selectedRange.end - selectedRange.start} h
-                          </span>
-                        </div>
-                      ) : null}
-                      {plannedGaps.map((gap) => (
-                        <div
-                          key={`pg-${gap.start}-${gap.end}`}
-                          className="pointer-events-none absolute top-1 bottom-1 z-[5] rounded-md bg-amber-200/40 ring-1 ring-dashed ring-amber-400"
-                          style={{
-                            left: (gap.start - DAY_START) * HOUR_WIDTH + 2,
-                            width: (gap.end - gap.start) * HOUR_WIDTH - 4,
-                          }}
-                        />
-                      ))}
-                      {planned.map((assignment) => renderBlock(employee.id, assignment, true, split, split))}
-                    </div>
-                    {split ? (
-                      <div className="relative border-t border-slate-200 bg-slate-50/70" style={{ height: SPLIT_LANE }}>
-                        <span className="pointer-events-none absolute left-0.5 top-0.5 z-20 rounded bg-white/90 px-0.5 text-[8px] font-bold uppercase leading-none text-slate-700">
-                          Ostv.
-                        </span>
-                        <div
-                          className="pointer-events-none absolute inset-y-0 bg-blue-50/30"
-                          style={{
-                            left: (CORE_START - DAY_START) * HOUR_WIDTH,
-                            width: (CORE_END - CORE_START) * HOUR_WIDTH,
-                          }}
-                        />
-                        {HOURS.map((hour) => (
-                          <div
-                            key={`a-${hour}`}
-                            className="absolute inset-y-0 border-r border-slate-100 last:border-r-0"
-                            style={{ left: (hour - DAY_START) * HOUR_WIDTH, width: HOUR_WIDTH }}
-                          />
-                        ))}
-                        {actualGaps.map((gap) => (
-                          <div
-                            key={`ag-${gap.start}-${gap.end}`}
-                            className="pointer-events-none absolute top-1 bottom-1 z-[5] rounded-md bg-amber-200/40 ring-1 ring-dashed ring-amber-400"
-                            style={{
-                              left: (gap.start - DAY_START) * HOUR_WIDTH + 2,
-                              width: (gap.end - gap.start) * HOUR_WIDTH - 4,
-                            }}
-                          />
-                        ))}
-                        {actuals.map((assignment) => renderBlock(employee.id, assignment, false, false, true))}
-                      </div>
-                    ) : null}
-                  </>
-                )}
+                ) : null}
               </div>
             </div>
           );
