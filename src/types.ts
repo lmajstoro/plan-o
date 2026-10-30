@@ -45,6 +45,7 @@ export type Task = {
 export type ChecklistItem = {
   id: string;
   code: string;
+  category: string;
   description: string;
 };
 

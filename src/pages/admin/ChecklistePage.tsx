@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Fragment, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
@@ -8,8 +8,16 @@ import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
 import type { ChecklistItem } from "../../types";
 
-type FormState = { code: string; description: string };
-const emptyForm: FormState = { code: "", description: "" };
+type FormState = { category: string; code: string; description: string };
+const emptyForm: FormState = { category: "", code: "", description: "" };
+
+function placeInCategory(items: ChecklistItem[], item: ChecklistItem): ChecklistItem[] {
+  const last = items.reduce((found, row, index) => (row.category === item.category ? index : found), -1);
+  if (last < 0) return [...items, item];
+  const next = [...items];
+  next.splice(last + 1, 0, item);
+  return next;
+}
 
 export function ChecklistePage() {
   const { db, update } = useDb();
@@ -19,10 +27,14 @@ export function ChecklistePage() {
   const [formError, setFormError] = useState("");
   const [removeId, setRemoveId] = useState<string | null>(null);
 
-  const rows = useMemo(
-    () => [...db.checklistItems].sort((a, b) => a.code.localeCompare(b.code, "hr")),
-    [db.checklistItems],
-  );
+  const rows = db.checklistItems;
+  const categories = useMemo(() => {
+    const names: string[] = [];
+    for (const row of rows) {
+      if (!names.includes(row.category)) names.push(row.category);
+    }
+    return names;
+  }, [rows]);
   const paging = usePagedRows(rows);
 
   function closeForm() {
@@ -38,17 +50,18 @@ export function ChecklistePage() {
   }
 
   function openEdit(item: ChecklistItem) {
-    setForm({ code: item.code, description: item.description });
+    setForm({ category: item.category, code: item.code, description: item.description });
     setFormError("");
     setEditing(item);
   }
 
   function save(event: FormEvent) {
     event.preventDefault();
+    const category = form.category.trim();
     const code = form.code.trim();
     const description = form.description.trim();
-    if (!code || !description) {
-      setFormError("Unesite šifru i opis.");
+    if (!category || !code || !description) {
+      setFormError("Unesite kategoriju, šifru i opis.");
       return;
     }
     const taken = db.checklistItems.some(
@@ -58,18 +71,20 @@ export function ChecklistePage() {
       setFormError("Stavka s tom šifrom već postoji.");
       return;
     }
-    const next = { code, description };
+    const next = { category, code, description };
     if (editing) {
-      update((current) => ({
-        ...current,
-        checklistItems: current.checklistItems.map((row) => (row.id === editing.id ? { ...row, ...next } : row)),
-      }));
+      update((current) => {
+        const item = { ...editing, ...next };
+        const without = current.checklistItems.filter((row) => row.id !== editing.id);
+        const checklistItems = editing.category === category ? current.checklistItems.map((row) => (row.id === editing.id ? item : row)) : placeInCategory(without, item);
+        return { ...current, checklistItems };
+      });
       setEditing(null);
       return;
     }
     update((current) => ({
       ...current,
-      checklistItems: [...current.checklistItems, { id: newId("chk"), ...next }],
+      checklistItems: placeInCategory(current.checklistItems, { id: newId("chk"), ...next }),
     }));
     setCreating(false);
   }
@@ -93,7 +108,7 @@ export function ChecklistePage() {
     <div>
       <Header title="Kontrola kvalitete" actionLabel="Nova stavka" onAction={openCreate} />
       <p className="mb-4 text-slate-500">
-        Šifarnik stavki kontrole kvalitete. Svaki novi radni nalog preuzima cijelu listu praznu. Na nalogu se stavka potvrđuje kad je provjerena, ili se označi da ne postoji na uređaju.
+        Šifarnik stavki kontrole kvalitete, složen po kategorijama. Svaki novi radni nalog preuzima cijelu listu praznu. Na nalogu se stavka potvrđuje kad je provjerena, ili se označi da ne postoji na uređaju.
       </p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
@@ -105,22 +120,35 @@ export function ChecklistePage() {
             </tr>
           </thead>
           <tbody>
-            {paging.pageRows.map((row) => (
-              <tr key={row.id} className="border-b border-slate-50 last:border-0">
-                <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.code}</td>
-                <td className="px-4 py-3 text-slate-700">{row.description}</td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-1">
-                    <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
-                      <EditIcon className="h-4 w-4" />
-                    </button>
-                    <button type="button" className="icon-btn-danger" onClick={() => setRemoveId(row.id)} title="Obriši">
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {paging.pageRows.map((row, index) => {
+              const previous = index === 0 ? undefined : paging.pageRows[index - 1];
+              const showCategory = !previous || previous.category !== row.category;
+              return (
+                <Fragment key={row.id}>
+                  {showCategory ? (
+                    <tr className="border-b border-slate-200 bg-slate-100">
+                      <td colSpan={3} className="px-4 py-2 text-sm font-semibold text-slate-800">
+                        {row.category}
+                      </td>
+                    </tr>
+                  ) : null}
+                  <tr className="border-b border-slate-50 last:border-0">
+                    <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.code}</td>
+                    <td className="px-4 py-3 text-slate-700">{row.description}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
+                          <EditIcon className="h-4 w-4" />
+                        </button>
+                        <button type="button" className="icon-btn-danger" onClick={() => setRemoveId(row.id)} title="Obriši">
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
         <PaginationBar
@@ -136,6 +164,23 @@ export function ChecklistePage() {
       {showForm ? (
         <Modal title={editing ? "Uredi stavku" : "Nova stavka"} onClose={closeForm}>
           <form onSubmit={save} className="space-y-3">
+            <Field label="Kategorija">
+              <input
+                className="input"
+                required
+                list="kategorije-kontrole"
+                value={form.category}
+                onChange={(e) => {
+                  setForm({ ...form, category: e.target.value });
+                  setFormError("");
+                }}
+              />
+              <datalist id="kategorije-kontrole">
+                {categories.map((category) => (
+                  <option key={category} value={category} />
+                ))}
+              </datalist>
+            </Field>
             <Field label="Šifra">
               <input
                 className="input"

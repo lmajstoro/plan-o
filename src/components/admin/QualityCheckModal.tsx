@@ -18,6 +18,12 @@ export function QualityCheckModal({ title, items, initialEntries, onClose, onSav
     const item = byId.get(entry.itemId);
     return item ? [{ entry, item }] : [];
   });
+  const groups = rows.reduce<Array<{ category: string; rows: typeof rows }>>((list, row) => {
+    const last = list[list.length - 1];
+    if (!last || last.category !== row.item.category) list.push({ category: row.item.category, rows: [row] });
+    else last.rows.push(row);
+    return list;
+  }, []);
   const summary = checklistSummary(entries);
 
   function setMark(itemId: string, mark: ChecklistMark) {
@@ -40,39 +46,48 @@ export function QualityCheckModal({ title, items, initialEntries, onClose, onSav
           {summary.absent > 0 ? ` · ne postoji na uređaju: ${summary.absent}` : ""}
         </p>
         <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200">
-          <ul>
-            {rows.map(({ entry, item }) => {
-              const confirmed = entry.mark === "potvrdeno";
-              const absent = entry.mark === "nema";
-              const rowTone = confirmed ? "bg-emerald-50" : absent ? "bg-red-50" : "bg-white";
-              return (
-                <li key={entry.itemId} className={`flex items-center gap-3 border-b border-slate-100 px-4 py-2.5 last:border-0 ${rowTone}`}>
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-emerald-600"
-                    checked={confirmed}
-                    onChange={() => setMark(item.id, confirmed ? "prazno" : "potvrdeno")}
-                    aria-label={`Potvrdi ${item.code}`}
-                  />
-                  <div className={`min-w-0 flex-1 text-sm ${confirmed ? "text-emerald-950" : absent ? "text-red-950" : "text-slate-700"}`}>
-                    <span className="font-mono font-medium">{item.code}</span> {item.description}
-                  </div>
-                  <button
-                    type="button"
-                    aria-pressed={absent}
-                    className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                      absent
-                        ? "bg-red-600 text-white"
-                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                    onClick={() => setMark(item.id, absent ? "prazno" : "nema")}
-                  >
-                    Ne postoji na uređaju
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <div>
+            {groups.map((group) => (
+              <section key={group.category}>
+                <h3 className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800">
+                  {group.category}
+                </h3>
+                <ul>
+                  {group.rows.map(({ entry, item }) => {
+                    const confirmed = entry.mark === "potvrdeno";
+                    const absent = entry.mark === "nema";
+                    const rowTone = confirmed ? "bg-emerald-50" : absent ? "bg-red-50" : "bg-white";
+                    return (
+                      <li key={entry.itemId} className={`flex items-center gap-3 border-b border-slate-100 px-4 py-2.5 ${rowTone}`}>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-emerald-600"
+                          checked={confirmed}
+                          onChange={() => setMark(item.id, confirmed ? "prazno" : "potvrdeno")}
+                          aria-label={`Potvrdi ${item.code}`}
+                        />
+                        <div className={`min-w-0 flex-1 text-sm ${confirmed ? "text-emerald-950" : absent ? "text-red-950" : "text-slate-700"}`}>
+                          <span className="font-mono font-medium">{item.code}</span> {item.description}
+                        </div>
+                        <button
+                          type="button"
+                          aria-pressed={absent}
+                          className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                            absent
+                              ? "bg-red-600 text-white"
+                              : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                          }`}
+                          onClick={() => setMark(item.id, absent ? "prazno" : "nema")}
+                        >
+                          Ne postoji na uređaju
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
         </div>
         <div className="flex shrink-0 justify-end gap-2 pt-1">
           <button type="button" className="btn-secondary" onClick={onClose}>
