@@ -71,7 +71,7 @@ export function AdminLayout() {
   }
 
   const nav = (
-    <nav className="flex flex-1 flex-col gap-1 px-3">
+    <nav className="flex flex-col gap-1 px-3">
       <SectionLabel label="Pregled" collapsed={collapsed} first />
       {overviewLinks.map((link) => (
         <NavItem key={link.to} {...link} collapsed={collapsed} />
@@ -95,15 +95,15 @@ export function AdminLayout() {
           Odjava
         </button>
       </div>
-      <div className="hidden min-h-screen bg-slate-50 lg:flex">
+      <div className="hidden h-dvh overflow-hidden bg-slate-50 lg:flex">
         <aside
-          className={`relative flex shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 ease-out ${
+          className={`relative flex h-full shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 ease-out ${
             collapsed ? "w-[68px]" : "w-60"
           }`}
         >
-          <div className="flex flex-1 flex-col overflow-hidden whitespace-nowrap">
+          <div className="flex h-full min-h-0 flex-col whitespace-nowrap">
             <Brand collapsed={collapsed} />
-            {nav}
+            <div className="min-h-0 flex-1 overflow-y-auto">{nav}</div>
             <SidebarFooter
               name={user?.name ?? ""}
               email={user?.email ?? ""}
@@ -114,8 +114,10 @@ export function AdminLayout() {
           </div>
           <CollapseToggle collapsed={collapsed} onToggle={toggleCollapsed} />
         </aside>
-        <main className="min-w-0 flex-1 p-6">
-          <Outlet />
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <div className="p-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </>
@@ -234,7 +236,7 @@ function SidebarFooter({
     .slice(0, 2);
 
   return (
-    <div className="mt-auto space-y-2 border-t border-slate-100 p-3">
+    <div className="space-y-2 border-t border-slate-100 p-3">
       <div className="flex items-center gap-3 py-1 pl-1" title={collapsed ? `${name}\n${email}` : undefined}>
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
           {initials}

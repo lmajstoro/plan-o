@@ -1,12 +1,14 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { QualityCheckModal } from "../../components/admin/QualityCheckModal";
 import { NotesEditor } from "../../components/admin/NotesEditor";
+import { NotesView } from "../../components/admin/NotesView";
+import { QualityCheckModal } from "../../components/admin/QualityCheckModal";
 import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { ChevronLeftIcon } from "../../components/icons";
 import { useDb } from "../../context/DbContext";
-import { compactNotes } from "../../lib/notes";
-import { formatHours, hourDeltaLabel, workOrderOverview, type HourPair } from "../../lib/workOrderOverview";
+import { compactNotes, notesHasContent } from "../../lib/notes";
+import { checklistSummary } from "../../lib/qualityChecklist";
+import { formatHours, hourDeltaLabel, workOrderOverview, type HourPair, type PersonHours, type RoleHours } from "../../lib/workOrderOverview";
 import {
   ERP_CODE_PATTERN,
   sortTemplates,
@@ -24,6 +26,7 @@ import { Field } from "./ZaposleniciPage";
 
 const TABS = [
   { id: "pregled", label: "Pregled" },
+  { id: "sati", label: "Sati" },
   { id: "informacije", label: "Informacije" },
   { id: "zadaci", label: "Zadaci" },
   { id: "kontrola", label: "Kontrola kvalitete" },
@@ -65,39 +68,53 @@ export function RadniNalogPage() {
 
   const color = workOrderColor(order, db.workOrderTemplates);
 
+  const checklist = checklistSummary(order.checklist ?? []);
+
   return (
     <div>
-      <BackLink />
-      <h1 className="mt-3 flex items-center gap-2 text-2xl font-semibold text-slate-900">
-        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-        <span className="font-mono">{workOrderCode(order)}</span>
-        <span className="min-w-0 truncate">{order.name}</span>
-        <span className={`ml-1 inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${workOrderStatusClass(order.status, order.archived)}`}>
-          {order.archived ? "Arhiviran" : WORK_ORDER_STATUS_LABELS[order.status]}
-        </span>
-      </h1>
+      <div className="sticky top-0 z-20 -mx-6 -mt-6 bg-slate-50 px-6 pb-4 pt-6">
+        <BackLink />
+        <h1 className="mt-3 flex items-center gap-2 text-2xl font-semibold text-slate-900">
+          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+          <span className="font-mono">{workOrderCode(order)}</span>
+          <span className="min-w-0 truncate">{order.name}</span>
+          <span className={`ml-1 inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${workOrderStatusClass(order.status, order.archived)}`}>
+            {order.archived ? "Arhiviran" : WORK_ORDER_STATUS_LABELS[order.status]}
+          </span>
+        </h1>
 
-      <div role="tablist" className="mt-5 flex flex-wrap gap-1 border-b border-slate-200">
-        {TABS.map((item) => {
-          const selected = tab === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              className={`border-b-2 px-3 py-2 text-sm font-medium ${
-                selected ? "border-blue-700 text-blue-800" : "border-transparent text-slate-500 hover:text-slate-800"
-              }`}
-              onClick={() => selectTab(item.id)}
-            >
-              {item.label}
-            </button>
-          );
-        })}
+        <div role="tablist" className="mt-4 flex flex-wrap gap-1 border-b border-slate-200">
+          {TABS.map((item) => {
+            const selected = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                className={`border-b-2 px-3 py-2 text-sm font-medium ${
+                  selected ? "border-blue-700 text-blue-800" : "border-transparent text-slate-500 hover:text-slate-800"
+                }`}
+                onClick={() => selectTab(item.id)}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {tab === "pregled" ? <Pregled overview={overview} /> : null}
+      {tab === "pregled" ? (
+        <Pregled
+          order={order}
+          overview={overview}
+          template={templateName(db.workOrderTemplates, order.templateId)}
+          taskCount={order.taskIds?.length ?? 0}
+          checklist={checklist}
+          onOpen={(next) => selectTab(next)}
+        />
+      ) : null}
+      {tab === "sati" ? <Sati overview={overview} /> : null}
       {tab === "informacije" ? <Informacije order={order} /> : null}
       {tab === "zadaci" ? (
         <div className="mt-5">
@@ -144,7 +161,168 @@ function BackLink() {
   );
 }
 
-function Pregled({ overview }: { overview: NonNullable<ReturnType<typeof workOrderOverview>> }) {
+function Pregled({
+  order,
+  overview,
+  template,
+  taskCount,
+  checklist,
+  onOpen,
+}: {
+  order: WorkOrder;
+  overview: NonNullable<ReturnType<typeof workOrderOverview>>;
+  template: string;
+  taskCount: number;
+  checklist: { confirmed: number; applicable: number };
+  onOpen: (tab: TabId) => void;
+}) {
+  const maxRole = Math.max(...overview.roles.map((role) => Math.max(role.planned, role.actual)), 0);
+  const maxPerson = Math.max(...overview.people.map((person) => person.actual), 0);
+
+  return (
+    <div className="mt-5 grid gap-4 xl:grid-cols-5">
+      <section className="rounded-xl border border-slate-200 bg-white xl:col-span-2">
+        <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">Nalog</h2>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-4 text-sm">
+          <div>
+            <dt className="text-slate-500">ERP šifra</dt>
+            <dd className="font-mono font-medium text-slate-900">{order.erpCode}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Predložak</dt>
+            <dd className="font-medium text-slate-900">{template}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Zadaci</dt>
+            <dd>
+              <button type="button" className="font-medium text-blue-800 hover:underline" onClick={() => onOpen("zadaci")}>
+                {taskCount}
+              </button>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Kontrola</dt>
+            <dd>
+              <button type="button" className="font-medium text-blue-800 hover:underline" onClick={() => onOpen("kontrola")}>
+                {checklist.confirmed}/{checklist.applicable}
+              </button>
+            </dd>
+          </div>
+        </dl>
+        <div className="border-t border-slate-100 px-4 py-3">
+          <p className="text-xs font-medium text-slate-500">Napomena</p>
+          {notesHasContent(order.description) ? (
+            <div className="mt-1">
+              <NotesView value={order.description} />
+            </div>
+          ) : (
+            <p className="mt-1 text-sm text-slate-400">Nema napomene.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-2 divide-x divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white xl:col-span-3">
+        <Stat label="Utrošeno" value={formatHours(overview.actual)} />
+        <Stat label="Planirano" value={formatHours(overview.planned)} />
+        <Stat label="Razlika" value={hourDeltaLabel(overview.planned, overview.actual)} />
+        <Stat
+          label="Ljudi"
+          value={String(overview.people.length)}
+          hint={overview.plannedOnly.length > 0 ? `${overview.plannedOnly.length} samo u planu` : "s unesenim satima"}
+        />
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white xl:col-span-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+          <h2 className="text-sm font-semibold text-slate-900">Sati po ulogama</h2>
+          <p className="text-xs text-slate-500">Deblja traka je ostvareno, tanja je plan.</p>
+        </div>
+        {overview.roles.length === 0 ? (
+          <p className="px-4 py-8 text-sm text-slate-500">Na ovom nalogu još nema planiranih ni utrošenih sati.</p>
+        ) : (
+          <div className="space-y-4 px-4 py-4">
+            {overview.roles.map((role) => (
+              <RoleBar key={role.id} role={role} max={maxRole} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white xl:col-span-2">
+        <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">
+          Ljudi koji su radili <span className="font-normal text-slate-500">{overview.people.length}</span>
+        </h2>
+        {overview.people.length === 0 ? (
+          <p className="px-4 py-8 text-sm text-slate-500">Još nitko nije unio sate na ovom nalogu.</p>
+        ) : (
+          <div className="space-y-3 px-4 py-4">
+            {overview.people.map((person) => (
+              <PersonBar key={person.id} person={person} max={maxPerson} />
+            ))}
+          </div>
+        )}
+        {overview.plannedOnly.length > 0 ? (
+          <p className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
+            Samo u planu: {overview.plannedOnly.map((person) => `${person.name} (${formatHours(person.planned)})`).join(", ")}
+          </p>
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="px-4 py-4">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{value}</p>
+      {hint ? <p className="mt-0.5 text-xs text-slate-400">{hint}</p> : null}
+    </div>
+  );
+}
+
+function RoleBar({ role, max }: { role: RoleHours; max: number }) {
+  const width = (value: number) => (max === 0 ? 0 : Math.round((value / max) * 100));
+  return (
+    <div>
+      <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
+        <span className="flex min-w-0 items-center gap-2 font-medium text-slate-900">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: role.color }} />
+          <span className="truncate">{role.name}</span>
+        </span>
+        <span className="shrink-0 tabular-nums text-slate-600">
+          {formatHours(role.actual)}
+          <span className="text-slate-400"> · plan {formatHours(role.planned)}</span>
+        </span>
+      </div>
+      <div className="space-y-1">
+        <div className="h-2.5 rounded-full bg-slate-100">
+          <div className="h-2.5 rounded-full" style={{ width: `${width(role.actual)}%`, backgroundColor: role.color }} />
+        </div>
+        <div className="h-1.5 rounded-full bg-slate-100">
+          <div className="h-1.5 rounded-full bg-slate-300" style={{ width: `${width(role.planned)}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PersonBar({ person, max }: { person: PersonHours; max: number }) {
+  const width = max === 0 ? 0 : Math.round((person.actual / max) * 100);
+  return (
+    <div>
+      <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
+        <span className="min-w-0 truncate font-medium text-slate-900">{person.name}</span>
+        <span className="shrink-0 tabular-nums text-slate-600">{formatHours(person.actual)}</span>
+      </div>
+      <div className="h-2 rounded-full bg-slate-100">
+        <div className="h-2 rounded-full bg-blue-600" style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function Sati({ overview }: { overview: NonNullable<ReturnType<typeof workOrderOverview>> }) {
   const empty = overview.planned === 0 && overview.actual === 0;
   if (empty) {
     return (
