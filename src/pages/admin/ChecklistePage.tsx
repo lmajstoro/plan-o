@@ -1,6 +1,7 @@
-import { FormEvent, Fragment, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
+import { CategoryTabs } from "../../components/admin/CategoryTabs";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { PaginationBar } from "../../components/admin/PaginationBar";
@@ -28,6 +29,7 @@ export function ChecklistePage() {
   const [removeId, setRemoveId] = useState<string | null>(null);
 
   const rows = db.checklistItems;
+  const [category, setCategory] = useState("");
   const categories = useMemo(() => {
     const names: string[] = [];
     for (const row of rows) {
@@ -35,7 +37,9 @@ export function ChecklistePage() {
     }
     return names;
   }, [rows]);
-  const paging = usePagedRows(rows);
+  const active = categories.includes(category) ? category : categories[0] ?? "";
+  const visible = useMemo(() => rows.filter((row) => row.category === active), [rows, active]);
+  const paging = usePagedRows(visible);
 
   function closeForm() {
     setCreating(false);
@@ -44,7 +48,7 @@ export function ChecklistePage() {
   }
 
   function openCreate() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, category: active });
     setFormError("");
     setCreating(true);
   }
@@ -79,6 +83,7 @@ export function ChecklistePage() {
         const checklistItems = editing.category === category ? current.checklistItems.map((row) => (row.id === editing.id ? item : row)) : placeInCategory(without, item);
         return { ...current, checklistItems };
       });
+      setCategory(category);
       setEditing(null);
       return;
     }
@@ -86,6 +91,7 @@ export function ChecklistePage() {
       ...current,
       checklistItems: placeInCategory(current.checklistItems, { id: newId("chk"), ...next }),
     }));
+    setCategory(category);
     setCreating(false);
   }
 
@@ -110,7 +116,19 @@ export function ChecklistePage() {
       <p className="mb-4 text-slate-500">
         Šifarnik stavki kontrole kvalitete, složen po kategorijama. Svaki novi radni nalog preuzima cijelu listu praznu. Na nalogu se stavka potvrđuje kad je provjerena, ili se označi da ne postoji na uređaju.
       </p>
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <CategoryTabs
+        tabs={categories.map((name) => ({
+          id: name,
+          label: name,
+          detail: String(rows.filter((row) => row.category === name).length),
+        }))}
+        value={active}
+        onChange={(next) => {
+          setCategory(next);
+          paging.setPage(1);
+        }}
+      />
+      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
             <tr>
@@ -120,35 +138,22 @@ export function ChecklistePage() {
             </tr>
           </thead>
           <tbody>
-            {paging.pageRows.map((row, index) => {
-              const previous = index === 0 ? undefined : paging.pageRows[index - 1];
-              const showCategory = !previous || previous.category !== row.category;
-              return (
-                <Fragment key={row.id}>
-                  {showCategory ? (
-                    <tr className="border-b border-slate-200 bg-slate-100">
-                      <td colSpan={3} className="px-4 py-2 text-sm font-semibold text-slate-800">
-                        {row.category}
-                      </td>
-                    </tr>
-                  ) : null}
-                  <tr className="border-b border-slate-50 last:border-0">
-                    <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.code}</td>
-                    <td className="px-4 py-3 text-slate-700">{row.description}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-1">
-                        <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
-                          <EditIcon className="h-4 w-4" />
-                        </button>
-                        <button type="button" className="icon-btn-danger" onClick={() => setRemoveId(row.id)} title="Obriši">
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </Fragment>
-              );
-            })}
+            {paging.pageRows.map((row) => (
+              <tr key={row.id} className="border-b border-slate-50 last:border-0">
+                <td className="px-4 py-3 font-mono font-medium text-slate-900">{row.code}</td>
+                <td className="px-4 py-3 text-slate-700">{row.description}</td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-end gap-1">
+                    <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
+                      <EditIcon className="h-4 w-4" />
+                    </button>
+                    <button type="button" className="icon-btn-danger" onClick={() => setRemoveId(row.id)} title="Obriši">
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
         <PaginationBar
