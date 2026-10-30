@@ -68,6 +68,12 @@ function showcaseHours(today: Date): Assignment[] {
     [3, "emp-6", "task-el-01", 4, 4],
     [3, "emp-7", "task-sv-03", 4, 0],
     [3, "emp-1", "task-mk-03", 2, 2],
+    [8, "emp-8", "task-iz-01", 8, 8],
+    [7, "emp-8", "task-iz-02", 6, 6],
+    [6, "emp-8", "task-iz-03", 4, 4],
+    [9, "emp-9", "task-lb-01", 8, 8],
+    [8, "emp-9", "task-lb-02", 6, 5],
+    [6, "emp-9", "task-lb-03", 4, 4],
   ];
   return rows.flatMap(([offset, employeeId, taskId, planned, actual], index) => {
     const date = formatDateKey(addWorkDays(today, -offset));
@@ -123,6 +129,8 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     { id: "emp-5", name: "Marko Čižmek", email: "marko.cizmek@plan-o.hr", roleIds: ["elektromonter"], groupIds: ["wg-elektricari", "wg-ivanovi", "wg-sopnica"] },
     { id: "emp-6", name: "Tomo Žižak", email: "tomo.zizak@plan-o.hr", roleIds: ["elektromonter", "monter-konstrukcije"], groupIds: ["wg-elektricari", "wg-donja"] },
     { id: "emp-7", name: "Patrik Lukanović", email: "patrik.lukanovic@plan-o.hr", roleIds: ["serviser"], groupIds: ["wg-dezurstvo", "wg-najjaci", "wg-sopnica"] },
+    { id: "emp-8", name: "Nikola Perić", email: "nikola.peric@plan-o.hr", roleIds: ["izolater"], groupIds: ["wg-gornja"] },
+    { id: "emp-9", name: "Stjepan Babić", email: "stjepan.babic@plan-o.hr", roleIds: ["lemitelj-bakra"], groupIds: ["wg-donja"] },
   ].map((row) => ({ ...row, active: true }));
 
   const tasks = [
