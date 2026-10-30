@@ -34,6 +34,50 @@ function plan(employeeId: string, date: string, prefix: string, slots: Slot[], k
   }));
 }
 
+function showcaseHours(today: Date): Assignment[] {
+  const orderId = "wo-cl-01";
+  const rows: Array<[number, string, string, number, number]> = [
+    [10, "emp-1", "task-mk-01", 8, 8],
+    [10, "emp-2", "task-mk-02", 8, 7],
+    [10, "emp-6", "task-lg-01", 4, 4],
+    [9, "emp-1", "task-mk-03", 8, 8],
+    [9, "emp-2", "task-mk-01", 4, 5],
+    [9, "emp-6", "task-sb-01", 6, 6],
+    [9, "emp-3", "task-lb-01", 8, 8],
+    [8, "emp-3", "task-lb-02", 6, 5],
+    [8, "emp-4", "task-lb-01", 4, 4],
+    [8, "emp-1", "task-mk-02", 4, 3],
+    [8, "emp-2", "task-iz-01", 8, 8],
+    [7, "emp-2", "task-iz-02", 6, 6],
+    [7, "emp-5", "task-el-01", 8, 8],
+    [7, "emp-6", "task-el-02", 6, 7],
+    [7, "emp-1", "task-iz-01", 4, 4],
+    [6, "emp-5", "task-el-02", 4, 6],
+    [6, "emp-6", "task-el-03", 8, 8],
+    [6, "emp-7", "task-sv-01", 8, 6],
+    [6, "emp-2", "task-iz-03", 4, 2],
+    [5, "emp-3", "task-sv-01", 6, 6],
+    [5, "emp-7", "task-sv-02", 8, 4],
+    [5, "emp-4", "task-sv-03", 4, 4],
+    [5, "emp-5", "task-el-03", 4, 4],
+    [4, "emp-3", "task-sv-02", 4, 5],
+    [4, "emp-1", "task-cu-01", 4, 4],
+    [4, "emp-2", "task-cu-03", 4, 3],
+    [4, "emp-5", "task-el-01", 2, 2],
+    [3, "emp-4", "task-sv-02", 4, 2],
+    [3, "emp-6", "task-cu-02", 4, 4],
+    [3, "emp-7", "task-sv-03", 4, 0],
+    [3, "emp-1", "task-mk-03", 2, 2],
+  ];
+  return rows.flatMap(([offset, employeeId, taskId, planned, actual], index) => {
+    const date = formatDateKey(addWorkDays(today, -offset));
+    const shared = { employeeId, date, workOrderId: orderId, taskId, startHour: 7 };
+    const plannedRow: Assignment = { id: `asg-cl-p-${index + 1}`, kind: "planned", durationHours: planned, ...shared };
+    if (actual <= 0) return [plannedRow];
+    return [plannedRow, { id: `asg-cl-a-${index + 1}`, kind: "actual", durationHours: actual, ...shared }];
+  });
+}
+
 export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Database {
   const today = parseDateKey(dateKey);
   const year = today.getFullYear();
@@ -270,9 +314,25 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
       archived: false,
       taskIds: [...allTaskIds],
     },
+    {
+      id: "wo-cl-01",
+      number: 11,
+      year,
+      erpCode: "CL1208KW",
+      name: "Čiler 120 kW",
+      description: "Sklapanje čilera za halu 2. Rad traje dva tjedna, od konstrukcije do čišćenja.",
+      color: "#dc2626",
+      templateId: "tpl-ciler",
+      status: "u_tijeku",
+      archived: false,
+      taskIds: [...allTaskIds],
+    },
   ] satisfies Array<Omit<WorkOrder, "checklist">>).map((order) => ({
     ...order,
-    checklist: checklistItemIds.map((itemId) => ({ itemId, mark: "prazno" as const })),
+    checklist: checklistItemIds.map((itemId, index) => ({
+      itemId,
+      mark: order.id !== "wo-cl-01" ? "prazno" as const : index < 12 ? "potvrdeno" as const : index === 17 ? "nema" as const : "prazno" as const,
+    })),
   }));
 
   const assignments: Assignment[] = [
@@ -381,6 +441,7 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     ...plan("emp-1", next3, "asg-n3-emp1", [
       { workOrderId: "wo-ro-01", taskId: "task-mk-03", startHour: 7, durationHours: 8 },
     ]),
+    ...showcaseHours(today),
   ];
 
   return {

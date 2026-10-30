@@ -4,13 +4,14 @@ import { roleColor, roleName } from "../../lib/roles";
 import type { JobRole, Task } from "../../types";
 
 type Props = {
-  title: string;
+  title?: string;
   description?: string;
   tasks: Task[];
   jobRoles: JobRole[];
   initialSelectedIds: string[];
-  onClose: () => void;
+  onClose?: () => void;
   onSave: (taskIds: string[]) => void;
+  embedded?: boolean;
 };
 
 function matchesQuery(task: Task, jobRoles: JobRole[], query: string): boolean {
@@ -27,6 +28,7 @@ export function TaskSelectModal({
   initialSelectedIds,
   onClose,
   onSave,
+  embedded = false,
 }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>(() => [...initialSelectedIds]);
   const [query, setQuery] = useState("");
@@ -72,8 +74,15 @@ export function TaskSelectModal({
     onSave(selectedIds);
   }
 
-  return (
-    <Modal title={title} size="full" onClose={onClose}>
+  function discard() {
+    if (onClose) onClose();
+    else {
+      setSelectedIds([...initialSelectedIds]);
+      setError("");
+    }
+  }
+
+  const form = (
       <form onSubmit={save} className="flex h-full min-h-0 flex-col gap-3">
         {description ? <p className="shrink-0 text-sm text-slate-500">{description}</p> : null}
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
@@ -147,7 +156,7 @@ export function TaskSelectModal({
         )}
         {error ? <p className="shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
         <div className="flex shrink-0 justify-end gap-2 pt-1">
-          <button type="button" className="btn-secondary" onClick={onClose}>
+          <button type="button" className="btn-secondary" onClick={discard}>
             Odustani
           </button>
           <button type="submit" className="btn-primary">
@@ -155,6 +164,12 @@ export function TaskSelectModal({
           </button>
         </div>
       </form>
+  );
+
+  if (embedded) return <div className="flex h-[min(70vh,42rem)] min-h-0 flex-col">{form}</div>;
+  return (
+    <Modal title={title ?? "Zadaci"} size="full" onClose={discard}>
+      {form}
     </Modal>
   );
 }

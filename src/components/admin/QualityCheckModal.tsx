@@ -5,14 +5,15 @@ import { checklistSummary } from "../../lib/qualityChecklist";
 import type { ChecklistItem, ChecklistMark, WorkOrderChecklistEntry } from "../../types";
 
 type Props = {
-  title: string;
+  title?: string;
   items: ChecklistItem[];
   initialEntries: WorkOrderChecklistEntry[];
-  onClose: () => void;
+  onClose?: () => void;
   onSave: (entries: WorkOrderChecklistEntry[]) => void;
+  embedded?: boolean;
 };
 
-export function QualityCheckModal({ title, items, initialEntries, onClose, onSave }: Props) {
+export function QualityCheckModal({ title, items, initialEntries, onClose, onSave, embedded = false }: Props) {
   const [entries, setEntries] = useState<WorkOrderChecklistEntry[]>(() => initialEntries.map((entry) => ({ ...entry })));
   const byId = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const rows = entries.flatMap((entry) => {
@@ -38,8 +39,12 @@ export function QualityCheckModal({ title, items, initialEntries, onClose, onSav
     onSave(entries);
   }
 
-  return (
-    <Modal title={title} size="full" onClose={onClose}>
+  function discard() {
+    if (onClose) onClose();
+    else setEntries(initialEntries.map((entry) => ({ ...entry })));
+  }
+
+  const form = (
       <form onSubmit={save} className="flex h-full min-h-0 flex-col gap-3">
         <p className="shrink-0 text-sm text-slate-500">
           Označi stavku kad je provjerena. Ako je nema na uređaju, označi to umjesto potvrde.
@@ -92,7 +97,7 @@ export function QualityCheckModal({ title, items, initialEntries, onClose, onSav
           </ul>
         </div>
         <div className="flex shrink-0 justify-end gap-2 pt-1">
-          <button type="button" className="btn-secondary" onClick={onClose}>
+          <button type="button" className="btn-secondary" onClick={discard}>
             Odustani
           </button>
           <button type="submit" className="btn-primary">
@@ -100,6 +105,12 @@ export function QualityCheckModal({ title, items, initialEntries, onClose, onSav
           </button>
         </div>
       </form>
+  );
+
+  if (embedded) return <div className="flex h-[min(70vh,42rem)] min-h-0 flex-col">{form}</div>;
+  return (
+    <Modal title={title ?? "Kontrola kvalitete"} size="full" onClose={discard}>
+      {form}
     </Modal>
   );
 }

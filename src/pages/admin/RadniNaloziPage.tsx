@@ -16,19 +16,16 @@ import {
   WORK_ORDER_STATUSES,
   workOrderStatusClass,
 } from "../../lib/workOrders";
-import { ConfirmDialog, Modal } from "../../components/ui/Modal";
-import { QualityCheckModal } from "../../components/admin/QualityCheckModal";
-import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
+import { Modal } from "../../components/ui/Modal";
 import { NotesEditor } from "../../components/admin/NotesEditor";
 import { NotesView } from "../../components/admin/NotesView";
 import { PaginationBar } from "../../components/admin/PaginationBar";
-import { EditIcon, ListChecksIcon, QualityIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
 import { usePagedRows } from "../../lib/pagination";
 import { compactNotes, toggleNoteTodo } from "../../lib/notes";
 import { calendarToday } from "../../lib/dates";
 import { blankChecklist, checklistSummary } from "../../lib/qualityChecklist";
-import type { WorkOrder, WorkOrderStatus } from "../../types";
+import type { WorkOrderStatus } from "../../types";
 
 type FormState = {
   number: number;
@@ -56,13 +53,9 @@ const emptyForm: FormState = {
 
 export function RadniNaloziPage() {
   const { db, update } = useDb();
-  const [editing, setEditing] = useState<WorkOrder | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState("");
-  const [archiveTarget, setArchiveTarget] = useState<WorkOrder | null>(null);
-  const [tasksOrder, setTasksOrder] = useState<WorkOrder | null>(null);
-  const [checklistOrder, setChecklistOrder] = useState<WorkOrder | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
   const templates = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
@@ -88,23 +81,6 @@ export function RadniNaloziPage() {
     setCreating(true);
   }
 
-  function openEdit(order: WorkOrder) {
-    const template = templates.find((row) => row.id === order.templateId);
-    setForm({
-      number: order.number,
-      year: order.year,
-      erpCode: order.erpCode,
-      name: order.name,
-      description: order.description,
-      templateId: order.templateId,
-      color: order.color || template?.color || WORK_ORDER_COLORS[0],
-      status: order.status ?? "otvoren",
-      archived: Boolean(order.archived),
-    });
-    setFormError("");
-    setEditing(order);
-  }
-
   function changeTemplate(templateId: string) {
     const template = templates.find((row) => row.id === templateId);
     setForm((current) => ({
@@ -115,58 +91,8 @@ export function RadniNaloziPage() {
     setFormError("");
   }
 
-  function openTasks(order: WorkOrder) {
-    setTasksOrder(order);
-  }
-
-  function closeTasks() {
-    setTasksOrder(null);
-  }
-
-  function saveTasks(taskIds: string[]) {
-    if (!tasksOrder) return;
-    update((current) => ({
-      ...current,
-      workOrders: current.workOrders.map((row) => (row.id === tasksOrder.id ? { ...row, taskIds } : row)),
-    }));
-    closeTasks();
-  }
-
-  function saveChecklist(checklist: WorkOrder["checklist"]) {
-    if (!checklistOrder) return;
-    update((current) => ({
-      ...current,
-      workOrders: current.workOrders.map((row) => (row.id === checklistOrder.id ? { ...row, checklist } : row)),
-    }));
-    setChecklistOrder(null);
-  }
-
-  function requestArchiveToggle(order: WorkOrder) {
-    if (order.archived) {
-      toggleArchived(order);
-      return;
-    }
-    setArchiveTarget(order);
-  }
-
-  function confirmArchive() {
-    if (!archiveTarget) return;
-    toggleArchived(archiveTarget);
-    setArchiveTarget(null);
-  }
-
-  function toggleArchived(order: WorkOrder) {
-    update((current) => ({
-      ...current,
-      workOrders: current.workOrders.map((row) =>
-        row.id === order.id ? { ...row, archived: !row.archived } : row,
-      ),
-    }));
-  }
-
   function closeForm() {
     setCreating(false);
-    setEditing(null);
     setFormError("");
   }
 
@@ -180,22 +106,12 @@ export function RadniNaloziPage() {
       setFormError("ERP šifra ima točno 8 znakova: slova bez dijakritika i brojke.");
       return;
     }
-    if (db.workOrders.some((row) => row.erpCode === form.erpCode && row.id !== editing?.id)) {
+    if (db.workOrders.some((row) => row.erpCode === form.erpCode)) {
       setFormError("Nalog s tom ERP šifrom već postoji.");
       return;
     }
     const color = form.color || selectedTemplate?.color || "#334155";
     const description = compactNotes(form.description);
-    if (editing) {
-      update((current) => ({
-        ...current,
-        workOrders: current.workOrders.map((row) =>
-          row.id === editing.id ? { ...row, ...form, description, color } : row,
-        ),
-      }));
-      setEditing(null);
-      return;
-    }
     const inheritedTaskIds = [...(selectedTemplate?.taskIds ?? [])];
     if (inheritedTaskIds.length === 0) {
       setFormError("Predložak nema zadataka. Dodajte ih na predlošku pa kreirajte nalog.");
@@ -227,7 +143,7 @@ export function RadniNaloziPage() {
     }));
   }
 
-  const showForm = creating || editing;
+  const showForm = creating;
 
   return (
     <div>
@@ -258,13 +174,12 @@ export function RadniNaloziPage() {
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Zadaci</th>
               <th className="px-4 py-3 font-medium">Kontrola</th>
-              <th className="px-4 py-3 font-medium text-right">Akcije</th>
             </tr>
           </thead>
           <tbody>
             {paging.pageRows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                   Nema naloga za prikaz.
                 </td>
               </tr>
@@ -296,28 +211,15 @@ export function RadniNaloziPage() {
                     {row.archived ? "Arhiviran" : (WORK_ORDER_STATUS_LABELS[row.status] ?? "Otvoren")}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-slate-600">{row.taskIds?.length ?? 0}</td>
-                <td className="px-4 py-3 tabular-nums text-slate-600">{checklistSummary(row.checklist ?? []).confirmed}/{checklistSummary(row.checklist ?? []).applicable}</td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-1">
-                    <button type="button" className="icon-btn" onClick={() => openEdit(row)} title="Uredi">
-                      <EditIcon className="h-4 w-4" />
-                    </button>
-                    <button type="button" className="icon-btn" onClick={() => openTasks(row)} title="Uredi zadatke">
-                      <ListChecksIcon className="h-4 w-4" />
-                    </button>
-                    <button type="button" className="icon-btn" onClick={() => setChecklistOrder(row)} title="Kontrola kvalitete">
-                      <QualityIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      className="icon-btn-danger"
-                      onClick={() => requestArchiveToggle(row)}
-                      title={row.archived ? "Vrati iz arhive" : "Arhiviraj"}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </div>
+                <td className="px-4 py-3 text-slate-600">
+                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=zadaci`} className="hover:text-blue-700">
+                    {row.taskIds?.length ?? 0}
+                  </Link>
+                </td>
+                <td className="px-4 py-3 tabular-nums text-slate-600">
+                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=kontrola`} className="hover:text-blue-700">
+                    {checklistSummary(row.checklist ?? []).confirmed}/{checklistSummary(row.checklist ?? []).applicable}
+                  </Link>
                 </td>
               </tr>
               ))
@@ -335,7 +237,7 @@ export function RadniNaloziPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi radni nalog" : "Novi radni nalog"} size="lg" onClose={closeForm}>
+        <Modal title="Novi radni nalog" size="lg" onClose={closeForm}>
           <form onSubmit={save} className="space-y-3">
             {templates.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -412,11 +314,7 @@ export function RadniNaloziPage() {
                   />
                 ))}
               </div>
-              <p className="mt-1.5 text-xs text-slate-500">
-                {creating
-                  ? "Novi nalog preuzima boju predloška. Možeš je odmah ili kasnije promijeniti."
-                  : "Zadaci i kontrola kvalitete uređuju se zasebnim akcijama."}
-              </p>
+              <p className="mt-1.5 text-xs text-slate-500">Novi nalog preuzima boju predloška. Možeš je odmah ili kasnije promijeniti.</p>
             </Field>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
@@ -439,37 +337,6 @@ export function RadniNaloziPage() {
         </Modal>
       ) : null}
 
-      {tasksOrder ? (
-        <TaskSelectModal
-          title={`Zadaci naloga ${workOrderCode(tasksOrder)}`}
-          description={`Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi koje nalog ${tasksOrder.name} smije koristiti.`}
-          tasks={db.tasks}
-          jobRoles={db.jobRoles}
-          initialSelectedIds={tasksOrder.taskIds ?? []}
-          onClose={closeTasks}
-          onSave={saveTasks}
-        />
-      ) : null}
-
-      {checklistOrder ? (
-        <QualityCheckModal
-          title={`Kontrola kvalitete naloga ${workOrderCode(checklistOrder)}`}
-          items={db.checklistItems}
-          initialEntries={checklistOrder.checklist ?? []}
-          onClose={() => setChecklistOrder(null)}
-          onSave={saveChecklist}
-        />
-      ) : null}
-
-      {archiveTarget ? (
-        <ConfirmDialog
-          title="Arhiviraj radni nalog"
-          message="Arhivirani nalog više se ne nudi pri unosu sati. Možeš ga kasnije vratiti iz arhive."
-          confirmLabel="Arhiviraj"
-          onClose={() => setArchiveTarget(null)}
-          onConfirm={confirmArchive}
-        />
-      ) : null}
     </div>
   );
 }
