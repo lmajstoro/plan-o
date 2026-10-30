@@ -1,0 +1,245 @@
+import { useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { NotesView } from "../../components/admin/NotesView";
+import { ChevronLeftIcon } from "../../components/icons";
+import { useDb } from "../../context/DbContext";
+import { checklistSummary } from "../../lib/qualityChecklist";
+import { formatHours, hourDeltaLabel, workOrderOverview, type HourPair } from "../../lib/workOrderOverview";
+import { templateName, workOrderCode, workOrderColor, WORK_ORDER_STATUS_LABELS, workOrderStatusClass } from "../../lib/workOrders";
+
+const TABS = [{ id: "pregled", label: "Pregled" }] as const;
+
+export function RadniNalogPage() {
+  const { orderId = "" } = useParams();
+  const { db } = useDb();
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("pregled");
+  const order = db.workOrders.find((row) => row.id === orderId);
+  const overview = useMemo(
+    () => (order ? workOrderOverview(order.id, db.assignments, db.tasks, db.jobRoles, db.employees) : null),
+    [order, db.assignments, db.tasks, db.jobRoles, db.employees],
+  );
+
+  if (!order || !overview) {
+    return (
+      <div>
+        <BackLink />
+        <p className="mt-6 text-slate-600">Radni nalog nije pronađen.</p>
+      </div>
+    );
+  }
+
+  const quality = checklistSummary(order.checklist ?? []);
+  const color = workOrderColor(order, db.workOrderTemplates);
+
+  return (
+    <div>
+      <BackLink />
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold text-slate-900">
+            <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+            <span className="font-mono">{workOrderCode(order)}</span>
+            <span className="truncate">{order.name}</span>
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
+            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${workOrderStatusClass(order.status, order.archived)}`}>
+              {order.archived ? "Arhiviran" : WORK_ORDER_STATUS_LABELS[order.status]}
+            </span>
+            <span className="font-mono">{order.erpCode}</span>
+            <span>{templateName(db.workOrderTemplates, order.templateId)}</span>
+            <span className="tabular-nums">
+              Kontrola {quality.confirmed}/{quality.applicable}
+            </span>
+          </div>
+        </div>
+      </div>
+      {order.description ? (
+        <div className="mt-4 max-w-3xl">
+          <NotesView value={order.description} />
+        </div>
+      ) : null}
+
+      <div role="tablist" className="mt-5 flex gap-1 border-b border-slate-200">
+        {TABS.map((item) => {
+          const selected = tab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              className={`border-b-2 px-3 py-2 text-sm font-medium ${
+                selected ? "border-blue-700 text-blue-800" : "border-transparent text-slate-500 hover:text-slate-800"
+              }`}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "pregled" ? <Pregled overview={overview} /> : null}
+    </div>
+  );
+}
+
+function BackLink() {
+  return (
+    <Link to="/administrator/radni-nalozi" className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800">
+      <ChevronLeftIcon className="h-4 w-4" />
+      Radni nalozi
+    </Link>
+  );
+}
+
+function Pregled({ overview }: { overview: NonNullable<ReturnType<typeof workOrderOverview>> }) {
+  const empty = overview.planned === 0 && overview.actual === 0;
+  return (
+    <div className="mt-5 space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat label="Utrošeno" value={formatHours(overview.actual)} hint="Ostvareni sati na nalogu" />
+        <Stat label="Planirano" value={formatHours(overview.planned)} hint="Sati upisani u plan" />
+        <Stat label="Razlika" value={hourDeltaLabel(overview.planned, overview.actual)} hint="Ostvareno prema planu" />
+        <Stat label="Ljudi" value={String(overview.people.length)} hint="S unesenim satima" />
+      </div>
+
+      {empty ? (
+        <p className="rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+          Na ovom nalogu još nema planiranih ni utrošenih sati.
+        </p>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-5">
+          <section className="rounded-xl border border-slate-200 bg-white xl:col-span-3">
+            <header className="border-b border-slate-100 px-4 py-3">
+              <h2 className="text-sm font-semibold text-slate-900">Sati po ulogama</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Uloga je kategorija zadatka. Ispod nje su zadaci te uloge.</p>
+            </header>
+            <div className="divide-y divide-slate-100">
+              {overview.roles.map((role) => (
+                <div key={role.id} className="px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: role.color }} />
+                      <h3 className="font-medium text-slate-900">{role.name}</h3>
+                    </div>
+                    <HourFigures hours={role} />
+                  </div>
+                  <CompareBar planned={role.planned} actual={role.actual} />
+                  <table className="mt-3 w-full text-left text-sm">
+                    <thead className="text-xs text-slate-500">
+                      <tr>
+                        <th className="py-1 font-medium">Zadatak</th>
+                        <th className="py-1 text-right font-medium">Plan</th>
+                        <th className="py-1 text-right font-medium">Ostvareno</th>
+                        <th className="py-1 text-right font-medium">Razlika</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {role.tasks.map((task) => (
+                        <tr key={task.id} className="border-t border-slate-50">
+                          <td className="py-1.5 pr-3 text-slate-700">
+                            {task.code ? <span className="mr-2 font-mono text-xs text-slate-500">{task.code}</span> : null}
+                            {task.description}
+                          </td>
+                          <td className="py-1.5 text-right tabular-nums text-slate-600">{formatHours(task.planned)}</td>
+                          <td className="py-1.5 text-right tabular-nums font-medium text-slate-900">{formatHours(task.actual)}</td>
+                          <td className="py-1.5 text-right text-slate-500">{hourDeltaLabel(task.planned, task.actual)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white xl:col-span-2">
+            <header className="border-b border-slate-100 px-4 py-3">
+              <h2 className="text-sm font-semibold text-slate-900">Ljudi na nalogu</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Tko je unio sate i na kojim zadacima.</p>
+            </header>
+            {overview.people.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-slate-500">Još nitko nije unio sate na ovom nalogu.</p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {overview.people.map((person) => (
+                  <div key={person.id} className="px-4 py-3">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <h3 className="font-medium text-slate-900">{person.name}</h3>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">{formatHours(person.actual)}</span>
+                    </div>
+                    <p className="text-xs text-slate-500">Planirano {formatHours(person.planned)}</p>
+                    <ul className="mt-2 space-y-1.5">
+                      {person.tasks.map((task) => (
+                        <li key={task.id} className="flex items-baseline justify-between gap-3 text-sm">
+                          <span className="min-w-0 text-slate-700">
+                            {task.code ? <span className="mr-1.5 font-mono text-xs text-slate-500">{task.code}</span> : null}
+                            {task.description}
+                            <span className="mt-0.5 block text-xs text-slate-400">{task.roleName}</span>
+                          </span>
+                          <span className="shrink-0 text-right tabular-nums text-slate-600">
+                            <span className="font-medium text-slate-900">{formatHours(task.actual)}</span>
+                            <span className="mt-0.5 block text-xs text-slate-400">plan {formatHours(task.planned)}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+            {overview.plannedOnly.length > 0 ? (
+              <p className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
+                Planirani bez unesenih sati:{" "}
+                {overview.plannedOnly.map((person) => `${person.name} (${formatHours(person.planned)})`).join(", ")}
+              </p>
+            ) : null}
+          </section>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{value}</p>
+      <p className="mt-1 text-xs text-slate-400">{hint}</p>
+    </div>
+  );
+}
+
+function HourFigures({ hours }: { hours: HourPair }) {
+  return (
+    <p className="text-sm tabular-nums text-slate-600">
+      Plan {formatHours(hours.planned)}
+      <span className="mx-1.5 text-slate-300">/</span>
+      Ostvareno {formatHours(hours.actual)}
+    </p>
+  );
+}
+
+function CompareBar({ planned, actual }: { planned: number; actual: number }) {
+  const max = Math.max(planned, actual, 0);
+  const width = (value: number) => (max === 0 ? 0 : Math.round((value / max) * 100));
+  return (
+    <div className="mt-2 space-y-1">
+      <Bar label="Plan" width={width(planned)} className="bg-slate-300" />
+      <Bar label="Ostvareno" width={width(actual)} className="bg-blue-600" />
+    </div>
+  );
+}
+
+function Bar({ label, width, className }: { label: string; width: number; className: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-16 shrink-0 text-xs text-slate-400">{label}</span>
+      <div className="h-1.5 flex-1 rounded-full bg-slate-100">
+        <div className={`h-1.5 rounded-full ${className}`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}

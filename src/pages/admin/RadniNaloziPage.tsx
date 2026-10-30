@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import {
@@ -271,13 +272,17 @@ export function RadniNaloziPage() {
               paging.pageRows.map((row) => (
               <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${row.archived ? "bg-slate-50 text-slate-500" : ""}`}>
                 <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-2 whitespace-nowrap font-mono font-medium text-slate-900">
+                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="inline-flex items-center gap-2 whitespace-nowrap font-mono font-medium text-slate-900 hover:text-blue-700">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: workOrderColor(row, db.workOrderTemplates) }} />
                     {workOrderCode(row)}
-                  </span>
+                  </Link>
                 </td>
                 <td className="px-4 py-3 font-mono text-slate-600">{row.erpCode}</td>
-                <td className="px-4 py-3 font-medium text-slate-800">{row.name}</td>
+                <td className="px-4 py-3 font-medium text-slate-800">
+                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="hover:text-blue-700">
+                    {row.name}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 text-slate-600">{templateName(db.workOrderTemplates, row.templateId)}</td>
                 <td className="max-w-sm px-4 py-3 text-slate-600">
                   <NotesView

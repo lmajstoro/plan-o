@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
 import { useDeviceMode } from "../../lib/device";
@@ -163,9 +163,11 @@ function SectionLabel({ label, collapsed, first = false }: { label: string; coll
 }
 
 function WorkOrdersNav({ collapsed }: { collapsed: boolean }) {
+  const { pathname } = useLocation();
+  const orderOpen = pathname.startsWith("/administrator/radni-nalozi/") && !pathname.startsWith("/administrator/radni-nalozi/predlosci");
   return (
     <div>
-      <NavItem to="/administrator/radni-nalozi" label="Radni nalozi" icon={LayersIcon} end collapsed={collapsed} />
+      <NavItem to="/administrator/radni-nalozi" label="Radni nalozi" icon={LayersIcon} end activeExtra={orderOpen} collapsed={collapsed} />
       <div
         className={`border-l transition-[margin,padding,border-color] duration-200 ${
           collapsed ? "ml-0 border-transparent pl-0" : "ml-5 border-slate-200 pl-1"
@@ -184,6 +186,7 @@ function NavItem({
   end,
   nested = false,
   collapsed,
+  activeExtra = false,
 }: {
   to: string;
   label: string;
@@ -191,6 +194,7 @@ function NavItem({
   end: boolean;
   nested?: boolean;
   collapsed: boolean;
+  activeExtra?: boolean;
 }) {
   return (
     <NavLink
@@ -199,7 +203,7 @@ function NavItem({
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
         `flex items-center gap-3 rounded-lg px-3 text-base font-medium ${nested ? "py-2" : "py-2.5"} ${
-          isActive ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          isActive || activeExtra ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
         }`
       }
     >
