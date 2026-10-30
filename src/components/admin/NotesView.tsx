@@ -3,12 +3,16 @@ import { notesHasContent, parseNotes } from "../../lib/notes";
 type Props = {
   value: string;
   compact?: boolean;
+  maxTodos?: number;
+  onShowMore?: () => void;
   onToggleTodo?: (index: number) => void;
 };
 
-export function NotesView({ value, compact = false, onToggleTodo }: Props) {
+export function NotesView({ value, compact = false, maxTodos, onShowMore, onToggleTodo }: Props) {
   const parsed = parseNotes(value);
   if (!notesHasContent(value)) return null;
+  const hidden = maxTodos != null && parsed.todos.length > maxTodos ? parsed.todos.length - maxTodos : 0;
+  const todos = hidden > 0 ? parsed.todos.slice(0, maxTodos) : parsed.todos;
 
   return (
     <div className={compact ? "space-y-1" : "space-y-1.5"}>
@@ -17,9 +21,9 @@ export function NotesView({ value, compact = false, onToggleTodo }: Props) {
           {parsed.text}
         </p>
       ) : null}
-      {parsed.todos.length > 0 ? (
+      {todos.length > 0 ? (
         <ul className="space-y-1">
-          {parsed.todos.map((todo, index) => (
+          {todos.map((todo, index) => (
             <li key={`${todo.label}-${index}`}>
               <label className={`flex items-start gap-1.5 ${onToggleTodo ? "cursor-pointer" : ""}`}>
                 <input
@@ -40,6 +44,11 @@ export function NotesView({ value, compact = false, onToggleTodo }: Props) {
             </li>
           ))}
         </ul>
+      ) : null}
+      {hidden > 0 && onShowMore ? (
+        <button type="button" className="text-sm font-medium text-blue-800 hover:underline" onClick={onShowMore}>
+          i još {hidden}...
+        </button>
       ) : null}
     </div>
   );

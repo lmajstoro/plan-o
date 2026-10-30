@@ -26,7 +26,8 @@ import { Field } from "./ZaposleniciPage";
 
 const TABS = [
   { id: "pregled", label: "Pregled" },
-  { id: "sati", label: "Sati" },
+  { id: "uloge", label: "Sati po ulogama" },
+  { id: "ljudi", label: "Sati po ljudima" },
   { id: "informacije", label: "Informacije" },
   { id: "zadaci", label: "Zadaci" },
   { id: "kontrola", label: "Kontrola kvalitete" },
@@ -114,7 +115,8 @@ export function RadniNalogPage() {
           onOpen={(next) => selectTab(next)}
         />
       ) : null}
-      {tab === "sati" ? <Sati overview={overview} /> : null}
+      {tab === "uloge" ? <SatiPoUlogama overview={overview} /> : null}
+      {tab === "ljudi" ? <SatiPoLjudima overview={overview} /> : null}
       {tab === "informacije" ? <Informacije order={order} /> : null}
       {tab === "zadaci" ? (
         <div className="mt-5">
@@ -213,7 +215,7 @@ function Pregled({
           <p className="text-xs font-medium text-slate-500">Napomena</p>
           {notesHasContent(order.description) ? (
             <div className="mt-1">
-              <NotesView value={order.description} />
+              <NotesView value={order.description} maxTodos={3} onShowMore={() => onOpen("informacije")} />
             </div>
           ) : (
             <p className="mt-1 text-sm text-slate-400">Nema napomene.</p>
@@ -322,98 +324,103 @@ function PersonBar({ person, max }: { person: PersonHours; max: number }) {
   );
 }
 
-function Sati({ overview }: { overview: NonNullable<ReturnType<typeof workOrderOverview>> }) {
-  const empty = overview.planned === 0 && overview.actual === 0;
-  if (empty) {
-    return (
-      <p className="mt-5 rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
-        Na ovom nalogu još nema planiranih ni utrošenih sati.
-      </p>
-    );
+function EmptyHours({ children }: { children: string }) {
+  return (
+    <p className="mt-5 rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">{children}</p>
+  );
+}
+
+function SatiPoUlogama({ overview }: { overview: NonNullable<ReturnType<typeof workOrderOverview>> }) {
+  if (overview.roles.length === 0) {
+    return <EmptyHours>Na ovom nalogu još nema planiranih ni utrošenih sati.</EmptyHours>;
   }
 
   return (
-    <div className="mt-5 grid gap-4 xl:grid-cols-5">
-      <section className="rounded-xl border border-slate-200 bg-white xl:col-span-3">
-        <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">Sati po ulogama</h2>
-        <div className="divide-y divide-slate-100">
-          {overview.roles.map((role) => (
-            <div key={role.id} className="px-4 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: role.color }} />
-                  <h3 className="font-medium text-slate-900">{role.name}</h3>
-                </div>
-                <HourFigures hours={role} />
+    <section className="mt-5 rounded-xl border border-slate-200 bg-white">
+      <div className="divide-y divide-slate-100">
+        {overview.roles.map((role) => (
+          <div key={role.id} className="px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: role.color }} />
+                <h2 className="font-medium text-slate-900">{role.name}</h2>
               </div>
-              <CompareBar planned={role.planned} actual={role.actual} />
-              <table className="mt-3 w-full text-left text-sm">
-                <thead className="text-xs text-slate-500">
-                  <tr>
-                    <th className="py-1 font-medium">Zadatak</th>
-                    <th className="py-1 text-right font-medium">Plan</th>
-                    <th className="py-1 text-right font-medium">Ostvareno</th>
-                    <th className="py-1 text-right font-medium">Razlika</th>
+              <HourFigures hours={role} />
+            </div>
+            <CompareBar planned={role.planned} actual={role.actual} />
+            <table className="mt-3 w-full text-left text-sm">
+              <thead className="text-xs text-slate-500">
+                <tr>
+                  <th className="py-1 font-medium">Zadatak</th>
+                  <th className="py-1 text-right font-medium">Plan</th>
+                  <th className="py-1 text-right font-medium">Ostvareno</th>
+                  <th className="py-1 text-right font-medium">Razlika</th>
+                </tr>
+              </thead>
+              <tbody>
+                {role.tasks.map((task) => (
+                  <tr key={task.id} className="border-t border-slate-50">
+                    <td className="py-1.5 pr-3 text-slate-700">
+                      {task.code ? <span className="mr-2 font-mono text-xs text-slate-500">{task.code}</span> : null}
+                      {task.description}
+                    </td>
+                    <td className="py-1.5 text-right tabular-nums text-slate-600">{formatHours(task.planned)}</td>
+                    <td className="py-1.5 text-right tabular-nums font-medium text-slate-900">{formatHours(task.actual)}</td>
+                    <td className="py-1.5 text-right text-slate-500">{hourDeltaLabel(task.planned, task.actual)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {role.tasks.map((task) => (
-                    <tr key={task.id} className="border-t border-slate-50">
-                      <td className="py-1.5 pr-3 text-slate-700">
-                        {task.code ? <span className="mr-2 font-mono text-xs text-slate-500">{task.code}</span> : null}
-                        {task.description}
-                      </td>
-                      <td className="py-1.5 text-right tabular-nums text-slate-600">{formatHours(task.planned)}</td>
-                      <td className="py-1.5 text-right tabular-nums font-medium text-slate-900">{formatHours(task.actual)}</td>
-                      <td className="py-1.5 text-right text-slate-500">{hourDeltaLabel(task.planned, task.actual)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SatiPoLjudima({ overview }: { overview: NonNullable<ReturnType<typeof workOrderOverview>> }) {
+  if (overview.people.length === 0 && overview.plannedOnly.length === 0) {
+    return <EmptyHours>Još nitko nije unio sate na ovom nalogu.</EmptyHours>;
+  }
+
+  return (
+    <section className="mt-5 rounded-xl border border-slate-200 bg-white">
+      {overview.people.length === 0 ? (
+        <p className="px-4 py-6 text-sm text-slate-500">Još nitko nije unio sate na ovom nalogu.</p>
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {overview.people.map((person) => (
+            <div key={person.id} className="px-4 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="font-medium text-slate-900">{person.name}</h2>
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">{formatHours(person.actual)}</span>
+              </div>
+              <p className="text-xs text-slate-500">Planirano {formatHours(person.planned)}</p>
+              <ul className="mt-2 space-y-1.5">
+                {person.tasks.map((task) => (
+                  <li key={task.id} className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="min-w-0 text-slate-700">
+                      {task.code ? <span className="mr-1.5 font-mono text-xs text-slate-500">{task.code}</span> : null}
+                      {task.description}
+                      <span className="mt-0.5 block text-xs text-slate-400">{task.roleName}</span>
+                    </span>
+                    <span className="shrink-0 text-right tabular-nums text-slate-600">
+                      <span className="font-medium text-slate-900">{formatHours(task.actual)}</span>
+                      <span className="mt-0.5 block text-xs text-slate-400">plan {formatHours(task.planned)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white xl:col-span-2">
-        <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">Ljudi na nalogu</h2>
-        {overview.people.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-slate-500">Još nitko nije unio sate na ovom nalogu.</p>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {overview.people.map((person) => (
-              <div key={person.id} className="px-4 py-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <h3 className="font-medium text-slate-900">{person.name}</h3>
-                  <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">{formatHours(person.actual)}</span>
-                </div>
-                <p className="text-xs text-slate-500">Planirano {formatHours(person.planned)}</p>
-                <ul className="mt-2 space-y-1.5">
-                  {person.tasks.map((task) => (
-                    <li key={task.id} className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="min-w-0 text-slate-700">
-                        {task.code ? <span className="mr-1.5 font-mono text-xs text-slate-500">{task.code}</span> : null}
-                        {task.description}
-                        <span className="mt-0.5 block text-xs text-slate-400">{task.roleName}</span>
-                      </span>
-                      <span className="shrink-0 text-right tabular-nums text-slate-600">
-                        <span className="font-medium text-slate-900">{formatHours(task.actual)}</span>
-                        <span className="mt-0.5 block text-xs text-slate-400">plan {formatHours(task.planned)}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-        {overview.plannedOnly.length > 0 ? (
-          <p className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
-            Planirani bez unesenih sati: {overview.plannedOnly.map((person) => `${person.name} (${formatHours(person.planned)})`).join(", ")}
-          </p>
-        ) : null}
-      </section>
-    </div>
+      )}
+      {overview.plannedOnly.length > 0 ? (
+        <p className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
+          Planirani bez unesenih sati: {overview.plannedOnly.map((person) => `${person.name} (${formatHours(person.planned)})`).join(", ")}
+        </p>
+      ) : null}
+    </section>
   );
 }
 
