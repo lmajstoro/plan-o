@@ -49,6 +49,23 @@ function byHours(a: HourPair, b: HourPair): number {
   return b.actual - a.actual || b.planned - a.planned;
 }
 
+function sortTasksByRole(tasks: PersonTaskHours[]): PersonTaskHours[] {
+  const totals = new Map<string, HourPair>();
+  for (const task of tasks) {
+    const bucket = totals.get(task.roleName) ?? { planned: 0, actual: 0 };
+    bucket.planned += task.planned;
+    bucket.actual += task.actual;
+    totals.set(task.roleName, bucket);
+  }
+  return [...tasks].sort((a, b) => {
+    const roleOrder = byHours(totals.get(a.roleName) ?? a, totals.get(b.roleName) ?? b);
+    if (roleOrder !== 0) return roleOrder;
+    const sameRole = a.roleName.localeCompare(b.roleName, "hr");
+    if (sameRole !== 0) return sameRole;
+    return byHours(a, b);
+  });
+}
+
 export function formatHours(value: number): string {
   const rounded = Math.round(value * 10) / 10;
   const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(".", ",");
@@ -139,8 +156,7 @@ export function workOrderOverview(
         ...taskHours,
       };
     });
-    tasksForPerson.sort(byHours);
-    people.push({ id: employeeId, name, ...hours, tasks: tasksForPerson });
+    people.push({ id: employeeId, name, ...hours, tasks: sortTasksByRole(tasksForPerson) });
   }
   people.sort((a, b) => byHours(a, b) || a.name.localeCompare(b.name, "hr"));
   plannedOnly.sort((a, b) => b.planned - a.planned || a.name.localeCompare(b.name, "hr"));
