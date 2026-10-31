@@ -21,6 +21,7 @@ export type RoleHours = HourPair & {
 
 export type PersonTaskHours = TaskHours & {
   roleName: string;
+  roleColor: string;
 };
 
 export type PersonHours = HourPair & {
@@ -134,6 +135,7 @@ export function workOrderOverview(
         code: task?.code ?? "",
         description: task?.description ?? "Nepoznat zadatak",
         roleName: task ? roleName(roles, task.role) : "Bez uloge",
+        roleColor: task ? roleColor(roles, task.role) : "#64748b",
         ...taskHours,
       };
     });

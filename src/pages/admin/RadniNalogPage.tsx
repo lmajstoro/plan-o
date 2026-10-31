@@ -396,13 +396,15 @@ function SatiPoLjudima({ overview }: { overview: NonNullable<ReturnType<typeof w
                 <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">{formatHours(person.actual)}</span>
               </div>
               <p className="text-xs text-slate-500">Planirano {formatHours(person.planned)}</p>
-              <ul className="mt-2 space-y-1.5">
+              <ul className="mt-2">
                 {person.tasks.map((task) => (
-                  <li key={task.id} className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className="min-w-0 text-slate-700">
+                  <li key={task.id} className="grid grid-cols-[11rem_minmax(0,1fr)_auto] items-baseline gap-x-4 py-1 text-sm">
+                    <span className="truncate font-medium" style={{ color: task.roleColor }}>
+                      {task.roleName}
+                    </span>
+                    <span className="min-w-0 truncate text-slate-700">
                       {task.code ? <span className="mr-1.5 font-mono text-xs text-slate-500">{task.code}</span> : null}
                       {task.description}
-                      <span className="mt-0.5 block text-xs text-slate-400">{task.roleName}</span>
                     </span>
                     <span className="shrink-0 text-right tabular-nums text-slate-600">
                       <span className="font-medium text-slate-900">{formatHours(task.actual)}</span>
