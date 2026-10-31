@@ -391,24 +391,26 @@ function SatiPoLjudima({ overview }: { overview: NonNullable<ReturnType<typeof w
         <div className="divide-y divide-slate-100">
           {overview.people.map((person) => (
             <div key={person.id} className="px-4 py-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="font-medium text-slate-900">{person.name}</h2>
-                <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">{formatHours(person.actual)}</span>
+              <div className="grid max-w-3xl grid-cols-[11rem_minmax(0,1fr)_6.5rem] items-baseline">
+                <h2 className="col-span-2 font-medium text-slate-900">{person.name}</h2>
+                <span className="text-right tabular-nums">
+                  <span className="block text-sm font-semibold text-slate-900">{formatHours(person.actual)}</span>
+                  <span className="block text-xs text-slate-400">plan {formatHours(person.planned)}</span>
+                </span>
               </div>
-              <p className="text-xs text-slate-500">Planirano {formatHours(person.planned)}</p>
-              <ul className="mt-2">
+              <ul className="mt-2 max-w-3xl border-t border-slate-200">
                 {person.tasks.map((task) => (
-                  <li key={task.id} className="grid grid-cols-[11rem_minmax(0,1fr)_auto] items-baseline gap-x-10 py-1 text-sm">
-                    <span className="truncate font-medium" style={{ color: task.roleColor }}>
+                  <li key={task.id} className="grid grid-cols-[11rem_minmax(0,1fr)_6.5rem] items-center border-b border-slate-100 text-sm">
+                    <span className="truncate py-1.5 pr-4 font-medium" style={{ color: task.roleColor }}>
                       {task.roleName}
                     </span>
-                    <span className="min-w-0 truncate text-slate-700">
+                    <span className="min-w-0 truncate border-l border-slate-100 px-4 py-1.5 text-slate-700">
                       {task.code ? <span className="mr-1.5 font-mono text-xs text-slate-500">{task.code}</span> : null}
                       {task.description}
                     </span>
-                    <span className="shrink-0 text-right tabular-nums text-slate-600">
-                      <span className="font-medium text-slate-900">{formatHours(task.actual)}</span>
-                      <span className="mt-0.5 block text-xs text-slate-400">plan {formatHours(task.planned)}</span>
+                    <span className="border-l border-slate-100 px-3 py-1.5 text-right tabular-nums text-slate-600">
+                      <span className="block font-medium text-slate-900">{formatHours(task.actual)}</span>
+                      <span className="block text-xs text-slate-400">plan {formatHours(task.planned)}</span>
                     </span>
                   </li>
                 ))}
