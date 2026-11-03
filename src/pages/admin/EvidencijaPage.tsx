@@ -32,7 +32,7 @@ export function EvidencijaPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "tokta-evidencija.csv";
+    link.download = "frigonex-evidencija.csv";
     link.click();
     URL.revokeObjectURL(url);
     update((current) =>

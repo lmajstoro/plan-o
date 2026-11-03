@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
 import { pageName, pushAudit } from "../../lib/audit";
-import { ToktaMark } from "../brand/ToktaMark";
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../icons";
 import { formatCroatianDate, formatDuration } from "../../lib/dates";
 import { SkillMarks } from "./SkillMarks";
@@ -42,7 +41,7 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
 
   if (!day.active) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center bg-white px-6 text-center shadow-sm">
+      <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-white px-6 text-center">
         <p className="text-lg font-semibold text-slate-900">Račun je deaktiviran</p>
         <p className="mt-2 text-sm text-slate-600">Ne možeš unositi sate dok administrator ponovno ne aktivira tvoj račun.</p>
         <button type="button" className="btn-secondary mt-6" onClick={signOut}>
@@ -55,15 +54,13 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
 
   return (
     <div
-      className={`mx-auto flex w-full max-w-md flex-col bg-white shadow-sm md:max-w-lg ${
+      className={`flex w-full flex-col bg-white ${
         fillViewport ? "h-dvh overflow-hidden" : "min-h-dvh"
       }`}
     >
       <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200 bg-white/95 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-start justify-between gap-3 px-4 pb-2">
-          <div className="flex min-w-0 items-start gap-2.5">
-            <ToktaMark className="mt-1 h-5 w-auto shrink-0" />
-            <div className="min-w-0">
+          <div className="min-w-0">
             <div className="truncate text-base font-semibold text-slate-900">{employee.name}</div>
             <SkillMarks
               person={employee}
@@ -71,7 +68,6 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
               tasks={day.db.tasks}
               className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500"
             />
-            </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <button
@@ -101,7 +97,7 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
             {day.isToday ? (
               <div className="text-xs font-medium text-slate-500">Danas</div>
             ) : (
-              <button type="button" className="text-xs font-medium text-tokta-700 underline-offset-2 hover:underline" onClick={day.goToday}>
+              <button type="button" className="text-xs font-medium text-frigo-700 underline-offset-2 hover:underline" onClick={day.goToday}>
                 Vrati na danas
               </button>
             )}

@@ -22,12 +22,12 @@ export function CategoryTabs({ tabs, value, onChange }: Props) {
             role="tab"
             aria-selected={selected}
             className={`rounded-lg px-3 py-1.5 text-left text-sm font-medium ${
-              selected ? "bg-tokta-700 text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              selected ? "bg-frigo-700 text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             }`}
             onClick={() => onChange(tab.id)}
           >
             {tab.label}
-            {tab.detail ? <span className={`ml-2 tabular-nums ${selected ? "text-tokta-100" : "text-slate-400"}`}>{tab.detail}</span> : null}
+            {tab.detail ? <span className={`ml-2 tabular-nums ${selected ? "text-frigo-100" : "text-slate-400"}`}>{tab.detail}</span> : null}
           </button>
         );
       })}

@@ -439,7 +439,7 @@ export function TouchGanttBoard({
             </div>
             <div className="relative flex" style={{ width: TIMELINE_WIDTH }}>
               <div
-                className="pointer-events-none absolute inset-y-0 bg-tokta-50/70"
+                className="pointer-events-none absolute inset-y-0 bg-frigo-50/70"
                 style={{ left: (CORE_START - DAY_START) * HOUR_WIDTH, width: (CORE_END - CORE_START) * HOUR_WIDTH }}
               />
               {HOURS.map((hour) => (
@@ -526,13 +526,13 @@ export function TouchGanttBoard({
                     <LaneGrid />
                     {selectedRange ? (
                       <div
-                        className="pointer-events-none absolute top-1.5 bottom-1.5 z-10 flex items-center justify-center rounded-lg bg-tokta-600/20 ring-2 ring-tokta-500"
+                        className="pointer-events-none absolute top-1.5 bottom-1.5 z-10 flex items-center justify-center rounded-lg bg-frigo-600/20 ring-2 ring-frigo-500"
                         style={{
                           left: (selectedRange.start - DAY_START) * HOUR_WIDTH + 2,
                           width: (selectedRange.end - selectedRange.start) * HOUR_WIDTH - 4,
                         }}
                       >
-                        <span className="rounded bg-tokta-700 px-2 py-0.5 text-xs font-semibold tabular-nums text-white">
+                        <span className="rounded bg-frigo-700 px-2 py-0.5 text-xs font-semibold tabular-nums text-white">
                           {selectedRange.end - selectedRange.start} h
                         </span>
                       </div>
@@ -653,7 +653,7 @@ function LaneGrid() {
   return (
     <>
       <div
-        className="pointer-events-none absolute inset-y-0 bg-tokta-50/40"
+        className="pointer-events-none absolute inset-y-0 bg-frigo-50/40"
         style={{ left: (CORE_START - DAY_START) * HOUR_WIDTH, width: (CORE_END - CORE_START) * HOUR_WIDTH }}
       />
       {HOURS.map((hour) => (

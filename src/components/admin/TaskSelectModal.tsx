@@ -1,5 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
+import { PaginationBar } from "./PaginationBar";
 import { Modal } from "../ui/Modal";
+import { usePagedRows } from "../../lib/pagination";
 import { roleColor, roleName } from "../../lib/roles";
 import type { JobRole, Task } from "../../types";
 
@@ -43,6 +45,7 @@ export function TaskSelectModal({
     () => rows.filter((task) => matchesQuery(task, jobRoles, normalizedQuery)),
     [rows, jobRoles, normalizedQuery],
   );
+  const paging = usePagedRows(visible);
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const visibleSelectedCount = visible.filter((task) => selectedSet.has(task.id)).length;
   const allVisibleSelected = visible.length > 0 && visibleSelectedCount === visible.length;
@@ -83,13 +86,16 @@ export function TaskSelectModal({
   }
 
   const form = (
-      <form onSubmit={save} className="flex h-full min-h-0 flex-col gap-3">
-        {description ? <p className="shrink-0 text-sm text-slate-500">{description}</p> : null}
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+      <form onSubmit={save} className={embedded ? "flex flex-col gap-3" : "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto"}>
+        {description ? <p className="text-sm text-slate-500">{description}</p> : null}
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <input
             className="input max-w-md"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              paging.setPage(1);
+            }}
             placeholder="Pretraži šifru, opis ili ulogu"
             aria-label="Pretraži zadatke"
           />
@@ -99,13 +105,13 @@ export function TaskSelectModal({
           </p>
         </div>
         {rows.length === 0 ? (
-          <p className="shrink-0 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">
             Nema zadataka. Dodajte ih u šifarniku Zadaci.
           </p>
         ) : (
-          <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="sticky top-0 border-b border-slate-100 bg-slate-50 text-slate-500">
+              <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
                 <tr>
                   <th className="w-10 px-4 py-3">
                     <input
@@ -122,16 +128,16 @@ export function TaskSelectModal({
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {paging.pageRows.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                       Nema zadataka za taj upit.
                     </td>
                   </tr>
                 ) : (
-                  visible.map((task) => (
+                  paging.pageRows.map((task) => (
                     <tr key={task.id} className="border-b border-slate-50 last:border-0">
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selectedSet.has(task.id)}
@@ -139,9 +145,9 @@ export function TaskSelectModal({
                           aria-label={task.code}
                         />
                       </td>
-                      <td className="px-4 py-2.5 font-mono font-medium text-slate-900">{task.code}</td>
-                      <td className="px-4 py-2.5 text-slate-700">{task.description}</td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-3 font-mono font-medium text-slate-900">{task.code}</td>
+                      <td className="px-4 py-3 text-slate-700">{task.description}</td>
+                      <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-2">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: roleColor(jobRoles, task.role) }} />
                           {roleName(jobRoles, task.role)}
@@ -152,10 +158,18 @@ export function TaskSelectModal({
                 )}
               </tbody>
             </table>
+            <PaginationBar
+              page={paging.page}
+              totalPages={paging.totalPages}
+              from={paging.from}
+              to={paging.to}
+              total={paging.total}
+              onPage={paging.setPage}
+            />
           </div>
         )}
-        {error ? <p className="shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-        <div className="flex shrink-0 justify-end gap-2 pt-1">
+        {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+        <div className="flex justify-end gap-2">
           <button type="button" className="btn-secondary" onClick={discard}>
             Odustani
           </button>
@@ -166,9 +180,9 @@ export function TaskSelectModal({
       </form>
   );
 
-  if (embedded) return <div className="flex h-[min(70vh,42rem)] min-h-0 flex-col">{form}</div>;
+  if (embedded) return <div className="h-full overflow-y-auto">{form}</div>;
   return (
-    <Modal title={title ?? "Zadaci"} size="full" onClose={discard}>
+    <Modal title={title ?? "Zadaci"} size="picker" onClose={discard}>
       {form}
     </Modal>
   );

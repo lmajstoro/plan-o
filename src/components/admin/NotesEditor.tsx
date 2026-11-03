@@ -5,9 +5,10 @@ import { parseNotes, serializeNotes, type NoteTodo } from "../../lib/notes";
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  fill?: boolean;
 };
 
-export function NotesEditor({ value, onChange }: Props) {
+export function NotesEditor({ value, onChange, fill = false }: Props) {
   const parsed = parseNotes(value);
 
   function commit(text: string, todos: NoteTodo[]) {
@@ -42,14 +43,14 @@ export function NotesEditor({ value, onChange }: Props) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-tokta-500 focus-within:ring-2 focus-within:ring-tokta-100">
+    <div className={`overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-frigo-500 focus-within:ring-2 focus-within:ring-frigo-100 ${fill ? "flex min-h-0 flex-1 flex-col" : ""}`}>
       <textarea
-        className="min-h-[72px] w-full resize-y border-0 bg-transparent px-3 py-2 text-sm text-slate-900 outline-none"
+        className={`w-full border-0 bg-transparent px-3 py-2 text-sm text-slate-900 outline-none ${fill ? "min-h-0 flex-1 resize-none" : "min-h-[72px] resize-y"}`}
         value={parsed.text}
         onChange={(event) => commit(event.target.value, parsed.todos)}
         placeholder="Slobodan tekst napomene"
       />
-      <div className="border-t border-slate-100 px-3 py-2">
+      <div className="shrink-0 border-t border-slate-100 px-3 py-2">
         {parsed.todos.length > 0 ? (
           <ul className="space-y-1.5">
             {parsed.todos.map((todo, index) => (
@@ -82,7 +83,7 @@ export function NotesEditor({ value, onChange }: Props) {
         ) : (
           <p className="text-xs text-slate-500">Možeš dodati todo listu koju kasnije označavaš klikom.</p>
         )}
-        <button type="button" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-tokta-700 hover:text-tokta-800" onClick={addTodo}>
+        <button type="button" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-frigo-700 hover:text-frigo-800" onClick={addTodo}>
           <PlusIcon className="h-3.5 w-3.5" />
           Dodaj stavku
         </button>

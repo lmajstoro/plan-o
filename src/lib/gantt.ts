@@ -1,6 +1,6 @@
 import { formatHour } from "./dates";
 
-export const DAY_START = 6;
+export const DAY_START = 5;
 export const DAY_END = 20;
 export const MIN_DURATION = 0.5;
 export const CORE_START = 8;

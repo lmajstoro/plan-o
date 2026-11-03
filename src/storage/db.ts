@@ -4,7 +4,7 @@ import type { Database } from "../types";
 
 export const DB_KEY = "plano-db";
 const SEED_VERSION_KEY = "plano-seed-version";
-export const SEED_VERSION = "37";
+export const SEED_VERSION = "38";
 
 function writeSeed(): Database {
   const seeded = createSeedDatabase();

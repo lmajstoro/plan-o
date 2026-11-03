@@ -55,7 +55,7 @@ const STATUS_RANK: Record<WorkOrderStatus, number> = {
 
 export function workOrderStatusClass(status: WorkOrderStatus, archived: boolean): string {
   if (archived) return "bg-slate-100 text-slate-500";
-  if (status === "u_tijeku") return "bg-tokta-50 text-tokta-800";
+  if (status === "u_tijeku") return "bg-frigo-50 text-frigo-800";
   if (status === "zavrsen") return "bg-emerald-50 text-emerald-800";
   return "bg-amber-50 text-amber-800";
 }

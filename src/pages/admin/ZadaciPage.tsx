@@ -3,7 +3,7 @@ import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { defaultRoleId, roleColor, roleName, sortJobRoles } from "../../lib/roles";
 import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
-import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { ConfirmDialog, Modal, ModalForm } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { Field, Header } from "./ZaposleniciPage";
@@ -96,7 +96,7 @@ export function ZadaciPage() {
   return (
     <div>
       <Header title="Zadaci" actionLabel="Novi zadatak" onAction={openCreate} />
-      <p className="mb-4 text-slate-500">Šifarnik zadataka. Radni nalozi samo biraju postojeće zadatke; uređivanje je ovdje.</p>
+      <p className="mb-4 text-sm text-slate-500">Šifarnik zadataka. Radni nalozi samo biraju postojeće zadatke; uređivanje je ovdje.</p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
@@ -143,10 +143,10 @@ export function ZadaciPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi zadatak" : "Novi zadatak"} onClose={closeForm}>
-          <form noValidate onSubmit={save} className="space-y-3">
+        <Modal title={editing ? "Uredi zadatak" : "Novi zadatak"} size="form" onClose={closeForm}>
+          <ModalForm onSubmit={save} onCancel={closeForm}>
             <Field label="Šifra" error={fields.errors.code}>
-              <input className={inputClass(Boolean(fields.errors.code))} value={form.code} onChange={(e) => { fields.clear("code"); setForm({ ...form, code: e.target.value }); }} />
+              <input className={inputClass(Boolean(fields.errors.code), "font-mono")} value={form.code} onChange={(e) => { fields.clear("code"); setForm({ ...form, code: e.target.value }); }} />
             </Field>
             <Field label="Opis" error={fields.errors.description}>
               <textarea
@@ -168,13 +168,7 @@ export function ZadaciPage() {
                 </select>
               )}
             </Field>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={closeForm}>
-                Odustani
-              </button>
-              <button type="submit" className="btn-primary">Spremi</button>
-            </div>
-          </form>
+          </ModalForm>
         </Modal>
       ) : null}
 

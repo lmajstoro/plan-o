@@ -4,7 +4,7 @@ import { TouchGanttBoard } from "../../components/gantt/TouchGanttBoard";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
 import { SaveStatus } from "../../components/ui/SaveStatus";
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../../components/icons";
-import { ToktaMark } from "../../components/brand/ToktaMark";
+import { FrigoMark, FrigoWordmark } from "../../components/brand/FrigoMark";
 import { useAuth } from "../../context/AuthContext";
 import { formatCroatianDate } from "../../lib/dates";
 import { sortJobRoles } from "../../lib/roles";
@@ -37,8 +37,8 @@ export function TabletPlanPage() {
     <div className="flex h-dvh flex-col gap-3 overflow-hidden bg-slate-50 p-3 select-none">
       <header className="flex shrink-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
         <div className="flex items-center gap-2.5 pr-1">
-          <ToktaMark className="h-7 w-auto shrink-0" />
-          <div className="text-lg font-extrabold leading-none tracking-wide text-tokta-900">TOKTA</div>
+          <FrigoMark className="h-8 w-auto shrink-0" />
+          <FrigoWordmark />
         </div>
         <DaySwiper
           dateKey={date}
@@ -210,7 +210,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       type="button"
       className={`inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-[15px] font-medium ${
-        active ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 active:bg-slate-200"
+        active ? "bg-frigo-700 text-white" : "bg-slate-100 text-slate-700 active:bg-slate-200"
       }`}
       onClick={onClick}
     >

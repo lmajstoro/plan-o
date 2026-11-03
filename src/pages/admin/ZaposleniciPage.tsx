@@ -263,7 +263,7 @@ export function ZaposleniciPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "tokta-racuni.csv";
+    link.download = "frigonex-racuni.csv";
     link.click();
     URL.revokeObjectURL(url);
     update((current) => pushAudit(current, { account: user?.name ?? "Administrator", email: user?.email ?? "", action: "Izvoz popisa računa", target: pageName("/administrator/zaposlenici") }));
@@ -390,10 +390,10 @@ export function ZaposleniciPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi zaposlenika" : "Novi zaposlenik"} size="xl" onClose={closeForm}>
-          <form noValidate onSubmit={save} className="flex min-h-[32rem] flex-col">
+        <Modal title={editing ? "Uredi zaposlenika" : "Novi zaposlenik"} size="form" onClose={closeForm}>
+          <form noValidate onSubmit={save} className="flex min-h-0 flex-1 flex-col">
             <CategoryTabs tabs={FORM_TABS} value={formTab} onChange={(id) => setFormTab(id as FormTab)} />
-            <div className="mt-4 min-h-0 flex-1">
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
               {formTab === "osnovno" ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Ime i prezime" error={fields.errors.name}>
@@ -413,7 +413,7 @@ export function ZaposleniciPage() {
                   {db.jobRoles.length === 0 ? (
                     <p className="text-sm text-slate-500">Nema uloga. Dodajte ih u šifarniku Uloge.</p>
                   ) : (
-                    <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
+                    <div className="space-y-3">
                       {sortJobRoles(db.jobRoles).map((role) => {
                         const roleOn = form.roleIds.includes(role.id);
                         const tasks = tasksOf(role.id);
@@ -449,7 +449,7 @@ export function ZaposleniciPage() {
                 </div>
               ) : null}
               {formTab === "skupine" ? (
-                <div className="max-h-[50vh] space-y-1.5 overflow-y-auto rounded-lg border border-slate-200 p-3">
+                <div className="space-y-1.5 rounded-lg border border-slate-200 p-3">
                   {db.workGroups.length === 0 ? (
                     <p className="text-sm text-slate-500">Nema radnih skupina. Dodajte ih u šifarniku.</p>
                   ) : (

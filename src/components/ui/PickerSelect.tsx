@@ -48,7 +48,7 @@ export function PickerSelect({
                 key={option.value}
                 type="button"
                 className={`flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-base ${
-                  active ? "bg-tokta-50 font-medium text-tokta-800" : "text-slate-800 active:bg-slate-100"
+                  active ? "bg-frigo-50 font-medium text-frigo-800" : "text-slate-800 active:bg-slate-100"
                 }`}
                 onClick={() => {
                   onChange(option.value);

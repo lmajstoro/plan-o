@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ToktaMark } from "../brand/ToktaMark";
+import { FrigoMark, FrigoWordmark } from "../brand/FrigoMark";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
 import { APP_VERSION } from "../../lib/accounts";
@@ -164,10 +164,10 @@ function CollapseToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle:
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
     <div className={`flex items-center py-5 ${collapsed ? "justify-center px-2" : "gap-3 pl-3.5 pr-4"}`}>
-      <ToktaMark className="h-8 w-auto shrink-0" />
+      <FrigoMark className="h-8 w-auto shrink-0" />
       <div className={`flex min-w-0 items-center gap-3 ${conceal(collapsed)}`}>
         <div className="h-6 w-px shrink-0 bg-slate-300" />
-        <div className="text-lg font-extrabold leading-none tracking-wide text-tokta-900">TOKTA</div>
+        <FrigoWordmark />
       </div>
     </div>
   );
@@ -223,7 +223,7 @@ function NavItem({
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
         `flex items-center rounded-lg px-3 text-base font-medium ${collapsed ? "justify-center" : "gap-3"} ${nested ? "py-2" : "py-2.5"} ${
-          isActive || activeExtra ? "bg-tokta-50 text-tokta-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          isActive || activeExtra ? "bg-frigo-50 text-frigo-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
         }`
       }
     >

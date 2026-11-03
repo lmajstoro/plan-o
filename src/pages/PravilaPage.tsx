@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { ToktaLockup } from "../components/brand/ToktaMark";
+import { FrigoLockup } from "../components/brand/FrigoMark";
 import { useAuth } from "../context/AuthContext";
 import { useDb } from "../context/DbContext";
 import { sameEmail } from "../lib/accounts";
@@ -50,7 +50,7 @@ export function PravilaPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-5">
-          <ToktaLockup subtitle={false} />
+          <FrigoLockup subtitle={false} />
         </div>
         <h1 className="text-xl font-semibold text-slate-900">Pravila korištenja</h1>
         <p className="mt-2 text-sm text-slate-600">Prije ulaska potvrdi kratka pravila. Tekst će biti definiran naknadno.</p>

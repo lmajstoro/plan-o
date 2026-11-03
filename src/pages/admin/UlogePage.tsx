@@ -3,8 +3,9 @@ import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { roleUsage, sortJobRoles } from "../../lib/roles";
 import { WORK_ORDER_COLOR_LABELS, WORK_ORDER_COLORS } from "../../lib/workOrders";
+import { ColorDots } from "../../components/ui/ColorDots";
 import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
-import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { ConfirmDialog, Modal, ModalForm } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { Field, Header } from "./ZaposleniciPage";
@@ -93,7 +94,7 @@ export function UlogePage() {
   return (
     <div>
       <Header title="Uloge" actionLabel="Nova uloga" onAction={openCreate} />
-      <p className="mb-4 text-slate-500">Šifarnik uloga za zaposlenike i zadatke. Boja se vidi na planu rada i u ostalim šifarnicima.</p>
+      <p className="mb-4 text-sm text-slate-500">Šifarnik uloga za zaposlenike i zadatke. Boja se vidi na planu rada i u ostalim šifarnicima.</p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[520px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
@@ -143,36 +144,15 @@ export function UlogePage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi ulogu" : "Nova uloga"} onClose={closeForm}>
-          <form noValidate onSubmit={save} className="space-y-3">
+        <Modal title={editing ? "Uredi ulogu" : "Nova uloga"} size="form" onClose={closeForm}>
+          <ModalForm onSubmit={save} onCancel={closeForm}>
             <Field label="Naziv" error={fields.errors.name}>
               <input className={inputClass(Boolean(fields.errors.name))} value={form.name} onChange={(e) => { fields.clear("name"); setForm({ ...form, name: e.target.value }); }} />
             </Field>
-            <Field label="Boja">
-              <div className="flex flex-wrap gap-2">
-                {WORK_ORDER_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setForm({ ...form, color })}
-                    className={`flex items-center gap-2 rounded-full border px-2 py-1 text-xs font-medium ${
-                      form.color === color ? "border-slate-400 ring-2 ring-offset-1 ring-slate-400" : "border-slate-200"
-                    }`}
-                    style={{ backgroundColor: color, color: "#fff" }}
-                    aria-label={WORK_ORDER_COLOR_LABELS[color] ?? color}
-                  >
-                    {WORK_ORDER_COLOR_LABELS[color] ?? color}
-                  </button>
-                ))}
-              </div>
+            <Field label={`Boja${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
+              <ColorDots value={form.color} onChange={(color) => setForm({ ...form, color })} />
             </Field>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={closeForm}>
-                Odustani
-              </button>
-              <button type="submit" className="btn-primary">Spremi</button>
-            </div>
-          </form>
+          </ModalForm>
         </Modal>
       ) : null}
 

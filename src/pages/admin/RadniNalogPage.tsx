@@ -5,11 +5,12 @@ import { NotesView } from "../../components/admin/NotesView";
 import { QualityCheckModal } from "../../components/admin/QualityCheckModal";
 import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { ChevronLeftIcon } from "../../components/icons";
+import { ColorDots } from "../../components/ui/ColorDots";
 import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { useDb } from "../../context/DbContext";
 import { compactNotes, notesHasContent } from "../../lib/notes";
 import { checklistSummary } from "../../lib/qualityChecklist";
-import { formatHours, hourDeltaLabel, workOrderOverview, type HourPair, type PersonHours, type RoleHours } from "../../lib/workOrderOverview";
+import { formatHours, hourDeltaLabel, workOrderOverview, type PersonHours, type RoleHours } from "../../lib/workOrderOverview";
 import {
   erpTaken,
   normalizeErp,
@@ -18,7 +19,6 @@ import {
   workOrderCode,
   workOrderColor,
   WORK_ORDER_COLOR_LABELS,
-  WORK_ORDER_COLORS,
   WORK_ORDER_STATUS_LABELS,
   WORK_ORDER_STATUSES,
   workOrderStatusClass,
@@ -74,12 +74,12 @@ export function RadniNalogPage() {
   const checklist = checklistSummary(order.checklist ?? []);
 
   return (
-    <div>
-      <div className="sticky top-0 z-20 -mx-6 -mt-6 bg-slate-50 px-6 pb-4 pt-6">
+    <div className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col">
+      <div className="shrink-0">
         <BackLink />
         <h1 className="mt-3 flex items-center gap-2 text-2xl font-semibold text-slate-900">
           <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-          <span className="font-mono">{workOrderCode(order)}</span>
+          <span className="font-mono font-medium">{workOrderCode(order)}</span>
           <span className="min-w-0 truncate">{order.name}</span>
           <span className={`ml-1 inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${workOrderStatusClass(order.status, order.archived)}`}>
             {order.archived ? "Arhiviran" : WORK_ORDER_STATUS_LABELS[order.status]}
@@ -96,7 +96,7 @@ export function RadniNalogPage() {
                 role="tab"
                 aria-selected={selected}
                 className={`border-b-2 px-3 py-2 text-sm font-medium ${
-                  selected ? "border-tokta-700 text-tokta-800" : "border-transparent text-slate-500 hover:text-slate-800"
+                  selected ? "border-frigo-700 text-frigo-800" : "border-transparent text-slate-500 hover:text-slate-800"
                 }`}
                 onClick={() => selectTab(item.id)}
               >
@@ -107,7 +107,9 @@ export function RadniNalogPage() {
         </div>
       </div>
 
+      <div className="mt-4 min-h-0 flex-1">
       {tab === "pregled" ? (
+        <div className="h-full overflow-y-auto">
         <Pregled
           order={order}
           overview={overview}
@@ -116,12 +118,13 @@ export function RadniNalogPage() {
           checklist={checklist}
           onOpen={(next) => selectTab(next)}
         />
+        </div>
       ) : null}
       {tab === "uloge" ? <SatiPoUlogama overview={overview} /> : null}
       {tab === "ljudi" ? <SatiPoLjudima overview={overview} /> : null}
       {tab === "informacije" ? <Informacije order={order} /> : null}
       {tab === "zadaci" ? (
-        <div className="mt-5">
+        <div className="h-full">
           <TaskSelectModal
             embedded
             description="Zadaci se uređuju u šifarniku Zadaci. Ovdje odaberi koje ovaj nalog smije koristiti."
@@ -138,7 +141,7 @@ export function RadniNalogPage() {
         </div>
       ) : null}
       {tab === "kontrola" ? (
-        <div className="mt-5">
+        <div className="h-full">
           <QualityCheckModal
             embedded
             items={db.checklistItems}
@@ -152,6 +155,7 @@ export function RadniNalogPage() {
           />
         </div>
       ) : null}
+      </div>
     </div>
   );
 }
@@ -184,7 +188,7 @@ function Pregled({
   const maxPerson = Math.max(...overview.people.map((person) => person.actual), 0);
 
   return (
-    <div className="mt-5 grid gap-4 xl:grid-cols-5">
+    <div className="grid gap-4 xl:grid-cols-5">
       <section className="rounded-xl border border-slate-200 bg-white xl:col-span-2">
         <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">Nalog</h2>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-4 text-sm">
@@ -199,7 +203,7 @@ function Pregled({
           <div>
             <dt className="text-slate-500">Zadaci</dt>
             <dd>
-              <button type="button" className="font-medium text-tokta-800 hover:underline" onClick={() => onOpen("zadaci")}>
+              <button type="button" className="font-medium text-frigo-800 hover:underline" onClick={() => onOpen("zadaci")}>
                 {taskCount}
               </button>
             </dd>
@@ -207,14 +211,14 @@ function Pregled({
           <div>
             <dt className="text-slate-500">Kontrola</dt>
             <dd>
-              <button type="button" className="font-medium text-tokta-800 hover:underline" onClick={() => onOpen("kontrola")}>
+              <button type="button" className="font-medium text-frigo-800 hover:underline" onClick={() => onOpen("kontrola")}>
                 {checklist.confirmed}/{checklist.applicable}
               </button>
             </dd>
           </div>
         </dl>
         <div className="border-t border-slate-100 px-4 py-3">
-          <p className="text-xs font-medium text-slate-500">Napomena</p>
+          <p className="text-sm font-medium text-slate-700">Napomena</p>
           {notesHasContent(order.description) ? (
             <div className="mt-1">
               <NotesView value={order.description} maxTodos={3} onShowMore={() => onOpen("informacije")} />
@@ -320,7 +324,7 @@ function PersonBar({ person, max }: { person: PersonHours; max: number }) {
         <span className="shrink-0 tabular-nums text-slate-600">{formatHours(person.actual)}</span>
       </div>
       <div className="h-2 rounded-full bg-slate-100">
-        <div className="h-2 rounded-full bg-tokta-700" style={{ width: `${width}%` }} />
+        <div className="h-2 rounded-full bg-frigo-700" style={{ width: `${width}%` }} />
       </div>
     </div>
   );
@@ -485,7 +489,9 @@ function Informacije({ order }: { order: WorkOrder }) {
   }
 
   return (
-    <form noValidate onSubmit={save} className="mt-5 max-w-3xl space-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4">
+    <form noValidate onSubmit={save} className="flex h-full min-h-0 flex-col rounded-xl border border-slate-200 bg-white">
+      <div className="grid min-h-0 flex-1 grid-cols-2 gap-6 overflow-hidden p-5">
+      <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Radni nalog">
           <input className="input bg-slate-50" value={workOrderCode(order)} readOnly />
@@ -550,34 +556,14 @@ function Informacije({ order }: { order: WorkOrder }) {
           }}
         />
       </Field>
-      <div>
-        <span className="mb-1 block text-sm font-medium text-slate-700">Napomene</span>
-        <NotesEditor
-          value={form.description}
-          onChange={(description) => {
-            setForm({ ...form, description });
+      <Field label={`Boja na planu${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
+        <ColorDots
+          value={form.color}
+          onChange={(color) => {
+            setForm({ ...form, color });
             setSaved(false);
           }}
         />
-      </div>
-      <Field label={`Boja na planu${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
-        <div className="flex flex-wrap gap-1.5">
-          {WORK_ORDER_COLORS.map((color) => (
-            <button
-              key={color}
-              type="button"
-              onClick={() => {
-                setForm({ ...form, color });
-                setSaved(false);
-              }}
-              className={`h-7 w-7 rounded-full border ${
-                form.color === color ? "border-white ring-2 ring-offset-1 ring-slate-400" : "border-slate-200"
-              }`}
-              style={{ backgroundColor: color }}
-              aria-label={WORK_ORDER_COLOR_LABELS[color] ?? color}
-            />
-          ))}
-        </div>
       </Field>
       <label className="flex items-center gap-2 text-sm text-slate-700">
         <input
@@ -590,7 +576,20 @@ function Informacije({ order }: { order: WorkOrder }) {
         />
         Arhiviraj nalog (ne nudi se pri unosu sati)
       </label>
-      <div className="flex items-center justify-end gap-3 pt-2">
+      </div>
+      <div className="flex min-h-0 flex-col">
+        <span className="mb-1 block text-sm font-medium text-slate-700">Napomene</span>
+        <NotesEditor
+          fill
+          value={form.description}
+          onChange={(description) => {
+            setForm({ ...form, description });
+            setSaved(false);
+          }}
+        />
+      </div>
+      </div>
+      <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
         {saved ? <span className="text-sm text-emerald-700">Spremljeno</span> : null}
         <button type="button" className="btn-secondary" onClick={() => { setForm(toInfoForm(order)); fields.clear(); setSaved(false); }}>
           Odustani
@@ -603,7 +602,7 @@ function Informacije({ order }: { order: WorkOrder }) {
   );
 }
 
-function HourFigures({ hours }: { hours: HourPair }) {
+function HourFigures({ hours }: { hours: { planned: number; actual: number } }) {
   return (
     <p className="text-sm tabular-nums text-slate-600">
       Plan {formatHours(hours.planned)}
@@ -619,7 +618,7 @@ function CompareBar({ planned, actual }: { planned: number; actual: number }) {
   return (
     <div className="mt-2 space-y-1">
       <Bar label="Plan" width={width(planned)} className="bg-slate-300" />
-      <Bar label="Ostvareno" width={width(actual)} className="bg-tokta-700" />
+      <Bar label="Ostvareno" width={width(actual)} className="bg-frigo-700" />
     </div>
   );
 }

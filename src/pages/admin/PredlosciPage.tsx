@@ -2,8 +2,9 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { sortTemplates, templateUsage, WORK_ORDER_COLOR_LABELS, WORK_ORDER_COLORS } from "../../lib/workOrders";
+import { ColorDots } from "../../components/ui/ColorDots";
 import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
-import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { ConfirmDialog, Modal, ModalForm } from "../../components/ui/Modal";
 import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { EditIcon, ListChecksIcon, TrashIcon } from "../../components/icons";
@@ -107,7 +108,7 @@ export function PredlosciPage() {
   return (
     <div>
       <Header title="Predlošci" actionLabel="Novi predložak" onAction={openCreate} />
-      <p className="mb-4 text-slate-500">
+      <p className="mb-4 text-sm text-slate-500">
         Tipovi uređaja iz kojih se kreira radni nalog. Novi nalog naslijedi boju i zadatke predloška, pa ih možeš naknadno promijeniti na nalogu.
       </p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -159,34 +160,15 @@ export function PredlosciPage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi predložak" : "Novi predložak"} onClose={closeForm}>
-          <form noValidate onSubmit={save} className="space-y-3">
+        <Modal title={editing ? "Uredi predložak" : "Novi predložak"} size="form" onClose={closeForm}>
+          <ModalForm onSubmit={save} onCancel={closeForm}>
             <Field label="Naziv" error={fields.errors.name}>
               <input className={inputClass(Boolean(fields.errors.name))} value={form.name} onChange={(e) => { fields.clear("name"); setForm({ ...form, name: e.target.value }); }} />
             </Field>
-            <Field label="Boja na planu">
-              <div className="flex flex-wrap gap-2">
-                {WORK_ORDER_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setForm({ ...form, color })}
-                    className={`flex items-center gap-2 rounded-full border px-2 py-1 text-xs font-medium ${
-                      form.color === color ? "border-slate-400 ring-2 ring-offset-1 ring-slate-400" : "border-slate-200"
-                    }`}
-                    style={{ backgroundColor: color, color: "#fff" }}
-                    aria-label={WORK_ORDER_COLOR_LABELS[color] ?? color}
-                  >
-                    {WORK_ORDER_COLOR_LABELS[color] ?? color}
-                  </button>
-                ))}
-              </div>
+            <Field label={`Boja na planu${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
+              <ColorDots value={form.color} onChange={(color) => setForm({ ...form, color })} />
             </Field>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={closeForm}>Odustani</button>
-              <button type="submit" className="btn-primary">Spremi</button>
-            </div>
-          </form>
+          </ModalForm>
         </Modal>
       ) : null}
 

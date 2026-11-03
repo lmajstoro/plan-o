@@ -35,7 +35,7 @@ export function BottomSheet({
       <div
         role="dialog"
         aria-label={title}
-        className="relative flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-2xl bg-white shadow-2xl md:max-w-lg md:rounded-2xl"
+        className="relative flex max-h-[92dvh] w-full flex-col rounded-t-2xl bg-white shadow-2xl md:rounded-2xl"
       >
         <div className="flex shrink-0 items-center gap-2 border-b border-slate-100 px-2 py-2">
           {onBack ? (
@@ -103,7 +103,7 @@ export function OrderChoiceList({
           disabled={order.archived}
           onClick={() => onSelect(order.id)}
           className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition disabled:opacity-50 ${
-            selected ? "border-tokta-600 bg-tokta-50 ring-2 ring-tokta-200" : "border-slate-200 bg-white hover:bg-slate-50"
+            selected ? "border-frigo-600 bg-frigo-50 ring-2 ring-frigo-200" : "border-slate-200 bg-white hover:bg-slate-50"
           }`}
         >
           <span
@@ -160,7 +160,7 @@ export function TaskChoiceList({
               type="button"
               onClick={() => onSelect(task.id)}
               className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                selected ? "border-tokta-600 bg-tokta-50 ring-2 ring-tokta-200" : "border-slate-200 bg-white hover:bg-slate-50"
+                selected ? "border-frigo-600 bg-frigo-50 ring-2 ring-frigo-200" : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
               <span className="w-14 shrink-0 text-sm font-semibold text-slate-500">{task.code}</span>
@@ -195,7 +195,7 @@ export function ChoiceGrid<T extends number>({
           onClick={() => onSelect(value)}
           className={`flex h-14 items-center justify-center rounded-xl border text-lg font-semibold tabular-nums transition ${
             value === selected
-              ? "border-tokta-700 bg-tokta-700 text-white"
+              ? "border-frigo-700 bg-frigo-700 text-white"
               : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
           }`}
         >

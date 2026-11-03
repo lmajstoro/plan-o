@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ToktaLockup } from "../components/brand/ToktaMark";
+import { FrigoLockup } from "../components/brand/FrigoMark";
 import { emailProblem, FieldError, inputClass, useFieldErrors } from "../components/ui/field";
 import { useDb } from "../context/DbContext";
 import { LOCK_AFTER, MOCK_ADMIN_EMAIL, MOCK_EMPLOYEE_EMAIL, MOCK_MFA_CODE, MOCK_PASSWORD, sameEmail } from "../lib/accounts";
@@ -168,7 +168,7 @@ export function LoginPage() {
     <div className="flex min-h-dvh items-center justify-center bg-slate-50 px-4 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6">
-          <ToktaLockup size="lg" heading />
+          <FrigoLockup size="lg" heading />
         </div>
 
         <form noValidate onSubmit={onSubmit} className="space-y-4">

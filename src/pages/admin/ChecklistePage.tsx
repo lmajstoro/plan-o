@@ -3,7 +3,7 @@ import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { CategoryTabs } from "../../components/admin/CategoryTabs";
 import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
-import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { ConfirmDialog, Modal, ModalForm } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { Field, Header } from "./ZaposleniciPage";
@@ -111,7 +111,7 @@ export function ChecklistePage() {
   return (
     <div>
       <Header title="Kontrola kvalitete" actionLabel="Nova stavka" onAction={openCreate} />
-      <p className="mb-4 text-slate-500">
+      <p className="mb-4 text-sm text-slate-500">
         Šifarnik stavki kontrole kvalitete, složen po kategorijama. Svaki novi radni nalog preuzima cijelu listu praznu. Na nalogu se stavka potvrđuje kad je provjerena, ili se označi da ne postoji na uređaju.
       </p>
       <CategoryTabs
@@ -165,8 +165,8 @@ export function ChecklistePage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi stavku" : "Nova stavka"} onClose={closeForm}>
-          <form noValidate onSubmit={save} className="space-y-3">
+        <Modal title={editing ? "Uredi stavku" : "Nova stavka"} size="form" onClose={closeForm}>
+          <ModalForm onSubmit={save} onCancel={closeForm}>
             <Field label="Kategorija" error={fields.errors.category}>
               <input
                 className={inputClass(Boolean(fields.errors.category))}
@@ -185,7 +185,7 @@ export function ChecklistePage() {
             </Field>
             <Field label="Šifra" error={fields.errors.code}>
               <input
-                className={inputClass(Boolean(fields.errors.code))}
+                className={inputClass(Boolean(fields.errors.code), "font-mono")}
                 value={form.code}
                 onChange={(e) => {
                   fields.clear("code");
@@ -203,15 +203,7 @@ export function ChecklistePage() {
                 }}
               />
             </Field>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={closeForm}>
-                Odustani
-              </button>
-              <button type="submit" className="btn-primary">
-                Spremi
-              </button>
-            </div>
-          </form>
+          </ModalForm>
         </Modal>
       ) : null}
 

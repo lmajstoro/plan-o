@@ -2,7 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
-import { ConfirmDialog, Modal } from "../../components/ui/Modal";
+import { ConfirmDialog, Modal, ModalForm } from "../../components/ui/Modal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { Field, Header } from "./ZaposleniciPage";
@@ -83,7 +83,7 @@ export function RadneSkupinePage() {
   return (
     <div>
       <Header title="Radne skupine" actionLabel="Nova radna skupina" onAction={openCreate} />
-      <p className="mb-4 text-slate-500">Oznake za filtriranje zaposlenika. Jedan radnik može pripadati više skupina.</p>
+      <p className="mb-4 text-sm text-slate-500">Oznake za filtriranje zaposlenika. Jedan radnik može pripadati više skupina.</p>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[520px] text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
@@ -125,18 +125,12 @@ export function RadneSkupinePage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi radnu skupinu" : "Nova radna skupina"} onClose={closeForm}>
-          <form noValidate onSubmit={save} className="space-y-3">
+        <Modal title={editing ? "Uredi radnu skupinu" : "Nova radna skupina"} size="form" onClose={closeForm}>
+          <ModalForm onSubmit={save} onCancel={closeForm}>
             <Field label="Naziv" error={fields.errors.name}>
               <input className={inputClass(Boolean(fields.errors.name))} value={form.name} onChange={(e) => { fields.clear("name"); setForm({ ...form, name: e.target.value }); }} />
             </Field>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={closeForm}>
-                Odustani
-              </button>
-              <button type="submit" className="btn-primary">Spremi</button>
-            </div>
-          </form>
+          </ModalForm>
         </Modal>
       ) : null}
 

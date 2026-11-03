@@ -76,7 +76,7 @@ export function PlanRadaPage() {
             <button
               type="button"
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                roleFilter.length === 0 ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                roleFilter.length === 0 ? "bg-frigo-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
               onClick={clearRoles}
             >
@@ -89,7 +89,7 @@ export function PlanRadaPage() {
                   key={role.id}
                   type="button"
                   className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                    active ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    active ? "bg-frigo-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                   onClick={() => toggleRole(role.id)}
                 >
@@ -106,7 +106,7 @@ export function PlanRadaPage() {
             <button
               type="button"
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                groupFilter.length === 0 ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                groupFilter.length === 0 ? "bg-frigo-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
               onClick={clearGroups}
             >
@@ -119,7 +119,7 @@ export function PlanRadaPage() {
                   key={group.id}
                   type="button"
                   className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                    active ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    active ? "bg-frigo-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                   onClick={() => toggleGroup(group.id)}
                 >

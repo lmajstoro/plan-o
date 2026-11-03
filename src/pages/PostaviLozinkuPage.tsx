@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ToktaLockup } from "../components/brand/ToktaMark";
+import { FrigoLockup } from "../components/brand/FrigoMark";
 import { FieldError, inputClass, useFieldErrors, type FieldErrors } from "../components/ui/field";
 import { useDb } from "../context/DbContext";
 import { linkExpired, PASSWORD_MIN } from "../lib/accounts";
@@ -57,7 +57,7 @@ export function PostaviLozinkuPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-5">
-          <ToktaLockup subtitle={false} />
+          <FrigoLockup subtitle={false} />
         </div>
         <h1 className="text-xl font-semibold text-slate-900">Postavljanje lozinke</h1>
         {welcome ? (
@@ -67,7 +67,7 @@ export function PostaviLozinkuPage() {
         )}
         {done ? (
           <p className="mt-4 text-sm text-slate-700">
-            Lozinka je postavljena. <Link className="font-medium text-tokta-700" to="/prijava">Prijavi se</Link>.
+            Lozinka je postavljena. <Link className="font-medium text-frigo-700" to="/prijava">Prijavi se</Link>.
           </p>
         ) : !employee || !employee.resetTokenExpires || linkExpired(employee.resetTokenExpires) ? (
           <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">

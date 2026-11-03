@@ -1,4 +1,4 @@
-const CACHE = "tokta-app-v1";
+const CACHE = "frigonex-v3";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

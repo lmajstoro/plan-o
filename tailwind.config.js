@@ -4,7 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Source Sans 3"', "Segoe UI", "system-ui", "sans-serif"],
+        sans: ['"Inter"', "Segoe UI", "system-ui", "sans-serif"],
+        display: ['"Audiowide"', '"Inter"', "sans-serif"],
       },
       colors: {
         ink: {
@@ -15,17 +16,16 @@ export default {
           700: "#334155",
           900: "#0f172a",
         },
-        tokta: {
-          50: "#f2f8f4",
-          100: "#e3f3e8",
-          200: "#c5e6d0",
-          300: "#8fcb9e",
-          500: "#1f8a4c",
-          600: "#187544",
-          700: "#0e4a32",
-          800: "#0b3d2e",
-          900: "#0d1f17",
-          bright: "#5dde6a",
+        frigo: {
+          50: "#f2fbf4",
+          100: "#e3f6e6",
+          200: "#c5ebca",
+          300: "#92d99a",
+          500: "#39B54A",
+          600: "#309a40",
+          700: "#39B54A",
+          800: "#267833",
+          900: "#1F2A37",
         },
       },
     },

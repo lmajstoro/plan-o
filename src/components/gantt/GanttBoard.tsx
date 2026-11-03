@@ -384,7 +384,7 @@ export function GanttBoard({
           </div>
           <div className="relative flex" style={{ width: TIMELINE_WIDTH }}>
             <div
-              className="pointer-events-none absolute inset-y-0 bg-tokta-50/70"
+              className="pointer-events-none absolute inset-y-0 bg-frigo-50/70"
               style={{
                 left: (CORE_START - DAY_START) * HOUR_WIDTH,
                 width: (CORE_END - CORE_START) * HOUR_WIDTH,
@@ -509,7 +509,7 @@ export function GanttBoard({
                     </span>
                   ) : null}
                   <div
-                    className="pointer-events-none absolute inset-y-0 bg-tokta-50/40"
+                    className="pointer-events-none absolute inset-y-0 bg-frigo-50/40"
                     style={{
                       left: (CORE_START - DAY_START) * HOUR_WIDTH,
                       width: (CORE_END - CORE_START) * HOUR_WIDTH,
@@ -524,13 +524,13 @@ export function GanttBoard({
                   ))}
                   {selectedRange ? (
                     <div
-                      className="pointer-events-none absolute top-1 bottom-1 z-10 flex items-center justify-center rounded-md bg-tokta-600/20 ring-1 ring-tokta-500"
+                      className="pointer-events-none absolute top-1 bottom-1 z-10 flex items-center justify-center rounded-md bg-frigo-600/20 ring-1 ring-frigo-500"
                       style={{
                         left: (selectedRange.start - DAY_START) * HOUR_WIDTH + 2,
                         width: (selectedRange.end - selectedRange.start) * HOUR_WIDTH - 4,
                       }}
                     >
-                      <span className="rounded bg-tokta-700 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
+                      <span className="rounded bg-frigo-700 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
                         {selectedRange.end - selectedRange.start} h
                       </span>
                     </div>
@@ -553,7 +553,7 @@ export function GanttBoard({
                       Ostv.
                     </span>
                     <div
-                      className="pointer-events-none absolute inset-y-0 bg-tokta-50/30"
+                      className="pointer-events-none absolute inset-y-0 bg-frigo-50/30"
                       style={{
                         left: (CORE_START - DAY_START) * HOUR_WIDTH,
                         width: (CORE_END - CORE_START) * HOUR_WIDTH,

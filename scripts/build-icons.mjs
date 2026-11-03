@@ -20,37 +20,70 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
-const BG = [0x0e, 0x4a, 0x32];
+const BG = [0x1f, 0x2a, 0x37];
+const MARK_W = 235;
+const MARK_H = 272;
+const MARK_SCALE = 24 / MARK_H;
+const MARK_X = (32 - MARK_W * MARK_SCALE) / 2;
+const MARK_Y = (32 - MARK_H * MARK_SCALE) / 2;
 const BARS = [
-  { x: 5.5, y: 19.2, w: 12.4, h: 4.6, r: 1.5, fill: [0x08, 0x30, 0x1f] },
-  { x: 10.1, y: 13.4, w: 12.4, h: 4.6, r: 1.5, fill: [0x3c, 0xba, 0x62] },
-  { x: 14.7, y: 7.6, w: 12.4, h: 4.6, r: 1.5, fill: [0xd8, 0xff, 0xdf] },
-];
+  { x: 0, y: 0, w: 235, h: 80, rTL: 40, rBR: 44, fill: [0x39, 0xb5, 0x4a] },
+  { x: 0, y: 96, w: 179, h: 80, rTL: 20, rBR: 44, fill: [0x21, 0x69, 0xae] },
+  { x: 0, y: 192, w: 84, h: 80, rTL: 20, rBR: 44, fill: [0xe0, 0x1d, 0x44] },
+].map((bar) => ({
+  x: MARK_X + bar.x * MARK_SCALE,
+  y: MARK_Y + bar.y * MARK_SCALE,
+  w: bar.w * MARK_SCALE,
+  h: bar.h * MARK_SCALE,
+  rTL: bar.rTL * MARK_SCALE,
+  rBR: bar.rBR * MARK_SCALE,
+  fill: bar.fill,
+}));
 
-function inRoundRect(u, v, bar) {
-  const { x, y, w, h, r } = bar;
+function inRoundRect(u, v, rect) {
+  const { x, y, w, h, r } = rect;
   if (u < x || v < y || u > x + w || v > y + h) return false;
-  const left = x + r;
-  const right = x + w - r;
-  const top = y + r;
-  const bottom = y + h - r;
-  if (u >= left && u <= right) return true;
-  if (v >= top && v <= bottom) return true;
-  const cx = u < left ? left : right;
-  const cy = v < top ? top : bottom;
-  const dx = u - cx;
-  const dy = v - cy;
-  return dx * dx + dy * dy <= r * r;
-}
-
-function sample(u, v) {
-  for (let i = BARS.length - 1; i >= 0; i -= 1) {
-    if (inRoundRect(u, v, BARS[i])) return BARS[i].fill;
+  const corners = [
+    [x + r, y + r, u < x + r && v < y + r],
+    [x + w - r, y + r, u > x + w - r && v < y + r],
+    [x + r, y + h - r, u < x + r && v > y + h - r],
+    [x + w - r, y + h - r, u > x + w - r && v > y + h - r],
+  ];
+  for (const [cx, cy, inside] of corners) {
+    if (!inside) continue;
+    const dx = u - cx;
+    const dy = v - cy;
+    return dx * dx + dy * dy <= r * r;
   }
-  return BG;
+  return true;
 }
 
-function raster(size, scale) {
+function inBar(u, v, bar) {
+  const { x, y, w, h, rTL, rBR } = bar;
+  if (u < x || v < y || u > x + w || v > y + h) return false;
+  if (u < x + rTL && v < y + rTL) {
+    const dx = u - (x + rTL);
+    const dy = v - (y + rTL);
+    return dx * dx + dy * dy <= rTL * rTL;
+  }
+  if (u > x + w - rBR && v > y + h - rBR) {
+    const dx = u - (x + w - rBR);
+    const dy = v - (y + h - rBR);
+    return dx * dx + dy * dy <= rBR * rBR;
+  }
+  return true;
+}
+
+function sample(u, v, rounded) {
+  const tile = { x: 0, y: 0, w: 32, h: 32, r: 8 };
+  if (rounded && !inRoundRect(u, v, tile)) return [0, 0, 0, 0];
+  for (const bar of BARS) {
+    if (inBar(u, v, bar)) return [...bar.fill, 255];
+  }
+  return [...BG, 255];
+}
+
+function raster(size, scale, rounded) {
   const samples = size <= 48 ? 4 : 2;
   const step = 1 / samples;
   const rgba = Buffer.alloc(size * size * 4);
@@ -59,6 +92,7 @@ function raster(size, scale) {
       let r = 0;
       let g = 0;
       let b = 0;
+      let a = 0;
       let n = 0;
       for (let sy = 0; sy < samples; sy += 1) {
         for (let sx = 0; sx < samples; sx += 1) {
@@ -66,10 +100,11 @@ function raster(size, scale) {
           const py = y + (sy + 0.5) * step;
           const u = ((px / size - 0.5) / scale) * 32 + 16;
           const v = ((py / size - 0.5) / scale) * 32 + 16;
-          const color = sample(u, v);
+          const color = sample(u, v, rounded);
           r += color[0];
           g += color[1];
           b += color[2];
+          a += color[3];
           n += 1;
         }
       }
@@ -77,7 +112,7 @@ function raster(size, scale) {
       rgba[i] = Math.round(r / n);
       rgba[i + 1] = Math.round(g / n);
       rgba[i + 2] = Math.round(b / n);
-      rgba[i + 3] = 255;
+      rgba[i + 3] = Math.round(a / n);
     }
   }
   return rgba;
@@ -92,8 +127,8 @@ function chunk(type, data) {
   return Buffer.concat([length, name, data, crc]);
 }
 
-function png(size, scale) {
-  const rgba = raster(size, scale);
+function png(size, scale, rounded = false) {
+  const rgba = raster(size, scale, rounded);
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0);
   ihdr.writeUInt32BE(size, 4);
@@ -136,8 +171,8 @@ function ico(images) {
 const iconsDir = join(root, "icons");
 mkdirSync(iconsDir, { recursive: true });
 
-const png32 = png(32, 1);
-const png16 = png(16, 1);
+const png32 = png(32, 1, true);
+const png16 = png(16, 1, true);
 writeFileSync(join(root, "favicon-32.png"), png32);
 writeFileSync(join(root, "apple-touch-icon.png"), png(180, 1));
 writeFileSync(join(iconsDir, "icon-192.png"), png(192, 1));

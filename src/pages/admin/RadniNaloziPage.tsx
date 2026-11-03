@@ -18,7 +18,8 @@ import {
   workOrderStatusClass,
 } from "../../lib/workOrders";
 import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
-import { Modal } from "../../components/ui/Modal";
+import { ColorDots } from "../../components/ui/ColorDots";
+import { Modal, ModalForm } from "../../components/ui/Modal";
 import { NotesEditor } from "../../components/admin/NotesEditor";
 import { NotesView } from "../../components/admin/NotesView";
 import { PaginationBar } from "../../components/admin/PaginationBar";
@@ -148,13 +149,13 @@ export function RadniNaloziPage() {
     <div>
       <Header title="Radni nalozi" actionLabel="Novi radni nalog" onAction={openCreate} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-slate-500">
+        <p className="text-sm text-slate-500">
           Novi nalog se kreira iz predloška i dobiva sljedeći broj RN u tekućoj godini. Boju i zadatke naslijedi s predloška, a listu kontrole kvalitete preuzima praznu. Stavka se potvrđuje kad je provjerena.
         </p>
         <button
           type="button"
           className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-            showArchived ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            showArchived ? "bg-frigo-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
           }`}
           onClick={() => setShowArchived((current) => !current)}
         >
@@ -186,14 +187,14 @@ export function RadniNaloziPage() {
               paging.pageRows.map((row) => (
               <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${row.archived ? "bg-slate-50 text-slate-500" : ""}`}>
                 <td className="px-4 py-3">
-                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="inline-flex items-center gap-2 whitespace-nowrap font-mono font-medium text-slate-900 hover:text-tokta-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="inline-flex items-center gap-2 whitespace-nowrap font-mono font-medium text-slate-900 hover:text-frigo-700">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: workOrderColor(row, db.workOrderTemplates) }} />
                     {workOrderCode(row)}
                   </Link>
                 </td>
-                <td className="px-4 py-3 font-mono text-slate-600">{row.erpCode}</td>
+                <td className="px-4 py-3 font-mono font-medium text-slate-700">{row.erpCode}</td>
                 <td className="px-4 py-3 font-medium text-slate-800">
-                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="hover:text-tokta-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="hover:text-frigo-700">
                     {row.name}
                   </Link>
                 </td>
@@ -211,12 +212,12 @@ export function RadniNaloziPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-slate-600">
-                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=zadaci`} className="hover:text-tokta-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=zadaci`} className="hover:text-frigo-700">
                     {row.taskIds?.length ?? 0}
                   </Link>
                 </td>
                 <td className="px-4 py-3 tabular-nums text-slate-600">
-                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=kontrola`} className="hover:text-tokta-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=kontrola`} className="hover:text-frigo-700">
                     {checklistSummary(row.checklist ?? []).confirmed}/{checklistSummary(row.checklist ?? []).applicable}
                   </Link>
                 </td>
@@ -236,8 +237,8 @@ export function RadniNaloziPage() {
       </div>
 
       {showForm ? (
-        <Modal title="Novi radni nalog" size="lg" onClose={closeForm}>
-          <form noValidate onSubmit={save} className="space-y-3">
+        <Modal title="Novi radni nalog" size="form" onClose={closeForm}>
+          <ModalForm onSubmit={save} onCancel={closeForm} disabled={templates.length === 0}>
             {templates.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 Nema predložaka. Dodajte ih u šifarniku Predlošci pa onda kreirajte nalog.
@@ -303,20 +304,7 @@ export function RadniNaloziPage() {
               <NotesEditor value={form.description} onChange={(description) => setForm({ ...form, description })} />
             </div>
             <Field label={`Boja na planu${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
-              <div className="flex flex-wrap gap-1.5">
-                {WORK_ORDER_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setForm({ ...form, color })}
-                    className={`h-7 w-7 rounded-full border ${
-                      form.color === color ? "border-white ring-2 ring-offset-1 ring-slate-400" : "border-slate-200"
-                    }`}
-                    style={{ backgroundColor: color }}
-                    aria-label={WORK_ORDER_COLOR_LABELS[color] ?? color}
-                  />
-                ))}
-              </div>
+              <ColorDots value={form.color} onChange={(color) => setForm({ ...form, color })} />
               <p className="mt-1.5 text-xs text-slate-500">Novi nalog preuzima boju predloška. Možeš je odmah ili kasnije promijeniti.</p>
             </Field>
             <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -327,15 +315,7 @@ export function RadniNaloziPage() {
               />
               Arhiviraj nalog (ne nudi se pri unosu sati)
             </label>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={closeForm}>
-                Odustani
-              </button>
-              <button type="submit" className="btn-primary" disabled={templates.length === 0}>
-                Spremi
-              </button>
-            </div>
-          </form>
+          </ModalForm>
         </Modal>
       ) : null}
 

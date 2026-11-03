@@ -12,6 +12,7 @@ type Step = "start" | "order" | "task" | "hours" | "review";
 export type StepSheetState = { kind: "create" } | { kind: "edit"; entry: Assignment } | { kind: "dayStart" };
 
 const QUICK_HOURS = 12;
+const DAY_START_HOURS = [5, 6, 7, 8, 9, 10];
 
 const STEP_TITLES: Record<Step, string> = {
   start: "Kada si počeo raditi?",
@@ -48,7 +49,7 @@ export function StepEntrySheet({ day, state, onClose }: { day: EmployeeDay; stat
     : 0;
   const maxHours = entryStart == null ? DAY_END - DAY_START : DAY_END - entryStart - laterHours;
   const maxDayStart = state.kind === "dayStart" ? DAY_END - day.workedHours : DAY_END - MIN_DURATION;
-  const startOptions = slots(DAY_START, maxDayStart);
+  const startOptions = DAY_START_HOURS.filter((hour) => hour <= maxDayStart + 1e-9);
   const hourCap = moreHours ? maxHours : Math.min(QUICK_HOURS, maxHours);
   const hourOptions = slots(MIN_DURATION, Math.max(MIN_DURATION, hourCap)).filter((value) => value <= hourCap + 1e-9);
   const order = day.orderById(workOrderId);
@@ -180,7 +181,7 @@ export function StepEntrySheet({ day, state, onClose }: { day: EmployeeDay; stat
           {state.kind === "dayStart" ? (
             <p className="text-sm text-slate-600">Svi tvoji unosi pomaknut će se zajedno, redom kako su upisani.</p>
           ) : null}
-          <ChoiceGrid values={startOptions} selected={start} onSelect={pickStart} render={(hour) => formatHour(hour)} />
+          <ChoiceGrid values={startOptions} selected={start} onSelect={pickStart} columns={3} render={(hour) => `${hour}:00`} />
         </div>
       ) : null}
 
@@ -206,7 +207,7 @@ export function StepEntrySheet({ day, state, onClose }: { day: EmployeeDay; stat
             <>
               <ChoiceGrid values={hourOptions} selected={hours} onSelect={pickHours} render={(value) => formatDuration(value)} />
               {!moreHours && maxHours > QUICK_HOURS ? (
-                <button type="button" className="text-sm font-medium text-tokta-700" onClick={() => setMoreHours(true)}>
+                <button type="button" className="text-sm font-medium text-frigo-700" onClick={() => setMoreHours(true)}>
                   Više od {QUICK_HOURS} h
                 </button>
               ) : null}
@@ -252,7 +253,7 @@ function SummaryRow({ label, onChange, children }: { label: string; onChange: ()
     <button type="button" onClick={onChange} className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-slate-50">
       <span className="w-14 shrink-0 text-sm text-slate-500">{label}</span>
       <span className="min-w-0 flex-1 text-base font-semibold text-slate-900">{children}</span>
-      <span className="shrink-0 text-sm font-medium text-tokta-700">Promijeni</span>
+      <span className="shrink-0 text-sm font-medium text-frigo-700">Promijeni</span>
     </button>
   );
 }
