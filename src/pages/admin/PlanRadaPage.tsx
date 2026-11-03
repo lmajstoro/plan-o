@@ -35,10 +35,7 @@ export function PlanRadaPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Plan rada</h1>
-          <p className="text-slate-500">Planiranje, nalozi i izvedba za čilere i dizalice topline.</p>
-        </div>
+        <h1 className="text-2xl font-semibold text-slate-900">Plan rada</h1>
         <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
           <SaveStatus />
           <div className="flex items-center gap-2">

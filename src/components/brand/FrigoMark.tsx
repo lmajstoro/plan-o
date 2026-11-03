@@ -20,30 +20,21 @@ export function FrigoWordmark({ large = false, className = "" }: { large?: boole
 
 export function FrigoLockup({
   size = "md",
-  subtitle = true,
   heading = false,
 }: {
   size?: "md" | "lg";
-  subtitle?: boolean;
   heading?: boolean;
 }) {
   const large = size === "lg";
   const Title = heading ? "h1" : "div";
   return (
-    <div className={`flex min-w-0 gap-3 ${subtitle ? "items-start" : "items-center"}`}>
-      <FrigoMark className={`${large ? "h-11" : "h-8"} w-auto shrink-0 ${subtitle ? "mt-1" : ""}`} />
-      <div className="min-w-0">
-        <div className="flex items-center gap-3">
-          <div className={`${large ? "h-8" : "h-6"} w-px shrink-0 bg-slate-300`} />
-          <Title>
-            <FrigoWordmark large={large} />
-          </Title>
-        </div>
-        {subtitle ? (
-          <p className={`text-slate-500 ${large ? "mt-1.5 text-sm leading-snug" : "mt-1 truncate text-xs"}`}>
-            Planiranje, nalozi i izvedba za čilere i dizalice topline
-          </p>
-        ) : null}
+    <div className="flex min-w-0 items-center gap-3">
+      <FrigoMark className={`${large ? "h-11" : "h-8"} w-auto shrink-0`} />
+      <div className="flex min-w-0 items-center gap-3">
+        <div className={`${large ? "h-8" : "h-6"} w-px shrink-0 bg-slate-300`} />
+        <Title>
+          <FrigoWordmark large={large} />
+        </Title>
       </div>
     </div>
   );

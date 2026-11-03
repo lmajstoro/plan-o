@@ -4,11 +4,12 @@ import { useAuth } from "../context/AuthContext";
 import { FrigoLockup } from "../components/brand/FrigoMark";
 import { emailProblem, FieldError, inputClass, useFieldErrors } from "../components/ui/field";
 import { useDb } from "../context/DbContext";
-import { LOCK_AFTER, MOCK_ADMIN_EMAIL, MOCK_EMPLOYEE_EMAIL, MOCK_MFA_CODE, MOCK_PASSWORD, sameEmail } from "../lib/accounts";
+import { employeeLoginName, LOCK_AFTER, MOCK_ADMIN_EMAIL, MOCK_EMPLOYEE_EMAIL, MOCK_MFA_CODE, MOCK_PASSWORD, sameEmail } from "../lib/accounts";
 import { pageName, pushAudit } from "../lib/audit";
+import { useLoginDevice } from "../lib/device";
 import type { Administrator, Employee } from "../types";
 
-const GENERIC_ERROR = "E-mail ili lozinka nisu točni.";
+const GENERIC_ERROR = "E-mail, korisničko ime ili lozinka nisu točni.";
 
 export function LoginPage() {
   const { user, login } = useAuth();
@@ -19,6 +20,9 @@ export function LoginPage() {
   const [pendingAdmin, setPendingAdmin] = useState<Administrator | null>(null);
   const [error, setError] = useState("");
   const fields = useFieldErrors();
+  const loginDevice = useLoginDevice();
+  const demoEmployee = db.employees.find((row) => sameEmail(row.email, MOCK_EMPLOYEE_EMAIL));
+  const employeeLogin = demoEmployee ? employeeLoginName(demoEmployee.name) : "dtakac";
 
   if (user?.role === "admin") return <Navigate to="/administrator" replace />;
   if (user?.role === "zaposlenik") return <Navigate to="/zaposlenik" replace />;
@@ -123,8 +127,11 @@ export function LoginPage() {
     }
 
     const nextErrors: Record<string, string> = {};
-    const mailProblem = emailProblem(mail);
-    if (mailProblem) nextErrors.email = mailProblem;
+    if (!mail) nextErrors.email = "Upiši e-mail ili korisničko ime.";
+    else if (mail.includes("@")) {
+      const mailProblem = emailProblem(mail);
+      if (mailProblem) nextErrors.email = mailProblem;
+    }
     if (!password) nextErrors.password = "Upiši lozinku.";
     if (fields.reject(nextErrors)) {
       setError("");
@@ -132,7 +139,9 @@ export function LoginPage() {
     }
 
     const admin = db.administrators.find((row) => sameEmail(row.email, mail));
-    const employee = db.employees.find((row) => sameEmail(row.email, mail));
+    const employee = mail.includes("@")
+      ? db.employees.find((row) => sameEmail(row.email, mail))
+      : db.employees.find((row) => employeeLoginName(row.name) === employeeLoginName(mail));
 
     if (admin) {
       if (admin.locked) {
@@ -173,9 +182,9 @@ export function LoginPage() {
 
         <form noValidate onSubmit={onSubmit} className="space-y-4">
           <label className="block text-sm font-medium text-slate-700">
-            E-mail
+            E-mail ili korisničko ime
             <input
-              type="email"
+              type="text"
               className={inputClass(Boolean(fields.errors.email), "mt-1")}
               autoComplete="username"
               value={email}
@@ -240,11 +249,14 @@ export function LoginPage() {
         </form>
 
         <div className="mt-6 rounded-xl bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
-          <p className="font-medium text-slate-600">Mockup računi</p>
-          <p>Administrator: {MOCK_ADMIN_EMAIL}</p>
-          <p>Zaposlenik: {MOCK_EMPLOYEE_EMAIL}</p>
+          <p className="font-medium text-slate-600">Testni račun</p>
+          {loginDevice === "phone" ? (
+            <p>Zaposlenik: {employeeLogin}</p>
+          ) : (
+            <p>Administrator: {MOCK_ADMIN_EMAIL}</p>
+          )}
           <p>Lozinka: {MOCK_PASSWORD}</p>
-          <p>Drugi faktor administratora: {MOCK_MFA_CODE}</p>
+          {loginDevice === "phone" ? null : <p>Drugi faktor: {MOCK_MFA_CODE}</p>}
         </div>
       </div>
     </div>
