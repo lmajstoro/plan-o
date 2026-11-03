@@ -68,7 +68,7 @@ export function AdminLayout() {
 
   if (device === "tablet-portrait") {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-slate-50 px-6">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-slate-50 px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <TabletIcon className="h-14 w-14 text-slate-400" />
         <p className="max-w-sm text-center text-lg font-medium text-slate-700">
           Okreni tablet u položeni način za rad na planu.
@@ -101,7 +101,7 @@ export function AdminLayout() {
 
   return (
     <>
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-slate-50 px-6 lg:hidden">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-slate-50 px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:hidden">
         <p className="max-w-sm text-center text-base font-medium text-slate-700">
           Administratorov pregled nije namijenjen za prikaz na mobitelu.
         </p>

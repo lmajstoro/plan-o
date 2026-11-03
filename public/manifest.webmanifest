@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "TOKTA",
+  "short_name": "TOKTA",
+  "description": "Planiranje, nalozi i izvedba za čilere i dizalice topline",
+  "lang": "hr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e4a32",
+  "theme_color": "#0e4a32",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

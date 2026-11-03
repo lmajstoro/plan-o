@@ -6,6 +6,12 @@ import { AuthProvider } from "./context/AuthContext";
 import { DbProvider } from "./context/DbContext";
 import "./index.css";
 
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  });
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
