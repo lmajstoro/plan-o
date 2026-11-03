@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
@@ -22,6 +22,25 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
   const { user } = useAuth();
   const { update } = useDb();
   const { employee } = day;
+
+  useEffect(() => {
+    if (!fillViewport) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const previous = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      overscroll: body.style.overscrollBehavior,
+    };
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+    return () => {
+      html.style.overflow = previous.htmlOverflow;
+      body.style.overflow = previous.bodyOverflow;
+      body.style.overscrollBehavior = previous.overscroll;
+    };
+  }, [fillViewport]);
 
   function signOut() {
     if (user) {
@@ -55,7 +74,7 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
   return (
     <div
       className={`flex w-full flex-col bg-white ${
-        fillViewport ? "h-dvh overflow-hidden" : "min-h-dvh"
+        fillViewport ? "h-svh max-h-svh min-w-0 max-w-full overflow-hidden overscroll-none" : "min-h-dvh"
       }`}
     >
       <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200 bg-white/95 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
