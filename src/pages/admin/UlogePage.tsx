@@ -3,6 +3,7 @@ import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { roleUsage, sortJobRoles } from "../../lib/roles";
 import { WORK_ORDER_COLOR_LABELS, WORK_ORDER_COLORS } from "../../lib/workOrders";
+import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { PaginationBar } from "../../components/admin/PaginationBar";
@@ -18,7 +19,7 @@ export function UlogePage() {
   const [editing, setEditing] = useState<JobRole | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [formError, setFormError] = useState("");
+  const fields = useFieldErrors();
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [blockedRemove, setBlockedRemove] = useState("");
 
@@ -29,36 +30,31 @@ export function UlogePage() {
     const used = new Set(db.jobRoles.map((row) => row.color));
     const color = WORK_ORDER_COLORS.find((item) => !used.has(item)) ?? WORK_ORDER_COLORS[db.jobRoles.length % WORK_ORDER_COLORS.length];
     setForm({ ...emptyForm, color });
-    setFormError("");
+    fields.clear();
     setCreating(true);
   }
 
   function openEdit(role: JobRole) {
     setForm({ name: role.name, color: role.color });
-    setFormError("");
+    fields.clear();
     setEditing(role);
   }
 
   function closeForm() {
     setCreating(false);
     setEditing(null);
-    setFormError("");
+    fields.clear();
   }
 
   function save(event: FormEvent) {
     event.preventDefault();
     const name = form.name.trim();
-    if (!name) {
-      setFormError("Unesite naziv uloge.");
-      return;
+    const nextErrors: FieldErrors = {};
+    if (!name) nextErrors.name = "Upiši naziv uloge.";
+    else if (db.jobRoles.some((row) => row.name.localeCompare(name, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id)) {
+      nextErrors.name = "Uloga s tim nazivom već postoji.";
     }
-    const taken = db.jobRoles.some(
-      (row) => row.name.localeCompare(name, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id,
-    );
-    if (taken) {
-      setFormError("Uloga s tim nazivom već postoji.");
-      return;
-    }
+    if (fields.reject(nextErrors)) return;
     if (editing) {
       update((current) => ({
         ...current,
@@ -148,9 +144,9 @@ export function UlogePage() {
 
       {showForm ? (
         <Modal title={editing ? "Uredi ulogu" : "Nova uloga"} onClose={closeForm}>
-          <form onSubmit={save} className="space-y-3">
-            <Field label="Naziv">
-              <input className="input" required value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); setFormError(""); }} />
+          <form noValidate onSubmit={save} className="space-y-3">
+            <Field label="Naziv" error={fields.errors.name}>
+              <input className={inputClass(Boolean(fields.errors.name))} value={form.name} onChange={(e) => { fields.clear("name"); setForm({ ...form, name: e.target.value }); }} />
             </Field>
             <Field label="Boja">
               <div className="flex flex-wrap gap-2">
@@ -170,7 +166,6 @@ export function UlogePage() {
                 ))}
               </div>
             </Field>
-            {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={closeForm}>
                 Odustani

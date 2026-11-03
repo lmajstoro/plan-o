@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAdmin, RequireEmployee } from "./components/auth/Guards";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { LoginPage } from "./pages/LoginPage";
+import { PostaviLozinkuPage } from "./pages/PostaviLozinkuPage";
+import { PravilaPage } from "./pages/PravilaPage";
 import { ChecklistePage } from "./pages/admin/ChecklistePage";
 import { PlanRadaPage } from "./pages/admin/PlanRadaPage";
 import { PredlosciPage } from "./pages/admin/PredlosciPage";
@@ -12,6 +14,7 @@ import { TabletPlanPage } from "./pages/admin/TabletPlanPage";
 import { TabletPreviewPage } from "./pages/admin/TabletPreviewPage";
 import { UlogePage } from "./pages/admin/UlogePage";
 import { ZadaciPage } from "./pages/admin/ZadaciPage";
+import { EvidencijaPage } from "./pages/admin/EvidencijaPage";
 import { ZaposleniciPage } from "./pages/admin/ZaposleniciPage";
 import { KorakPoKorakPage } from "./pages/zaposlenik/KorakPoKorakPage";
 
@@ -20,6 +23,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/prijava" replace />} />
       <Route path="/prijava" element={<LoginPage />} />
+      <Route path="/pravila" element={<PravilaPage />} />
+      <Route path="/postavi-lozinku/:token" element={<PostaviLozinkuPage />} />
       <Route
         path="/administrator/tablet"
         element={
@@ -39,6 +44,9 @@ export default function App() {
         <Route index element={<PlanRadaPage />} />
         <Route path="tablet-pregled" element={<TabletPreviewPage />} />
         <Route path="zaposlenici" element={<ZaposleniciPage />} />
+        <Route path="evidencija" element={<EvidencijaPage />} />
+        <Route path="incidenti" element={<Navigate to="/administrator" replace />} />
+        <Route path="obavijest" element={<Navigate to="/administrator" replace />} />
         <Route path="uloge" element={<UlogePage />} />
         <Route path="radne-skupine" element={<RadneSkupinePage />} />
         <Route path="zadaci" element={<ZadaciPage />} />

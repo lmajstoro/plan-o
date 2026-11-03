@@ -4,7 +4,7 @@ import { addWorkDays, calendarToday, formatDateKey, isWeekend, parseDateKey, tod
 export const REST_DAY_MESSAGE = "Neradni dan je, odmori :)";
 
 export const MAX_FUTURE_WORK_DAYS = 3;
-export const MAX_PAST_WORK_DAYS = 21;
+export const MAX_PAST_WORK_DAYS = 15;
 
 export function isEmployeeActive(employee: Employee): boolean {
   return employee.active !== false;
@@ -12,19 +12,11 @@ export function isEmployeeActive(employee: Employee): boolean {
 
 export function findEmployeeForUser(employees: Employee[], user: SessionUser): Employee | undefined {
   const email = user.email.trim().toLowerCase();
-  return (
-    employees.find((row) => row.email.toLowerCase() === email) ??
-    employees.find((row) => row.name === user.name) ??
-    employees.find((row) => row.name === "Ivan Vladić")
-  );
+  return employees.find((row) => row.email.toLowerCase() === email);
 }
 
 export function todayKey(): string {
   return formatDateKey(calendarToday());
-}
-
-export function yesterdayKey(): string {
-  return formatDateKey(addWorkDays(todayWorkDate(), -1));
 }
 
 export function minViewKey(): string {
@@ -40,12 +32,8 @@ export function isRestDay(dateKey: string): boolean {
 }
 
 export function isEditableDay(dateKey: string): boolean {
-  if (isRestDay(dateKey)) return false;
-  const today = todayKey();
-  if (isRestDay(today)) {
-    return dateKey === formatDateKey(addWorkDays(parseDateKey(today), -1));
-  }
-  return dateKey === today || dateKey === yesterdayKey();
+  if (isRestDay(dateKey) || isRestDay(todayKey())) return false;
+  return dateKey === todayKey();
 }
 
 export function dayTone(dateKey: string): "live" | "past" | "future" {

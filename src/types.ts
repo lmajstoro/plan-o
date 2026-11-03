@@ -16,10 +16,6 @@ export type SessionUser = {
   name: string;
 };
 
-export type DemoAccount = SessionUser & {
-  password: string;
-};
-
 export type WorkGroup = {
   id: string;
   name: string;
@@ -30,9 +26,39 @@ export type Employee = {
   name: string;
   email: string;
   roleIds: Role[];
+  taskIds: string[];
   groupIds: string[];
   active: boolean;
+  password: string;
+  passwordSet: boolean;
+  welcomed: boolean;
+  failedLogins: number;
+  locked: boolean;
+  rulesAcceptedAt?: string;
+  resetToken?: string;
+  resetTokenExpires?: string;
   passwordResetSentAt?: string;
+  lastLoginAt?: string;
+};
+
+export type Administrator = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  failedLogins: number;
+  locked: boolean;
+  rulesAcceptedAt?: string;
+  lastLoginAt?: string;
+};
+
+export type AuditEntry = {
+  id: string;
+  at: string;
+  account: string;
+  email: string;
+  action: string;
+  target: string;
 };
 
 export type Task = {
@@ -101,6 +127,7 @@ export type DayStatus = {
 
 export type Database = {
   employees: Employee[];
+  administrators: Administrator[];
   tasks: Task[];
   checklistItems: ChecklistItem[];
   workOrders: WorkOrder[];
@@ -109,4 +136,5 @@ export type Database = {
   jobRoles: JobRole[];
   assignments: Assignment[];
   dayStatuses: DayStatus[];
+  auditLog: AuditEntry[];
 };

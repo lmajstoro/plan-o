@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckIcon } from "../icons";
 import { ConfirmDialog } from "../ui/Modal";
+import { formatDuration } from "../../lib/dates";
 import { EXPECTED_HOURS } from "../../lib/gantt";
 import { EMPTY_DAY_MESSAGE, type EmployeeDay } from "../../lib/useEmployeeDay";
 import { HoursValue } from "./EmployeeShell";
@@ -28,7 +29,7 @@ export function ConfirmFooter({ day, showError = true }: Props) {
       <div className="flex items-center justify-between gap-3">
         <p className="flex min-w-0 items-center gap-2 text-sm font-medium text-emerald-700">
           <CheckIcon className="h-5 w-5 shrink-0" />
-          <span className="truncate">Potvrđeno, {day.workedHours} h</span>
+          <span className="truncate">Potvrđeno, {formatDuration(day.workedHours)}</span>
         </p>
         {day.editable ? (
           <button type="button" className="btn-secondary h-11 shrink-0 px-3 text-red-700" onClick={day.unconfirm}>
@@ -43,9 +44,9 @@ export function ConfirmFooter({ day, showError = true }: Props) {
     return (
       <div className="space-y-1 py-1 text-center text-sm text-slate-500">
         {day.tone === "future" ? (
-          <p>Samo pregled. Sate upisuješ na dan rada ili idući radni dan.</p>
+          <p>Samo pregled.</p>
         ) : (
-          <p>Sati nisu potvrđeni. Upisano {day.workedHours} h.</p>
+          <p>Sati se upisuju samo na današnji radni dan. Upisano {formatDuration(day.workedHours)}.</p>
         )}
       </div>
     );
@@ -90,7 +91,7 @@ export function ConfirmFooter({ day, showError = true }: Props) {
       {askConfirm ? (
         <ConfirmDialog
           title="Potvrdi sate"
-          message={`Upisao si ${day.workedHours} h, a uobičajeni radni dan ima ${EXPECTED_HOURS} h. Želiš li ipak potvrditi?`}
+          message={`Upisao si ${formatDuration(day.workedHours)}, a uobičajeni radni dan ima ${EXPECTED_HOURS} h. Želiš li ipak potvrditi?`}
           confirmLabel="Da, potvrdi"
           tone="primary"
           onConfirm={() => {

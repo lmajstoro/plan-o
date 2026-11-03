@@ -103,7 +103,7 @@ export function OrderChoiceList({
           disabled={order.archived}
           onClick={() => onSelect(order.id)}
           className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition disabled:opacity-50 ${
-            selected ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200" : "border-slate-200 bg-white hover:bg-slate-50"
+            selected ? "border-tokta-600 bg-tokta-50 ring-2 ring-tokta-200" : "border-slate-200 bg-white hover:bg-slate-50"
           }`}
         >
           <span
@@ -160,7 +160,7 @@ export function TaskChoiceList({
               type="button"
               onClick={() => onSelect(task.id)}
               className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                selected ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200" : "border-slate-200 bg-white hover:bg-slate-50"
+                selected ? "border-tokta-600 bg-tokta-50 ring-2 ring-tokta-200" : "border-slate-200 bg-white hover:bg-slate-50"
               }`}
             >
               <span className="w-14 shrink-0 text-sm font-semibold text-slate-500">{task.code}</span>
@@ -195,7 +195,7 @@ export function ChoiceGrid<T extends number>({
           onClick={() => onSelect(value)}
           className={`flex h-14 items-center justify-center rounded-xl border text-lg font-semibold tabular-nums transition ${
             value === selected
-              ? "border-blue-700 bg-blue-700 text-white"
+              ? "border-tokta-700 bg-tokta-700 text-white"
               : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
           }`}
         >

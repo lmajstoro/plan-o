@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { sortTemplates, templateUsage, WORK_ORDER_COLOR_LABELS, WORK_ORDER_COLORS } from "../../lib/workOrders";
+import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
@@ -18,7 +19,7 @@ export function PredlosciPage() {
   const [editing, setEditing] = useState<WorkOrderTemplate | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [formError, setFormError] = useState("");
+  const fields = useFieldErrors();
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [blockedRemove, setBlockedRemove] = useState("");
   const [tasksTemplate, setTasksTemplate] = useState<WorkOrderTemplate | null>(null);
@@ -29,7 +30,7 @@ export function PredlosciPage() {
   function closeForm() {
     setCreating(false);
     setEditing(null);
-    setFormError("");
+    fields.clear();
   }
 
   function openCreate() {
@@ -37,30 +38,25 @@ export function PredlosciPage() {
       ...emptyForm,
       color: WORK_ORDER_COLORS[db.workOrderTemplates.length % WORK_ORDER_COLORS.length],
     });
-    setFormError("");
+    fields.clear();
     setCreating(true);
   }
 
   function openEdit(template: WorkOrderTemplate) {
     setForm({ name: template.name, color: template.color });
-    setFormError("");
+    fields.clear();
     setEditing(template);
   }
 
   function save(event: FormEvent) {
     event.preventDefault();
     const name = form.name.trim();
-    if (!name) {
-      setFormError("Unesite naziv predloška.");
-      return;
+    const nextErrors: FieldErrors = {};
+    if (!name) nextErrors.name = "Upiši naziv predloška.";
+    else if (db.workOrderTemplates.some((row) => row.name.localeCompare(name, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id)) {
+      nextErrors.name = "Predložak s tim nazivom već postoji.";
     }
-    const taken = db.workOrderTemplates.some(
-      (row) => row.name.localeCompare(name, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id,
-    );
-    if (taken) {
-      setFormError("Predložak s tim nazivom već postoji.");
-      return;
-    }
+    if (fields.reject(nextErrors)) return;
     if (editing) {
       update((current) => ({
         ...current,
@@ -164,9 +160,9 @@ export function PredlosciPage() {
 
       {showForm ? (
         <Modal title={editing ? "Uredi predložak" : "Novi predložak"} onClose={closeForm}>
-          <form onSubmit={save} className="space-y-3">
-            <Field label="Naziv">
-              <input className="input" required value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); setFormError(""); }} />
+          <form noValidate onSubmit={save} className="space-y-3">
+            <Field label="Naziv" error={fields.errors.name}>
+              <input className={inputClass(Boolean(fields.errors.name))} value={form.name} onChange={(e) => { fields.clear("name"); setForm({ ...form, name: e.target.value }); }} />
             </Field>
             <Field label="Boja na planu">
               <div className="flex flex-wrap gap-2">
@@ -186,7 +182,6 @@ export function PredlosciPage() {
                 ))}
               </div>
             </Field>
-            {formError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={closeForm}>Odustani</button>
               <button type="submit" className="btn-primary">Spremi</button>

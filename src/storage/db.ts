@@ -4,7 +4,7 @@ import type { Database } from "../types";
 
 export const DB_KEY = "plano-db";
 const SEED_VERSION_KEY = "plano-seed-version";
-export const SEED_VERSION = "36";
+export const SEED_VERSION = "37";
 
 function writeSeed(): Database {
   const seeded = createSeedDatabase();
@@ -54,6 +54,7 @@ export function loadDatabase(): Database {
     parsed.employees = parsed.employees.map((row) => ({
       ...row,
       active: row.active !== false,
+      taskIds: Array.isArray(row.taskIds) ? row.taskIds : [],
     }));
     return parsed;
   } catch {

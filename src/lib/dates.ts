@@ -80,5 +80,14 @@ export function todayWorkDate(): Date {
 }
 
 export function formatHour(hour: number): string {
-  return `${String(hour).padStart(2, "0")}:00`;
+  const total = Math.round(hour * 60);
+  const whole = Math.floor(total / 60);
+  const minutes = total % 60;
+  return `${String(whole).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+export function formatDuration(hours: number): string {
+  const rounded = Math.round(hours * 2) / 2;
+  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(".", ",");
+  return `${text} h`;
 }

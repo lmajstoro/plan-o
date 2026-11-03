@@ -35,7 +35,7 @@ export function PaginationBar({ page, totalPages, from, to, total, onPage }: Pro
             key={item}
             type="button"
             className={`min-w-8 rounded-lg px-2.5 py-1.5 text-sm font-medium ${
-              item === page ? "bg-blue-700 text-white" : "text-slate-700 hover:bg-slate-100"
+              item === page ? "bg-tokta-700 text-white" : "text-slate-700 hover:bg-slate-100"
             }`}
             onClick={() => onPage(item)}
           >

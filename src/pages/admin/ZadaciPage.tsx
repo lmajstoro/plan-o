@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { defaultRoleId, roleColor, roleName, sortJobRoles } from "../../lib/roles";
+import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { PaginationBar } from "../../components/admin/PaginationBar";
@@ -17,7 +18,7 @@ export function ZadaciPage() {
   const [editing, setEditing] = useState<Task | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [formError, setFormError] = useState("");
+  const fields = useFieldErrors();
   const [removeId, setRemoveId] = useState<string | null>(null);
 
   const rows = useMemo(
@@ -29,18 +30,18 @@ export function ZadaciPage() {
   function closeForm() {
     setCreating(false);
     setEditing(null);
-    setFormError("");
+    fields.clear();
   }
 
   function openCreate() {
     setForm({ ...emptyForm, role: defaultRoleId(db.jobRoles) });
-    setFormError("");
+    fields.clear();
     setCreating(true);
   }
 
   function openEdit(task: Task) {
     setForm({ code: task.code, description: task.description, role: task.role });
-    setFormError("");
+    fields.clear();
     setEditing(task);
   }
 
@@ -48,17 +49,14 @@ export function ZadaciPage() {
     event.preventDefault();
     const code = form.code.trim();
     const description = form.description.trim();
-    if (!form.role || !code || !description) {
-      setFormError("Unesite šifru, opis i ulogu.");
-      return;
+    const nextErrors: FieldErrors = {};
+    if (!code) nextErrors.code = "Upiši šifru.";
+    else if (db.tasks.some((row) => row.code.localeCompare(code, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id)) {
+      nextErrors.code = "Zadatak s tom šifrom već postoji.";
     }
-    const taken = db.tasks.some(
-      (row) => row.code.localeCompare(code, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id,
-    );
-    if (taken) {
-      setFormError("Zadatak s tom šifrom već postoji.");
-      return;
-    }
+    if (!description) nextErrors.description = "Upiši opis.";
+    if (!form.role) nextErrors.role = "Odaberi ulogu.";
+    if (fields.reject(nextErrors)) return;
     const next = { code, description, role: form.role };
     if (editing) {
       update((current) => ({
@@ -146,23 +144,22 @@ export function ZadaciPage() {
 
       {showForm ? (
         <Modal title={editing ? "Uredi zadatak" : "Novi zadatak"} onClose={closeForm}>
-          <form onSubmit={save} className="space-y-3">
-            <Field label="Šifra">
-              <input className="input" required value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value }); setFormError(""); }} />
+          <form noValidate onSubmit={save} className="space-y-3">
+            <Field label="Šifra" error={fields.errors.code}>
+              <input className={inputClass(Boolean(fields.errors.code))} value={form.code} onChange={(e) => { fields.clear("code"); setForm({ ...form, code: e.target.value }); }} />
             </Field>
-            <Field label="Opis">
+            <Field label="Opis" error={fields.errors.description}>
               <textarea
-                className="input min-h-[88px]"
-                required
+                className={inputClass(Boolean(fields.errors.description), "min-h-[88px]")}
                 value={form.description}
-                onChange={(e) => { setForm({ ...form, description: e.target.value }); setFormError(""); }}
+                onChange={(e) => { fields.clear("description"); setForm({ ...form, description: e.target.value }); }}
               />
             </Field>
-            <Field label="Uloga">
+            <Field label="Uloga" error={fields.errors.role}>
               {db.jobRoles.length === 0 ? (
                 <p className="text-sm text-slate-500">Nema uloga. Dodajte ih u šifarniku Uloge.</p>
               ) : (
-                <select className="input" required value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                <select className={inputClass(Boolean(fields.errors.role))} value={form.role} onChange={(e) => { fields.clear("role"); setForm({ ...form, role: e.target.value }); }}>
                   {sortJobRoles(db.jobRoles).map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.name}
@@ -171,7 +168,6 @@ export function ZadaciPage() {
                 </select>
               )}
             </Field>
-            {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={closeForm}>
                 Odustani

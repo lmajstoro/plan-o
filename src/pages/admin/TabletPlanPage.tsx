@@ -4,10 +4,11 @@ import { TouchGanttBoard } from "../../components/gantt/TouchGanttBoard";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
 import { SaveStatus } from "../../components/ui/SaveStatus";
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../../components/icons";
+import { ToktaMark } from "../../components/brand/ToktaMark";
 import { useAuth } from "../../context/AuthContext";
 import { formatCroatianDate } from "../../lib/dates";
 import { sortJobRoles } from "../../lib/roles";
-import { SOPNICA_LOAD_MESSAGES, usePlanDay } from "../../lib/usePlanDay";
+import { usePlanDay } from "../../lib/usePlanDay";
 
 const SWIPE_MIN = 50;
 
@@ -27,20 +28,17 @@ export function TabletPlanPage() {
     employees,
     dayHasActuals,
     confirmedEmployeeIds,
-    sopnicaLoading,
-    sopnicaStep,
     commitEmployeeDay,
   } = usePlanDay();
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const embedded = window.self !== window.top;
 
   return (
     <div className="flex h-dvh flex-col gap-3 overflow-hidden bg-slate-50 p-3 select-none">
       <header className="flex shrink-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
         <div className="flex items-center gap-2.5 pr-1">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-700 text-base font-bold text-white">P</div>
-          <div className="text-lg font-semibold leading-tight text-slate-900">Plan rada</div>
+          <ToktaMark className="h-7 w-auto shrink-0" />
+          <div className="text-lg font-extrabold leading-none tracking-wide text-tokta-900">TOKTA</div>
         </div>
         <DaySwiper
           dateKey={date}
@@ -54,19 +52,17 @@ export function TabletPlanPage() {
           Danas
         </button>
         <FullscreenButton className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-slate-600" />
-        {embedded ? null : (
-          <button
-            type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-slate-600"
-            aria-label="Odjava"
-            onClick={() => {
-              logout();
-              navigate("/prijava");
-            }}
-          >
-            <LogoutIcon className="h-5 w-5" />
-          </button>
-        )}
+        <button
+          type="button"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-slate-600"
+          aria-label="Odjava"
+          onClick={() => {
+            logout();
+            navigate("/prijava");
+          }}
+        >
+          <LogoutIcon className="h-5 w-5" />
+        </button>
       </header>
 
       <section className="shrink-0 space-y-2 rounded-xl border border-slate-200 bg-white py-2.5 shadow-sm">
@@ -89,26 +85,17 @@ export function TabletPlanPage() {
       </section>
 
       <div className="min-h-0 flex-1">
-        {sopnicaLoading ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white" aria-busy="true">
-            <div className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-blue-700" aria-hidden />
-            <p key={sopnicaStep} className="animate-fade-in text-base font-semibold text-slate-800">
-              {SOPNICA_LOAD_MESSAGES[sopnicaStep]}
-            </p>
-          </div>
-        ) : (
-          <TouchGanttBoard
-            date={date}
-            employees={employees}
-            tasks={db.tasks}
-            workOrders={db.workOrders}
-            workOrderTemplates={db.workOrderTemplates}
-            jobRoles={db.jobRoles}
-            assignments={db.assignments}
-            confirmedEmployeeIds={confirmedEmployeeIds}
-            onCommitEmployeeDay={commitEmployeeDay}
-          />
-        )}
+        <TouchGanttBoard
+          date={date}
+          employees={employees}
+          tasks={db.tasks}
+          workOrders={db.workOrders}
+          workOrderTemplates={db.workOrderTemplates}
+          jobRoles={db.jobRoles}
+          assignments={db.assignments}
+          confirmedEmployeeIds={confirmedEmployeeIds}
+          onCommitEmployeeDay={commitEmployeeDay}
+        />
       </div>
     </div>
   );
@@ -223,7 +210,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       type="button"
       className={`inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-[15px] font-medium ${
-        active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 active:bg-slate-200"
+        active ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 active:bg-slate-200"
       }`}
       onClick={onClick}
     >

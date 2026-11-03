@@ -1,9 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
 import { formatHour } from "../../lib/dates";
-import { selectableWorkOrders, taskLabel, tasksForWorkOrder, workOrderCode } from "../../lib/workOrders";
+import { tasksEmployeeMayDo, type Capable } from "../../lib/skills";
+import { selectableWorkOrders, taskLabel, workOrderCode } from "../../lib/workOrders";
+import { FieldError, inputClass, useFieldErrors } from "../ui/field";
 import { Modal } from "../ui/Modal";
 import { PickerSelect } from "../ui/PickerSelect";
-import type { Role, Task, WorkOrder } from "../../types";
+import type { Task, WorkOrder } from "../../types";
 
 type Props = {
   title: string;
@@ -11,7 +13,7 @@ type Props = {
   endHour: number;
   workOrders: WorkOrder[];
   tasks: Task[];
-  roleIds?: Role[];
+  person?: Capable;
   initialWorkOrderId?: string;
   initialTaskId?: string;
   onClose: () => void;
@@ -27,7 +29,7 @@ export function AssignmentModal({
   endHour,
   workOrders,
   tasks,
-  roleIds,
+  person,
   initialWorkOrderId,
   initialTaskId,
   onClose,
@@ -39,12 +41,13 @@ export function AssignmentModal({
   const orders = useMemo(() => selectableWorkOrders(workOrders, initialWorkOrderId), [workOrders, initialWorkOrderId]);
   const [workOrderId, setWorkOrderId] = useState(initialWorkOrderId ?? orders[0]?.id ?? "");
   const selectedOrder = orders.find((order) => order.id === workOrderId);
-  const availableTasks = tasksForWorkOrder(selectedOrder, tasks, roleIds);
+  const availableTasks = tasksEmployeeMayDo(selectedOrder, tasks, person);
   const [taskId, setTaskId] = useState(
     initialTaskId && availableTasks.some((task) => task.id === initialTaskId)
       ? initialTaskId
       : availableTasks[0]?.id ?? "",
   );
+  const fields = useFieldErrors();
 
   useEffect(() => {
     if (!availableTasks.some((task) => task.id === taskId)) {
@@ -54,7 +57,10 @@ export function AssignmentModal({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!workOrderId || !taskId) return;
+    const nextErrors: Record<string, string> = {};
+    if (!workOrderId) nextErrors.workOrderId = "Odaberi radni nalog.";
+    if (!taskId) nextErrors.taskId = "Odaberi zadatak.";
+    if (fields.reject(nextErrors)) return;
     if (selectedOrder?.archived) return;
     onSave(workOrderId, taskId);
   }
@@ -70,16 +76,20 @@ export function AssignmentModal({
       {orders.length === 0 ? (
         <p className="text-sm text-amber-700">Nema aktivnih radnih naloga za unos sati.</p>
       ) : (
-        <form onSubmit={submit} className="space-y-3">
-          <Field label="Radni nalog" touch={touch}>
+        <form noValidate onSubmit={submit} className="space-y-3">
+          <Field label="Radni nalog" touch={touch} error={fields.errors.workOrderId}>
             {touch ? (
               <PickerSelect
                 value={workOrderId}
+                invalid={Boolean(fields.errors.workOrderId)}
                 options={orders.map((order) => ({ value: order.id, label: `${workOrderCode(order)} ${order.name}` }))}
-                onChange={setWorkOrderId}
+                onChange={(value) => {
+                  fields.clear("workOrderId");
+                  setWorkOrderId(value);
+                }}
               />
             ) : (
-              <select className="input" required value={workOrderId} onChange={(event) => setWorkOrderId(event.target.value)}>
+              <select className={inputClass(Boolean(fields.errors.workOrderId))} value={workOrderId} onChange={(event) => { fields.clear("workOrderId"); setWorkOrderId(event.target.value); }}>
                 {orders.map((order) => (
                   <option key={order.id} value={order.id}>
                     {workOrderCode(order)} {order.name}
@@ -88,7 +98,7 @@ export function AssignmentModal({
               </select>
             )}
           </Field>
-          <Field label="Zadatak" touch={touch}>
+          <Field label="Zadatak" touch={touch} error={fields.errors.taskId}>
             {availableTasks.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 Ovaj nalog nema zadataka za ove uloge.
@@ -96,11 +106,15 @@ export function AssignmentModal({
             ) : touch ? (
               <PickerSelect
                 value={taskId}
+                invalid={Boolean(fields.errors.taskId)}
                 options={availableTasks.map((task) => ({ value: task.id, label: taskLabel(task) }))}
-                onChange={setTaskId}
+                onChange={(value) => {
+                  fields.clear("taskId");
+                  setTaskId(value);
+                }}
               />
             ) : (
-              <select className="input" required value={taskId} onChange={(event) => setTaskId(event.target.value)}>
+              <select className={inputClass(Boolean(fields.errors.taskId))} value={taskId} onChange={(event) => { fields.clear("taskId"); setTaskId(event.target.value); }}>
                 {availableTasks.map((task) => (
                   <option key={task.id} value={task.id}>
                     {taskLabel(task)}
@@ -133,12 +147,13 @@ export function AssignmentModal({
   );
 }
 
-function Field({ label, touch, children }: { label: string; touch?: boolean; children: ReactNode }) {
+function Field({ label, touch, error, children }: { label: string; touch?: boolean; error?: string; children: ReactNode }) {
   const Wrapper = touch ? "div" : "label";
   return (
     <Wrapper className="block">
       <span className="mb-1 block text-sm font-medium text-slate-700">{label}</span>
       {children}
+      <FieldError message={error} />
     </Wrapper>
   );
 }

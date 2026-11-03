@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import {
-  ERP_CODE_PATTERN,
+  erpTaken,
+  normalizeErp,
   nextWorkOrderNumber,
   sortTemplates,
   sortWorkOrders,
@@ -16,6 +17,7 @@ import {
   WORK_ORDER_STATUSES,
   workOrderStatusClass,
 } from "../../lib/workOrders";
+import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { Modal } from "../../components/ui/Modal";
 import { NotesEditor } from "../../components/admin/NotesEditor";
 import { NotesView } from "../../components/admin/NotesView";
@@ -55,7 +57,7 @@ export function RadniNaloziPage() {
   const { db, update } = useDb();
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [formError, setFormError] = useState("");
+  const fields = useFieldErrors();
   const [showArchived, setShowArchived] = useState(false);
 
   const templates = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
@@ -77,7 +79,7 @@ export function RadniNaloziPage() {
       templateId: first?.id ?? "",
       color: first?.color ?? WORK_ORDER_COLORS[0],
     });
-    setFormError("");
+    fields.clear();
     setCreating(true);
   }
 
@@ -88,35 +90,30 @@ export function RadniNaloziPage() {
       templateId,
       color: creating && template ? template.color : current.color,
     }));
-    setFormError("");
+    fields.clear();
   }
 
   function closeForm() {
     setCreating(false);
-    setFormError("");
+    fields.clear();
   }
 
   function save(event: FormEvent) {
     event.preventDefault();
-    if (!form.templateId) {
-      setFormError("Odaberite predložak. Nalog naslijedi njegovu boju i zadatke, pa ih možeš mijenjati.");
-      return;
-    }
-    if (!ERP_CODE_PATTERN.test(form.erpCode)) {
-      setFormError("ERP šifra ima točno 8 znakova: slova bez dijakritika i brojke.");
-      return;
-    }
-    if (db.workOrders.some((row) => row.erpCode === form.erpCode)) {
-      setFormError("Nalog s tom ERP šifrom već postoji.");
-      return;
-    }
+    const erpCode = normalizeErp(form.erpCode);
+    const name = form.name.trim();
+    const nextErrors: FieldErrors = {};
+    if (!form.templateId) nextErrors.templateId = "Odaberi predložak.";
+    if (!erpCode) nextErrors.erpCode = "Upiši ERP šifru.";
+    else if (erpTaken(db.workOrders, erpCode)) nextErrors.erpCode = "Nalog s tom ERP šifrom već postoji, uključujući arhivirane.";
+    if (!name) nextErrors.name = "Upiši naziv.";
     const color = form.color || selectedTemplate?.color || "#334155";
     const description = compactNotes(form.description);
     const inheritedTaskIds = [...(selectedTemplate?.taskIds ?? [])];
-    if (inheritedTaskIds.length === 0) {
-      setFormError("Predložak nema zadataka. Dodajte ih na predlošku pa kreirajte nalog.");
-      return;
+    if (form.templateId && inheritedTaskIds.length === 0) {
+      nextErrors.templateId = "Predložak nema zadataka. Dodajte ih na predlošku pa kreirajte nalog.";
     }
+    if (fields.reject(nextErrors)) return;
     update((current) => ({
       ...current,
       workOrders: [
@@ -124,6 +121,8 @@ export function RadniNaloziPage() {
         {
           id: newId("wo"),
           ...form,
+          name,
+          erpCode,
           description,
           color,
           taskIds: inheritedTaskIds,
@@ -155,7 +154,7 @@ export function RadniNaloziPage() {
         <button
           type="button"
           className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-            showArchived ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            showArchived ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
           }`}
           onClick={() => setShowArchived((current) => !current)}
         >
@@ -187,14 +186,14 @@ export function RadniNaloziPage() {
               paging.pageRows.map((row) => (
               <tr key={row.id} className={`border-b border-slate-50 last:border-0 ${row.archived ? "bg-slate-50 text-slate-500" : ""}`}>
                 <td className="px-4 py-3">
-                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="inline-flex items-center gap-2 whitespace-nowrap font-mono font-medium text-slate-900 hover:text-blue-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="inline-flex items-center gap-2 whitespace-nowrap font-mono font-medium text-slate-900 hover:text-tokta-700">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: workOrderColor(row, db.workOrderTemplates) }} />
                     {workOrderCode(row)}
                   </Link>
                 </td>
                 <td className="px-4 py-3 font-mono text-slate-600">{row.erpCode}</td>
                 <td className="px-4 py-3 font-medium text-slate-800">
-                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="hover:text-blue-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}`} className="hover:text-tokta-700">
                     {row.name}
                   </Link>
                 </td>
@@ -212,12 +211,12 @@ export function RadniNaloziPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-slate-600">
-                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=zadaci`} className="hover:text-blue-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=zadaci`} className="hover:text-tokta-700">
                     {row.taskIds?.length ?? 0}
                   </Link>
                 </td>
                 <td className="px-4 py-3 tabular-nums text-slate-600">
-                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=kontrola`} className="hover:text-blue-700">
+                  <Link to={`/administrator/radni-nalozi/${row.id}?tab=kontrola`} className="hover:text-tokta-700">
                     {checklistSummary(row.checklist ?? []).confirmed}/{checklistSummary(row.checklist ?? []).applicable}
                   </Link>
                 </td>
@@ -238,7 +237,7 @@ export function RadniNaloziPage() {
 
       {showForm ? (
         <Modal title="Novi radni nalog" size="lg" onClose={closeForm}>
-          <form onSubmit={save} className="space-y-3">
+          <form noValidate onSubmit={save} className="space-y-3">
             {templates.length === 0 ? (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 Nema predložaka. Dodajte ih u šifarniku Predlošci pa onda kreirajte nalog.
@@ -251,16 +250,13 @@ export function RadniNaloziPage() {
               <Field label="Godina">
                 <input className="input bg-slate-50" value={`${form.year}.`} readOnly />
               </Field>
-              <Field label="ERP šifra">
+              <Field label="ERP šifra" error={fields.errors.erpCode}>
                 <input
-                  className="input font-mono"
-                  required
-                  maxLength={8}
-                  placeholder="npr. KT4821AX"
+                  className={inputClass(Boolean(fields.errors.erpCode), "font-mono")}
                   value={form.erpCode}
                   onChange={(e) => {
-                    setForm({ ...form, erpCode: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") });
-                    setFormError("");
+                    fields.clear("erpCode");
+                    setForm({ ...form, erpCode: e.target.value });
                   }}
                 />
               </Field>
@@ -278,10 +274,9 @@ export function RadniNaloziPage() {
                 </select>
               </Field>
             </div>
-            <Field label="Predložak">
+            <Field label="Predložak" error={fields.errors.templateId}>
               <select
-                className="input"
-                required
+                className={inputClass(Boolean(fields.errors.templateId))}
                 value={form.templateId}
                 onChange={(e) => changeTemplate(e.target.value)}
               >
@@ -292,8 +287,16 @@ export function RadniNaloziPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Naziv">
-              <input className="input" required placeholder="npr. Flexi P8" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Field label="Naziv" error={fields.errors.name}>
+              <input
+                className={inputClass(Boolean(fields.errors.name))}
+                placeholder="npr. Flexi P8"
+                value={form.name}
+                onChange={(e) => {
+                  fields.clear("name");
+                  setForm({ ...form, name: e.target.value });
+                }}
+              />
             </Field>
             <div>
               <span className="mb-1 block text-sm font-medium text-slate-700">Napomene</span>
@@ -324,7 +327,6 @@ export function RadniNaloziPage() {
               />
               Arhiviraj nalog (ne nudi se pri unosu sati)
             </label>
-            {formError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={closeForm}>
                 Odustani

@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import { CategoryTabs } from "../../components/admin/CategoryTabs";
+import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { EditIcon, TrashIcon } from "../../components/icons";
 import { PaginationBar } from "../../components/admin/PaginationBar";
@@ -25,7 +26,7 @@ export function ChecklistePage() {
   const [editing, setEditing] = useState<ChecklistItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [formError, setFormError] = useState("");
+  const fields = useFieldErrors();
   const [removeId, setRemoveId] = useState<string | null>(null);
 
   const rows = db.checklistItems;
@@ -44,18 +45,18 @@ export function ChecklistePage() {
   function closeForm() {
     setCreating(false);
     setEditing(null);
-    setFormError("");
+    fields.clear();
   }
 
   function openCreate() {
     setForm({ ...emptyForm, category: active });
-    setFormError("");
+    fields.clear();
     setCreating(true);
   }
 
   function openEdit(item: ChecklistItem) {
     setForm({ category: item.category, code: item.code, description: item.description });
-    setFormError("");
+    fields.clear();
     setEditing(item);
   }
 
@@ -64,17 +65,14 @@ export function ChecklistePage() {
     const category = form.category.trim();
     const code = form.code.trim();
     const description = form.description.trim();
-    if (!category || !code || !description) {
-      setFormError("Unesite kategoriju, šifru i opis.");
-      return;
+    const nextErrors: FieldErrors = {};
+    if (!category) nextErrors.category = "Upiši kategoriju.";
+    if (!code) nextErrors.code = "Upiši šifru.";
+    else if (db.checklistItems.some((row) => row.code.localeCompare(code, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id)) {
+      nextErrors.code = "Stavka s tom šifrom već postoji.";
     }
-    const taken = db.checklistItems.some(
-      (row) => row.code.localeCompare(code, "hr", { sensitivity: "accent" }) === 0 && row.id !== editing?.id,
-    );
-    if (taken) {
-      setFormError("Stavka s tom šifrom već postoji.");
-      return;
-    }
+    if (!description) nextErrors.description = "Upiši opis.";
+    if (fields.reject(nextErrors)) return;
     const next = { category, code, description };
     if (editing) {
       update((current) => {
@@ -168,16 +166,15 @@ export function ChecklistePage() {
 
       {showForm ? (
         <Modal title={editing ? "Uredi stavku" : "Nova stavka"} onClose={closeForm}>
-          <form onSubmit={save} className="space-y-3">
-            <Field label="Kategorija">
+          <form noValidate onSubmit={save} className="space-y-3">
+            <Field label="Kategorija" error={fields.errors.category}>
               <input
-                className="input"
-                required
+                className={inputClass(Boolean(fields.errors.category))}
                 list="kategorije-kontrole"
                 value={form.category}
                 onChange={(e) => {
+                  fields.clear("category");
                   setForm({ ...form, category: e.target.value });
-                  setFormError("");
                 }}
               />
               <datalist id="kategorije-kontrole">
@@ -186,29 +183,26 @@ export function ChecklistePage() {
                 ))}
               </datalist>
             </Field>
-            <Field label="Šifra">
+            <Field label="Šifra" error={fields.errors.code}>
               <input
-                className="input"
-                required
+                className={inputClass(Boolean(fields.errors.code))}
                 value={form.code}
                 onChange={(e) => {
+                  fields.clear("code");
                   setForm({ ...form, code: e.target.value });
-                  setFormError("");
                 }}
               />
             </Field>
-            <Field label="Opis">
+            <Field label="Opis" error={fields.errors.description}>
               <textarea
-                className="input min-h-[88px]"
-                required
+                className={inputClass(Boolean(fields.errors.description), "min-h-[88px]")}
                 value={form.description}
                 onChange={(e) => {
+                  fields.clear("description");
                   setForm({ ...form, description: e.target.value });
-                  setFormError("");
                 }}
               />
             </Field>
-            {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" className="btn-secondary" onClick={closeForm}>
                 Odustani

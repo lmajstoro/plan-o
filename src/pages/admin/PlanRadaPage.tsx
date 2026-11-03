@@ -5,7 +5,7 @@ import { formatCroatianDate } from "../../lib/dates";
 import { sortJobRoles } from "../../lib/roles";
 import { workOrderCode, workOrderColor } from "../../lib/workOrders";
 import { toggleNoteTodo } from "../../lib/notes";
-import { SOPNICA_LOAD_MESSAGES, usePlanDay } from "../../lib/usePlanDay";
+import { usePlanDay } from "../../lib/usePlanDay";
 import { NotesView } from "../../components/admin/NotesView";
 import { FullscreenButton } from "../../components/ui/FullscreenButton";
 import { SaveStatus } from "../../components/ui/SaveStatus";
@@ -28,8 +28,6 @@ export function PlanRadaPage() {
     employees,
     dayHasActuals,
     confirmedEmployeeIds,
-    sopnicaLoading,
-    sopnicaStep,
     commitEmployeeDay,
   } = usePlanDay();
   const [legendOpen, setLegendOpen] = useState(false);
@@ -39,7 +37,7 @@ export function PlanRadaPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Plan rada</h1>
-          <p className="text-slate-500">Montaža i servis čilera i dizalica topline.</p>
+          <p className="text-slate-500">Planiranje, nalozi i izvedba za čilere i dizalice topline.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
           <SaveStatus />
@@ -78,7 +76,7 @@ export function PlanRadaPage() {
             <button
               type="button"
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                roleFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                roleFilter.length === 0 ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
               onClick={clearRoles}
             >
@@ -91,7 +89,7 @@ export function PlanRadaPage() {
                   key={role.id}
                   type="button"
                   className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                    active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    active ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                   onClick={() => toggleRole(role.id)}
                 >
@@ -108,7 +106,7 @@ export function PlanRadaPage() {
             <button
               type="button"
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                groupFilter.length === 0 ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                groupFilter.length === 0 ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
               onClick={clearGroups}
             >
@@ -121,7 +119,7 @@ export function PlanRadaPage() {
                   key={group.id}
                   type="button"
                   className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium ${
-                    active ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    active ? "bg-tokta-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                   onClick={() => toggleGroup(group.id)}
                 >
@@ -135,62 +133,18 @@ export function PlanRadaPage() {
 
       <div className="flex items-start gap-3">
         <div className="relative min-w-0 flex-1">
-          {sopnicaLoading ? (
-            <div
-              className="relative min-h-[28rem] overflow-hidden rounded-xl border border-slate-200 bg-white"
-              aria-live="polite"
-              aria-busy="true"
-            >
-              <div className="flex h-10 border-b border-slate-200 bg-slate-50">
-                <div className="flex w-[300px] shrink-0 items-center border-r border-slate-200 px-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Zaposlenik
-                </div>
-                <div className="flex min-w-0 flex-1">
-                  {Array.from({ length: 18 }).map((_, index) => (
-                    <div key={index} className="flex-1 border-r border-slate-200 last:border-r-0" />
-                  ))}
-                </div>
-              </div>
-              <div className="pointer-events-none">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="flex h-[76px] border-b border-slate-100">
-                    <div className="w-[300px] shrink-0 border-r border-slate-100 bg-slate-50/80" />
-                    <div className="flex min-w-0 flex-1 bg-white">
-                      {Array.from({ length: 18 }).map((_, hour) => (
-                        <div key={hour} className="flex-1 border-r border-slate-50 last:border-r-0" />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="absolute inset-0 bg-white/25 backdrop-blur-[3px]" />
-              <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-slate-50/35 to-white/55" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
-                <div className="flex flex-col items-center gap-3 rounded-2xl bg-white/85 px-8 py-6 shadow-lg ring-1 ring-slate-200/80">
-                  <div
-                    className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-blue-700"
-                    aria-hidden
-                  />
-                  <p key={sopnicaStep} className="animate-fade-in text-base font-semibold text-slate-800">
-                    {SOPNICA_LOAD_MESSAGES[sopnicaStep]}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <GanttBoard
-              date={date}
-              employees={employees}
-              copySources={allEmployees}
-              tasks={db.tasks}
-              workOrders={db.workOrders}
-              workOrderTemplates={db.workOrderTemplates}
-              jobRoles={db.jobRoles}
-              assignments={db.assignments}
-              confirmedEmployeeIds={confirmedEmployeeIds}
-              onCommitEmployeeDay={commitEmployeeDay}
-            />
-          )}
+          <GanttBoard
+            date={date}
+            employees={employees}
+            copySources={allEmployees}
+            tasks={db.tasks}
+            workOrders={db.workOrders}
+            workOrderTemplates={db.workOrderTemplates}
+            jobRoles={db.jobRoles}
+            assignments={db.assignments}
+            confirmedEmployeeIds={confirmedEmployeeIds}
+            onCommitEmployeeDay={commitEmployeeDay}
+          />
         </div>
 
         {legendOpen ? (

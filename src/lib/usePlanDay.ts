@@ -2,27 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useDb } from "../context/DbContext";
 import { addWorkDays, formatDateKey, parseDateKey, todayWorkDate } from "./dates";
 import { isEmployeeActive, isHoursConfirmed } from "./employee";
+import { coversRole } from "./skills";
 import type { Assignment } from "../types";
-
-const SOPNICA_GROUP_ID = "wg-sopnica";
-const SOPNICA_LOAD_MS = 1000;
-export const SOPNICA_LOAD_MESSAGES = [
-  "Učitavam zaposlenike",
-  "Raspodjeljujem zadatke",
-  "Usklađujem satnicu",
-  "Pripremam plan rada",
-];
 
 export function usePlanDay() {
   const { db, update, reset } = useDb();
   const [date, setDate] = useState(() => formatDateKey(todayWorkDate()));
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
   const [roleFilter, setRoleFilter] = useState<string[]>([]);
-  const [sopnicaStep, setSopnicaStep] = useState(0);
-  const [sopnicaReady, setSopnicaReady] = useState(false);
   const current = parseDateKey(date);
-  const sopnicaOnly = groupFilter.length === 1 && groupFilter[0] === SOPNICA_GROUP_ID;
-  const sopnicaLoading = sopnicaOnly && !sopnicaReady;
 
   useEffect(() => {
     const yesterday = formatDateKey(addWorkDays(todayWorkDate(), -1));
@@ -30,26 +18,6 @@ export function usePlanDay() {
       reset();
     }
   }, [db.assignments, reset]);
-
-  useEffect(() => {
-    if (!sopnicaOnly) {
-      setSopnicaReady(false);
-      setSopnicaStep(0);
-      return;
-    }
-
-    setSopnicaReady(false);
-    setSopnicaStep(0);
-    const timers = SOPNICA_LOAD_MESSAGES.slice(1).map((_, index) =>
-      window.setTimeout(() => setSopnicaStep(index + 1), (index + 1) * SOPNICA_LOAD_MS),
-    );
-    const done = window.setTimeout(() => setSopnicaReady(true), SOPNICA_LOAD_MESSAGES.length * SOPNICA_LOAD_MS);
-
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-      window.clearTimeout(done);
-    };
-  }, [sopnicaOnly]);
 
   const allEmployees = useMemo(
     () =>
@@ -64,10 +32,10 @@ export function usePlanDay() {
       const matchesGroup =
         groupFilter.length === 0 || employee.groupIds.some((id) => groupFilter.includes(id));
       const matchesRole =
-        roleFilter.length === 0 || employee.roleIds.some((id) => roleFilter.includes(id));
+        roleFilter.length === 0 || roleFilter.some((id) => coversRole(employee, db.tasks, id));
       return matchesGroup && matchesRole;
     });
-  }, [allEmployees, groupFilter, roleFilter]);
+  }, [allEmployees, db.tasks, groupFilter, roleFilter]);
 
   const dayHasActuals = db.assignments.some((row) => row.date === date && row.kind === "actual");
   const confirmedEmployeeIds = useMemo(
@@ -127,8 +95,6 @@ export function usePlanDay() {
     employees,
     dayHasActuals,
     confirmedEmployeeIds,
-    sopnicaLoading,
-    sopnicaStep,
     commitEmployeeDay,
   };
 }

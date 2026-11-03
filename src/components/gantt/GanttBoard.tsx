@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { formatHour } from "../../lib/dates";
-import { assignedRoles } from "../../lib/roles";
+import { formatDuration, formatHour } from "../../lib/dates";
+import { canDoTask } from "../../lib/skills";
+import { SkillMarks } from "../employee/SkillMarks";
 import {
   CORE_END,
   CORE_START,
@@ -82,6 +83,7 @@ export function GanttBoard({
   const [create, setCreate] = useState<CreateState | null>(null);
   const [edit, setEdit] = useState<EditState | null>(null);
   const [copyFor, setCopyFor] = useState<string | null>(null);
+  const [copyNote, setCopyNote] = useState<string | null>(null);
   const originRef = useRef<Assignment[]>([]);
   const dragRef = useRef<{
     kind: "move" | "resize";
@@ -201,7 +203,7 @@ export function GanttBoard({
     const hourWidth = timeline.getBoundingClientRect().width / HOURS.length;
 
     if (drag.kind === "move") {
-      const delta = Math.round((event.clientX - drag.startX) / hourWidth);
+      const delta = Math.round(((event.clientX - drag.startX) / hourWidth) * 2) / 2;
       const next = shiftChain(originRef.current, drag.assignmentId, delta);
       if (next) {
         drag.lastValid = next;
@@ -277,17 +279,31 @@ export function GanttBoard({
   }
 
   function copyFrom(targetId: string, sourceId: string) {
-    const source = plannedFor(sourceId)
-      .filter((row) => {
-        const order = orderById(row.workOrderId);
-        return order && !order.archived;
-      })
-      .map((row) => ({
-        ...row,
-        id: newId("asg"),
-        employeeId: targetId,
-      }));
-    onCommitEmployeeDay(targetId, source);
+    const target = employees.find((row) => row.id === targetId) ?? copySources.find((row) => row.id === targetId);
+    const skipped: string[] = [];
+    const kept: Assignment[] = [];
+    for (const row of plannedFor(sourceId)) {
+      const order = orderById(row.workOrderId);
+      if (!order || order.archived) continue;
+      const task = taskById(row.taskId);
+      if (!task || !target || !canDoTask(target, task)) {
+        skipped.push(task ? taskLabel(task) : "zadatak");
+        continue;
+      }
+      kept.push({ ...row, id: newId("asg"), employeeId: targetId });
+    }
+    const targetName = target?.name ?? "osobu";
+    if (kept.length === 0) {
+      setCopyNote(
+        skipped.length
+          ? `Ništa nije kopirano za ${targetName}. Preskočeno jer nije u ulozi: ${skipped.join(", ")}.`
+          : "Nema plana za kopiranje.",
+      );
+      setCopyFor(null);
+      return;
+    }
+    onCommitEmployeeDay(targetId, kept);
+    setCopyNote(skipped.length ? `Kopirano je što pripada ulozi. Preskočeno: ${skipped.join(", ")}.` : null);
     setCopyFor(null);
   }
 
@@ -328,7 +344,7 @@ export function GanttBoard({
                 compact ? "px-1 py-0.5 text-[9px]" : "px-1.5 py-0.5 text-[11px]"
               }`}
             >
-              {assignment.durationHours} h
+              {formatDuration(assignment.durationHours)}
             </span>
           </div>
           {compact ? (
@@ -357,6 +373,7 @@ export function GanttBoard({
 
   return (
     <div className="overflow-auto rounded-xl border border-slate-200 bg-white">
+      {copyNote ? <p className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-950">{copyNote}</p> : null}
       <div style={{ minWidth: EMP_WIDTH + TIMELINE_WIDTH }}>
         <div className="flex border-b border-slate-200 bg-slate-50">
           <div
@@ -367,7 +384,7 @@ export function GanttBoard({
           </div>
           <div className="relative flex" style={{ width: TIMELINE_WIDTH }}>
             <div
-              className="pointer-events-none absolute inset-y-0 bg-blue-50/70"
+              className="pointer-events-none absolute inset-y-0 bg-tokta-50/70"
               style={{
                 left: (CORE_START - DAY_START) * HOUR_WIDTH,
                 width: (CORE_END - CORE_START) * HOUR_WIDTH,
@@ -454,14 +471,7 @@ export function GanttBoard({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold text-slate-900">{employee.name}</div>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
-                      {assignedRoles(jobRoles, employee.roleIds).map((role) => (
-                        <span key={role.id} className="inline-flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: role.color }} />
-                          {role.name}
-                        </span>
-                      ))}
-                    </div>
+                    <SkillMarks person={employee} roles={jobRoles} tasks={tasks} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500" />
                     <div className="text-xs text-slate-500">
                       {split && planHours !== displayHours ? `${planHours} → ${displayHours} h` : `${displayHours} h`}
                       {confirmedEmployeeIds.includes(employee.id) ? (
@@ -499,7 +509,7 @@ export function GanttBoard({
                     </span>
                   ) : null}
                   <div
-                    className="pointer-events-none absolute inset-y-0 bg-blue-50/40"
+                    className="pointer-events-none absolute inset-y-0 bg-tokta-50/40"
                     style={{
                       left: (CORE_START - DAY_START) * HOUR_WIDTH,
                       width: (CORE_END - CORE_START) * HOUR_WIDTH,
@@ -514,13 +524,13 @@ export function GanttBoard({
                   ))}
                   {selectedRange ? (
                     <div
-                      className="pointer-events-none absolute top-1 bottom-1 z-10 flex items-center justify-center rounded-md bg-blue-600/20 ring-1 ring-blue-500"
+                      className="pointer-events-none absolute top-1 bottom-1 z-10 flex items-center justify-center rounded-md bg-tokta-600/20 ring-1 ring-tokta-500"
                       style={{
                         left: (selectedRange.start - DAY_START) * HOUR_WIDTH + 2,
                         width: (selectedRange.end - selectedRange.start) * HOUR_WIDTH - 4,
                       }}
                     >
-                      <span className="rounded bg-blue-700 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
+                      <span className="rounded bg-tokta-700 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white">
                         {selectedRange.end - selectedRange.start} h
                       </span>
                     </div>
@@ -543,7 +553,7 @@ export function GanttBoard({
                       Ostv.
                     </span>
                     <div
-                      className="pointer-events-none absolute inset-y-0 bg-blue-50/30"
+                      className="pointer-events-none absolute inset-y-0 bg-tokta-50/30"
                       style={{
                         left: (CORE_START - DAY_START) * HOUR_WIDTH,
                         width: (CORE_END - CORE_START) * HOUR_WIDTH,
@@ -582,7 +592,7 @@ export function GanttBoard({
           endHour={create.endHour}
           workOrders={workOrders}
           tasks={tasks}
-          roleIds={createEmployee?.roleIds}
+          person={createEmployee}
           onClose={() => setCreate(null)}
           onSave={saveCreate}
         />
@@ -595,7 +605,7 @@ export function GanttBoard({
           endHour={editAssignment.startHour + editAssignment.durationHours}
           workOrders={workOrders}
           tasks={tasks}
-          roleIds={editEmployee?.roleIds}
+          person={editEmployee}
           initialWorkOrderId={editAssignment.workOrderId}
           initialTaskId={editAssignment.taskId}
           onClose={() => setEdit(null)}

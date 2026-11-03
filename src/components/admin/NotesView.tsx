@@ -46,7 +46,7 @@ export function NotesView({ value, compact = false, maxTodos, onShowMore, onTogg
         </ul>
       ) : null}
       {hidden > 0 && onShowMore ? (
-        <button type="button" className="text-sm font-medium text-blue-800 hover:underline" onClick={onShowMore}>
+        <button type="button" className="text-sm font-medium text-tokta-700 hover:underline" onClick={onShowMore}>
           i još {hidden}...
         </button>
       ) : null}

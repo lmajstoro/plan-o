@@ -8,10 +8,12 @@ export function PickerSelect({
   value,
   options,
   onChange,
+  invalid = false,
 }: {
   value: string;
   options: Option[];
   onChange: (value: string) => void;
+  invalid?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -30,7 +32,7 @@ export function PickerSelect({
     <div ref={rootRef}>
       <button
         type="button"
-        className="input flex h-11 items-center justify-between gap-2 text-left text-base"
+        className={`input flex h-11 items-center justify-between gap-2 text-left text-base${invalid ? " border-red-500 focus:border-red-500 focus:ring-red-100" : ""}`}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
@@ -46,7 +48,7 @@ export function PickerSelect({
                 key={option.value}
                 type="button"
                 className={`flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-base ${
-                  active ? "bg-blue-50 font-medium text-blue-800" : "text-slate-800 active:bg-slate-100"
+                  active ? "bg-tokta-50 font-medium text-tokta-800" : "text-slate-800 active:bg-slate-100"
                 }`}
                 onClick={() => {
                   onChange(option.value);

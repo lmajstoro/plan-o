@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { formatHour } from "../../lib/dates";
-import { assignedRoles } from "../../lib/roles";
+import { SkillMarks } from "../employee/SkillMarks";
 import {
   CORE_END,
   CORE_START,
+  DAY_END,
   DAY_START,
   EXPECTED_HOURS,
   blockEnd,
@@ -222,7 +223,7 @@ export function TouchGanttBoard({
         ? shiftChain(
             gesture.origin,
             gesture.assignmentId,
-            Math.round((event.clientX - gesture.startX) / (timeline.getBoundingClientRect().width / HOURS.length)),
+            Math.round(((event.clientX - gesture.startX) / (timeline.getBoundingClientRect().width / HOURS.length)) * 2) / 2,
           )
         : resizeBlock(gesture.origin, gesture.assignmentId, gesture.edge ?? "end", edgeHourFromClientX(event.clientX, timeline));
     if (next && next.some((row) => row.id === gesture.assignmentId)) {
@@ -243,7 +244,10 @@ export function TouchGanttBoard({
         return;
       }
       if (gesture.free) {
-        setCreate({ employeeId: gesture.employeeId, startHour: gesture.hour, endHour: gesture.hour + 1 });
+        const endHour = Math.min(DAY_END, gesture.hour + 1);
+        if (endHour - gesture.hour >= 0.5) {
+          setCreate({ employeeId: gesture.employeeId, startHour: gesture.hour, endHour });
+        }
       }
       return;
     }
@@ -435,7 +439,7 @@ export function TouchGanttBoard({
             </div>
             <div className="relative flex" style={{ width: TIMELINE_WIDTH }}>
               <div
-                className="pointer-events-none absolute inset-y-0 bg-blue-50/70"
+                className="pointer-events-none absolute inset-y-0 bg-tokta-50/70"
                 style={{ left: (CORE_START - DAY_START) * HOUR_WIDTH, width: (CORE_END - CORE_START) * HOUR_WIDTH }}
               />
               {HOURS.map((hour) => (
@@ -484,14 +488,7 @@ export function TouchGanttBoard({
                   style={{ width: EMP_WIDTH, minHeight: ROW_HEIGHT }}
                 >
                   <div className="truncate font-semibold leading-tight text-slate-900">{employee.name}</div>
-                  <div className="flex min-w-0 flex-wrap gap-x-2 text-[11px] leading-tight text-slate-500">
-                    {assignedRoles(jobRoles, employee.roleIds).map((role) => (
-                      <span key={role.id} className="inline-flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: role.color }} />
-                        {role.name}
-                      </span>
-                    ))}
-                  </div>
+                  <SkillMarks person={employee} roles={jobRoles} tasks={tasks} className="flex min-w-0 flex-wrap gap-x-2 text-[11px] leading-tight text-slate-500" />
                   <div className="flex flex-wrap items-center gap-x-1.5 text-xs font-medium">
                     {hoursOff ? (
                       <span className={`inline-flex items-center gap-1 ${displayHours > EXPECTED_HOURS ? "text-red-600" : "text-amber-600"}`}>
@@ -529,13 +526,13 @@ export function TouchGanttBoard({
                     <LaneGrid />
                     {selectedRange ? (
                       <div
-                        className="pointer-events-none absolute top-1.5 bottom-1.5 z-10 flex items-center justify-center rounded-lg bg-blue-600/20 ring-2 ring-blue-500"
+                        className="pointer-events-none absolute top-1.5 bottom-1.5 z-10 flex items-center justify-center rounded-lg bg-tokta-600/20 ring-2 ring-tokta-500"
                         style={{
                           left: (selectedRange.start - DAY_START) * HOUR_WIDTH + 2,
                           width: (selectedRange.end - selectedRange.start) * HOUR_WIDTH - 4,
                         }}
                       >
-                        <span className="rounded bg-blue-700 px-2 py-0.5 text-xs font-semibold tabular-nums text-white">
+                        <span className="rounded bg-tokta-700 px-2 py-0.5 text-xs font-semibold tabular-nums text-white">
                           {selectedRange.end - selectedRange.start} h
                         </span>
                       </div>
@@ -625,7 +622,7 @@ export function TouchGanttBoard({
           endHour={create.endHour}
           workOrders={workOrders}
           tasks={tasks}
-          roleIds={createEmployee?.roleIds}
+          person={createEmployee}
           onClose={() => setCreate(null)}
           onSave={saveCreate}
           touch
@@ -639,7 +636,7 @@ export function TouchGanttBoard({
           endHour={blockEnd(editAssignment)}
           workOrders={workOrders}
           tasks={tasks}
-          roleIds={editEmployee?.roleIds}
+          person={editEmployee}
           initialWorkOrderId={editAssignment.workOrderId}
           initialTaskId={editAssignment.taskId}
           onClose={() => setEdit(null)}
@@ -656,7 +653,7 @@ function LaneGrid() {
   return (
     <>
       <div
-        className="pointer-events-none absolute inset-y-0 bg-blue-50/40"
+        className="pointer-events-none absolute inset-y-0 bg-tokta-50/40"
         style={{ left: (CORE_START - DAY_START) * HOUR_WIDTH, width: (CORE_END - CORE_START) * HOUR_WIDTH }}
       />
       {HOURS.map((hour) => (

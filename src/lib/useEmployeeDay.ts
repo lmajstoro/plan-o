@@ -26,11 +26,13 @@ import {
   EXPECTED_HOURS,
   fitAroundTarget,
   gapErrorMessage,
+  MIN_DURATION,
   newId,
   overlapErrorMessage,
   totalHours,
 } from "./gantt";
-import { isArchivedWorkOrder, sortWorkOrdersForEmployeeDay, tasksForWorkOrder } from "./workOrders";
+import { tasksEmployeeMayDo } from "./skills";
+import { isArchivedWorkOrder, sortWorkOrdersForEmployeeDay } from "./workOrders";
 import type { Assignment, HourStatus } from "../types";
 
 export const EMPTY_DAY_MESSAGE = "Upiši barem jedan unos sati prije potvrde.";
@@ -95,7 +97,7 @@ export const HOURS_TONE_TEXT: Record<HoursTone, string> = {
 
 export function useEmployeeDay() {
   const { user, logout } = useAuth();
-  const { db, update, reset } = useDb();
+  const { db, update } = useDb();
   const [params, setParams] = useSearchParams();
   const requested = params.get(DATE_PARAM);
   const date = requested && DATE_KEY.test(requested) && canViewDay(requested) ? requested : todayKey();
@@ -147,7 +149,7 @@ export function useEmployeeDay() {
 
   function tasksFor(workOrderId: string) {
     if (!employee) return [];
-    return [...tasksForWorkOrder(orderById(workOrderId), db.tasks, employee.roleIds)].sort((a, b) =>
+    return [...tasksEmployeeMayDo(orderById(workOrderId), db.tasks, employee)].sort((a, b) =>
       a.code.localeCompare(b.code, "hr"),
     );
   }
@@ -193,11 +195,11 @@ export function useEmployeeDay() {
     let toSave = mode === "chain" ? chainFrom(next, anchor) : next;
 
     const outOfDay = toSave.some(
-      (row) => row.startHour < DAY_START || blockEnd(row) > DAY_END || row.durationHours < 1,
+      (row) => row.startHour < DAY_START || blockEnd(row) > DAY_END + 1e-9 || row.durationHours < MIN_DURATION,
     );
     const usesArchived = toSave.some((row) => isArchivedWorkOrder(orderById(row.workOrderId)));
     const invalidTask = toSave.some(
-      (row) => !tasksForWorkOrder(orderById(row.workOrderId), db.tasks, employee.roleIds).some((task) => task.id === row.taskId),
+      (row) => !tasksEmployeeMayDo(orderById(row.workOrderId), db.tasks, employee).some((task) => task.id === row.taskId),
     );
     if (usesArchived) return fail("Na arhivirani nalog se ne mogu unositi sati.");
     if (invalidTask) return fail("Odabrani zadatak nije dostupan na tom nalogu.");
@@ -305,12 +307,6 @@ export function useEmployeeDay() {
     clearMessages();
   }
 
-  function resetTestData() {
-    reset();
-    setDate(todayKey());
-    clearMessages();
-  }
-
   return {
     db,
     user,
@@ -354,7 +350,6 @@ export function useEmployeeDay() {
     setDayStart,
     confirm,
     unconfirm,
-    resetTestData,
   };
 }
 

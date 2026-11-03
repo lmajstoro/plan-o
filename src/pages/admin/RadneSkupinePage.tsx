@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
+import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { ConfirmDialog, Modal } from "../../components/ui/Modal";
 import { PaginationBar } from "../../components/admin/PaginationBar";
 import { EditIcon, TrashIcon } from "../../components/icons";
@@ -16,6 +17,7 @@ export function RadneSkupinePage() {
   const [editing, setEditing] = useState<WorkGroup | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const fields = useFieldErrors();
   const [removeId, setRemoveId] = useState<string | null>(null);
 
   const rows = useMemo(
@@ -26,18 +28,28 @@ export function RadneSkupinePage() {
 
   function openCreate() {
     setForm(emptyForm);
+    fields.clear();
     setCreating(true);
   }
 
   function openEdit(group: WorkGroup) {
     setForm({ name: group.name });
+    fields.clear();
     setEditing(group);
+  }
+
+  function closeForm() {
+    setCreating(false);
+    setEditing(null);
+    fields.clear();
   }
 
   function save(event: FormEvent) {
     event.preventDefault();
     const name = form.name.trim();
-    if (!name) return;
+    const nextErrors: FieldErrors = {};
+    if (!name) nextErrors.name = "Upiši naziv radne skupine.";
+    if (fields.reject(nextErrors)) return;
     if (editing) {
       update((current) => ({
         ...current,
@@ -113,13 +125,13 @@ export function RadneSkupinePage() {
       </div>
 
       {showForm ? (
-        <Modal title={editing ? "Uredi radnu skupinu" : "Nova radna skupina"} onClose={() => { setCreating(false); setEditing(null); }}>
-          <form onSubmit={save} className="space-y-3">
-            <Field label="Naziv">
-              <input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <Modal title={editing ? "Uredi radnu skupinu" : "Nova radna skupina"} onClose={closeForm}>
+          <form noValidate onSubmit={save} className="space-y-3">
+            <Field label="Naziv" error={fields.errors.name}>
+              <input className={inputClass(Boolean(fields.errors.name))} value={form.name} onChange={(e) => { fields.clear("name"); setForm({ ...form, name: e.target.value }); }} />
             </Field>
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" className="btn-secondary" onClick={() => { setCreating(false); setEditing(null); }}>
+              <button type="button" className="btn-secondary" onClick={closeForm}>
                 Odustani
               </button>
               <button type="submit" className="btn-primary">Spremi</button>

@@ -1,21 +1,7 @@
 import { checklistItemIds, checklistItems } from "./checklists";
+import { MOCK_ADMIN_EMAIL, MOCK_PASSWORD } from "../lib/accounts";
 import { addWorkDays, formatDateKey, parseDateKey, todayWorkDate } from "../lib/dates";
-import type { Assignment, Database, DemoAccount, WorkOrder } from "../types";
-
-export const DEMO_ACCOUNTS: DemoAccount[] = [
-  {
-    email: "ivan.vladic-administrator@gmail.com",
-    password: "demo123",
-    role: "admin",
-    name: "Ivan Vladić",
-  },
-  {
-    email: "ivan.vladic-zaposlenik@gmail.com",
-    password: "demo123",
-    role: "zaposlenik",
-    name: "Ivan Vladić",
-  },
-];
+import type { Assignment, Database, WorkOrder } from "../types";
 
 type Slot = {
   workOrderId: string;
@@ -452,8 +438,30 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     ...showcaseHours(today),
   ];
 
+  const readyAt = "2026-01-01T08:00:00.000Z";
   return {
-    employees,
+    employees: employees.map((row) => ({
+      ...row,
+      active: true,
+      password: MOCK_PASSWORD,
+      passwordSet: true,
+      welcomed: true,
+      failedLogins: 0,
+      locked: false,
+      rulesAcceptedAt: readyAt,
+      taskIds: [],
+    })),
+    administrators: [
+      {
+        id: "adm-1",
+        name: "Ivan Vladić",
+        email: MOCK_ADMIN_EMAIL,
+        password: MOCK_PASSWORD,
+        failedLogins: 0,
+        locked: false,
+        rulesAcceptedAt: readyAt,
+      },
+    ],
     tasks,
     checklistItems,
     workOrders,
@@ -462,5 +470,6 @@ export function createSeedDatabase(dateKey = formatDateKey(todayWorkDate())): Da
     jobRoles,
     assignments,
     dayStatuses: [],
+    auditLog: [],
   };
 }

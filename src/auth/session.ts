@@ -1,4 +1,3 @@
-import { DEMO_ACCOUNTS } from "../data/seed";
 import type { SessionUser } from "../types";
 
 const SESSION_KEY = "plano-session";
@@ -21,10 +20,4 @@ export function saveSession(user: SessionUser): void {
 
 export function clearSession(): void {
   localStorage.removeItem(SESSION_KEY);
-}
-
-export function authenticate(role: SessionUser["role"]): SessionUser | null {
-  const match = DEMO_ACCOUNTS.find((account) => account.role === role);
-  if (!match) return null;
-  return { email: match.email, role: match.role, name: match.name };
 }

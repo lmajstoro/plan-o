@@ -1,9 +1,12 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ConfirmDialog } from "../ui/Modal";
+import { useAuth } from "../../context/AuthContext";
+import { useDb } from "../../context/DbContext";
+import { pageName, pushAudit } from "../../lib/audit";
+import { ToktaMark } from "../brand/ToktaMark";
 import { ChevronLeftIcon, ChevronRightIcon, LogoutIcon } from "../icons";
-import { formatCroatianDate } from "../../lib/dates";
-import { assignedRoles } from "../../lib/roles";
+import { formatCroatianDate, formatDuration } from "../../lib/dates";
+import { SkillMarks } from "./SkillMarks";
 import { REST_DAY_MESSAGE } from "../../lib/employee";
 import { HOURS_TONE_TEXT, type EmployeeDay } from "../../lib/useEmployeeDay";
 
@@ -17,10 +20,14 @@ type Props = {
 
 export function EmployeeShell({ day, fillViewport = false, footer, children }: Props) {
   const navigate = useNavigate();
-  const [resetOpen, setResetOpen] = useState(false);
+  const { user } = useAuth();
+  const { update } = useDb();
   const { employee } = day;
 
   function signOut() {
+    if (user) {
+      update((current) => pushAudit(current, { account: user.name, email: user.email, action: "Odjava", target: pageName("/zaposlenik") }));
+    }
     day.logout();
     navigate("/prijava");
   }
@@ -54,21 +61,16 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
     >
       <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200 bg-white/95 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-start justify-between gap-3 px-4 pb-2">
-          <div className="min-w-0">
-            <button
-              type="button"
-              className="block w-full truncate text-left text-base font-semibold text-slate-900"
-              onClick={() => setResetOpen(true)}
-            >
-              {employee.name}
-            </button>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
-              {assignedRoles(day.db.jobRoles, employee.roleIds).map((role) => (
-                <span key={role.id} className="inline-flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: role.color }} />
-                  {role.name}
-                </span>
-              ))}
+          <div className="flex min-w-0 items-start gap-2.5">
+            <ToktaMark className="mt-1 h-5 w-auto shrink-0" />
+            <div className="min-w-0">
+            <div className="truncate text-base font-semibold text-slate-900">{employee.name}</div>
+            <SkillMarks
+              person={employee}
+              roles={day.db.jobRoles}
+              tasks={day.db.tasks}
+              className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500"
+            />
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -99,7 +101,7 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
             {day.isToday ? (
               <div className="text-xs font-medium text-slate-500">Danas</div>
             ) : (
-              <button type="button" className="text-xs font-medium text-blue-700 underline-offset-2 hover:underline" onClick={day.goToday}>
+              <button type="button" className="text-xs font-medium text-tokta-700 underline-offset-2 hover:underline" onClick={day.goToday}>
                 Vrati na danas
               </button>
             )}
@@ -137,22 +139,10 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
         </div>
       ) : null}
 
-      {resetOpen ? (
-        <ConfirmDialog
-          title="Poništi testne podatke"
-          message="Ovo vraća demo stanje na ovom uređaju. Lokalne izmjene sati i potvrde nestaju."
-          confirmLabel="Poništi testne podatke"
-          onConfirm={() => {
-            day.resetTestData();
-            setResetOpen(false);
-          }}
-          onClose={() => setResetOpen(false)}
-        />
-      ) : null}
     </div>
   );
 }
 
 export function HoursValue({ hours, tone }: { hours: number; tone: EmployeeDay["workedTone"] }) {
-  return <span className={`font-semibold tabular-nums ${HOURS_TONE_TEXT[tone]}`}>{hours} h</span>;
+  return <span className={`font-semibold tabular-nums ${HOURS_TONE_TEXT[tone]}`}>{formatDuration(hours)}</span>;
 }

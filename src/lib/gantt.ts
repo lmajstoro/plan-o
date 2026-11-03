@@ -1,10 +1,21 @@
 import { formatHour } from "./dates";
 
-export const DAY_START = 4;
-export const DAY_END = 23;
+export const DAY_START = 6;
+export const DAY_END = 20;
+export const MIN_DURATION = 0.5;
 export const CORE_START = 8;
 export const CORE_END = 16;
 export const EXPECTED_HOURS = 8;
+
+export function snapHalf(value: number): number {
+  return Math.round(value * 2) / 2;
+}
+
+export function slots(from: number, to: number): number[] {
+  const values: number[] = [];
+  for (let hour = snapHalf(from); hour <= to + 1e-9; hour = snapHalf(hour + MIN_DURATION)) values.push(hour);
+  return values;
+}
 
 export type Timed = {
   id: string;
@@ -61,16 +72,16 @@ export function closeWorkGaps<T extends Timed>(blocks: T[]): T[] {
 
 export function hourFromClientX(clientX: number, timeline: HTMLElement): number {
   const rect = timeline.getBoundingClientRect();
-  const ratio = (clientX - rect.left) / rect.width;
-  const hour = DAY_START + Math.floor(ratio * (DAY_END - DAY_START));
-  return Math.min(DAY_END - 1, Math.max(DAY_START, hour));
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  const hour = DAY_START + ratio * (DAY_END - DAY_START);
+  return Math.min(DAY_END - MIN_DURATION, Math.max(DAY_START, snapHalf(hour)));
 }
 
 export function edgeHourFromClientX(clientX: number, timeline: HTMLElement): number {
   const rect = timeline.getBoundingClientRect();
-  const ratio = (clientX - rect.left) / rect.width;
-  const hour = DAY_START + Math.round(ratio * (DAY_END - DAY_START));
-  return Math.min(DAY_END, Math.max(DAY_START, hour));
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  const hour = DAY_START + ratio * (DAY_END - DAY_START);
+  return Math.min(DAY_END, Math.max(DAY_START, snapHalf(hour)));
 }
 
 function sortBlocks<T extends Timed>(blocks: T[]): T[] {
@@ -88,7 +99,7 @@ export function movingGroupIds<T extends Timed>(blocks: T[], movedId: string, de
 }
 
 function isInBounds<T extends Timed>(blocks: T[]): boolean {
-  return blocks.every((block) => block.startHour >= DAY_START && blockEnd(block) <= DAY_END && block.durationHours >= 1);
+  return blocks.every((block) => block.startHour >= DAY_START && blockEnd(block) <= DAY_END + 1e-9 && block.durationHours >= MIN_DURATION);
 }
 
 function hasOverlap<T extends Timed>(blocks: T[]): boolean {
@@ -106,7 +117,7 @@ function rangeLabel(block: Pick<Timed, "startHour" | "durationHours">): string {
 export function fitAroundTarget<T extends Timed>(blocks: T[], targetId: string): T[] | null {
   const target = blocks.find((block) => block.id === targetId);
   if (!target) return null;
-  if (target.startHour < DAY_START || blockEnd(target) > DAY_END || target.durationHours < 1) return null;
+  if (target.startHour < DAY_START || blockEnd(target) > DAY_END + 1e-9 || target.durationHours < MIN_DURATION) return null;
 
   const others = blocks.filter((block) => block.id !== targetId);
   const left = others
@@ -194,7 +205,7 @@ export function resizeBlock<T extends Timed>(
     durationHours = oldEnd - startHour;
   }
 
-  if (durationHours < 1) {
+  if (durationHours < MIN_DURATION) {
     return blocks.filter((block) => block.id !== id).map((block) => ({ ...block }));
   }
 
@@ -207,7 +218,7 @@ export function resizeBlock<T extends Timed>(
 export function occupiedHours<T extends Timed>(blocks: T[]): Set<number> {
   const hours = new Set<number>();
   for (const block of blocks) {
-    for (let hour = block.startHour; hour < blockEnd(block); hour += 1) {
+    for (let hour = snapHalf(block.startHour); hour < blockEnd(block) - 1e-9; hour = snapHalf(hour + MIN_DURATION)) {
       hours.add(hour);
     }
   }
@@ -215,20 +226,23 @@ export function occupiedHours<T extends Timed>(blocks: T[]): Set<number> {
 }
 
 export function expandSelection(startHour: number, currentHour: number, occupied: Set<number>): { start: number; end: number } | null {
-  const lo = Math.min(startHour, currentHour);
-  const hi = Math.max(startHour, currentHour);
-  if (occupied.has(startHour)) return null;
-  let start = startHour;
-  let end = startHour;
-  for (let hour = startHour; hour >= lo; hour -= 1) {
+  const origin = snapHalf(startHour);
+  const lo = Math.min(origin, snapHalf(currentHour));
+  const hi = Math.max(origin, snapHalf(currentHour));
+  if (occupied.has(origin)) return null;
+  let start = origin;
+  let end = origin;
+  for (let hour = origin; hour >= lo - 1e-9; hour = snapHalf(hour - MIN_DURATION)) {
     if (occupied.has(hour)) break;
     start = hour;
+    if (hour <= lo) break;
   }
-  for (let hour = startHour; hour <= hi; hour += 1) {
+  for (let hour = origin; hour <= hi + 1e-9; hour = snapHalf(hour + MIN_DURATION)) {
     if (occupied.has(hour)) break;
     end = hour;
+    if (hour >= hi) break;
   }
-  return { start, end: end + 1 };
+  return { start, end: snapHalf(end + MIN_DURATION) };
 }
 
 export function newId(prefix: string): string {

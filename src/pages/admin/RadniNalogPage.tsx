@@ -5,12 +5,14 @@ import { NotesView } from "../../components/admin/NotesView";
 import { QualityCheckModal } from "../../components/admin/QualityCheckModal";
 import { TaskSelectModal } from "../../components/admin/TaskSelectModal";
 import { ChevronLeftIcon } from "../../components/icons";
+import { inputClass, useFieldErrors, type FieldErrors } from "../../components/ui/field";
 import { useDb } from "../../context/DbContext";
 import { compactNotes, notesHasContent } from "../../lib/notes";
 import { checklistSummary } from "../../lib/qualityChecklist";
 import { formatHours, hourDeltaLabel, workOrderOverview, type HourPair, type PersonHours, type RoleHours } from "../../lib/workOrderOverview";
 import {
-  ERP_CODE_PATTERN,
+  erpTaken,
+  normalizeErp,
   sortTemplates,
   templateName,
   workOrderCode,
@@ -94,7 +96,7 @@ export function RadniNalogPage() {
                 role="tab"
                 aria-selected={selected}
                 className={`border-b-2 px-3 py-2 text-sm font-medium ${
-                  selected ? "border-blue-700 text-blue-800" : "border-transparent text-slate-500 hover:text-slate-800"
+                  selected ? "border-tokta-700 text-tokta-800" : "border-transparent text-slate-500 hover:text-slate-800"
                 }`}
                 onClick={() => selectTab(item.id)}
               >
@@ -197,7 +199,7 @@ function Pregled({
           <div>
             <dt className="text-slate-500">Zadaci</dt>
             <dd>
-              <button type="button" className="font-medium text-blue-800 hover:underline" onClick={() => onOpen("zadaci")}>
+              <button type="button" className="font-medium text-tokta-800 hover:underline" onClick={() => onOpen("zadaci")}>
                 {taskCount}
               </button>
             </dd>
@@ -205,7 +207,7 @@ function Pregled({
           <div>
             <dt className="text-slate-500">Kontrola</dt>
             <dd>
-              <button type="button" className="font-medium text-blue-800 hover:underline" onClick={() => onOpen("kontrola")}>
+              <button type="button" className="font-medium text-tokta-800 hover:underline" onClick={() => onOpen("kontrola")}>
                 {checklist.confirmed}/{checklist.applicable}
               </button>
             </dd>
@@ -318,7 +320,7 @@ function PersonBar({ person, max }: { person: PersonHours; max: number }) {
         <span className="shrink-0 tabular-nums text-slate-600">{formatHours(person.actual)}</span>
       </div>
       <div className="h-2 rounded-full bg-slate-100">
-        <div className="h-2 rounded-full bg-blue-600" style={{ width: `${width}%` }} />
+        <div className="h-2 rounded-full bg-tokta-700" style={{ width: `${width}%` }} />
       </div>
     </div>
   );
@@ -452,38 +454,38 @@ function Informacije({ order }: { order: WorkOrder }) {
   const { db, update } = useDb();
   const templates = useMemo(() => sortTemplates(db.workOrderTemplates), [db.workOrderTemplates]);
   const [form, setForm] = useState<InfoForm>(() => toInfoForm(order));
-  const [formError, setFormError] = useState("");
+  const fields = useFieldErrors();
   const [saved, setSaved] = useState(false);
   const snapshot = `${order.id}|${order.erpCode}|${order.name}|${order.description}|${order.templateId}|${order.color}|${order.status}|${order.archived}`;
 
   useEffect(() => {
     setForm(toInfoForm(order));
-    setFormError("");
+    fields.clear();
   }, [snapshot, order]);
 
   function save(event: FormEvent) {
     event.preventDefault();
-    if (!ERP_CODE_PATTERN.test(form.erpCode)) {
-      setFormError("ERP šifra ima točno 8 znakova: slova bez dijakritika i brojke.");
-      setSaved(false);
-      return;
-    }
-    if (db.workOrders.some((row) => row.erpCode === form.erpCode && row.id !== order.id)) {
-      setFormError("Nalog s tom ERP šifrom već postoji.");
+    const erpCode = normalizeErp(form.erpCode);
+    const name = form.name.trim();
+    const nextErrors: FieldErrors = {};
+    if (!erpCode) nextErrors.erpCode = "Upiši ERP šifru.";
+    else if (erpTaken(db.workOrders, erpCode, order.id)) nextErrors.erpCode = "Nalog s tom ERP šifrom već postoji, uključujući arhivirane.";
+    if (!name) nextErrors.name = "Upiši naziv.";
+    if (!form.templateId) nextErrors.templateId = "Odaberi predložak.";
+    if (fields.reject(nextErrors)) {
       setSaved(false);
       return;
     }
     const description = compactNotes(form.description);
     update((current) => ({
       ...current,
-      workOrders: current.workOrders.map((row) => (row.id === order.id ? { ...row, ...form, description } : row)),
+      workOrders: current.workOrders.map((row) => (row.id === order.id ? { ...row, ...form, name, erpCode, description } : row)),
     }));
-    setFormError("");
     setSaved(true);
   }
 
   return (
-    <form onSubmit={save} className="mt-5 max-w-3xl space-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4">
+    <form noValidate onSubmit={save} className="mt-5 max-w-3xl space-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Radni nalog">
           <input className="input bg-slate-50" value={workOrderCode(order)} readOnly />
@@ -491,14 +493,13 @@ function Informacije({ order }: { order: WorkOrder }) {
         <Field label="Godina">
           <input className="input bg-slate-50" value={`${order.year}.`} readOnly />
         </Field>
-        <Field label="ERP šifra">
+        <Field label="ERP šifra" error={fields.errors.erpCode}>
           <input
-            className="input font-mono"
-            required
-            maxLength={8}
+            className={inputClass(Boolean(fields.errors.erpCode), "font-mono")}
             value={form.erpCode}
             onChange={(event) => {
-              setForm({ ...form, erpCode: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") });
+              fields.clear("erpCode");
+              setForm({ ...form, erpCode: event.target.value });
               setSaved(false);
             }}
           />
@@ -520,12 +521,12 @@ function Informacije({ order }: { order: WorkOrder }) {
           </select>
         </Field>
       </div>
-      <Field label="Predložak">
+      <Field label="Predložak" error={fields.errors.templateId}>
         <select
-          className="input"
-          required
+          className={inputClass(Boolean(fields.errors.templateId))}
           value={form.templateId}
           onChange={(event) => {
+            fields.clear("templateId");
             setForm({ ...form, templateId: event.target.value });
             setSaved(false);
           }}
@@ -538,12 +539,12 @@ function Informacije({ order }: { order: WorkOrder }) {
         </select>
         <p className="mt-1 text-xs text-slate-500">Trenutno: {templateName(templates, order.templateId)}. Zadaci se biraju u tabu Zadaci.</p>
       </Field>
-      <Field label="Naziv">
+      <Field label="Naziv" error={fields.errors.name}>
         <input
-          className="input"
-          required
+          className={inputClass(Boolean(fields.errors.name))}
           value={form.name}
           onChange={(event) => {
+            fields.clear("name");
             setForm({ ...form, name: event.target.value });
             setSaved(false);
           }}
@@ -589,10 +590,9 @@ function Informacije({ order }: { order: WorkOrder }) {
         />
         Arhiviraj nalog (ne nudi se pri unosu sati)
       </label>
-      {formError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p> : null}
       <div className="flex items-center justify-end gap-3 pt-2">
         {saved ? <span className="text-sm text-emerald-700">Spremljeno</span> : null}
-        <button type="button" className="btn-secondary" onClick={() => { setForm(toInfoForm(order)); setFormError(""); setSaved(false); }}>
+        <button type="button" className="btn-secondary" onClick={() => { setForm(toInfoForm(order)); fields.clear(); setSaved(false); }}>
           Odustani
         </button>
         <button type="submit" className="btn-primary">
@@ -619,7 +619,7 @@ function CompareBar({ planned, actual }: { planned: number; actual: number }) {
   return (
     <div className="mt-2 space-y-1">
       <Bar label="Plan" width={width(planned)} className="bg-slate-300" />
-      <Bar label="Ostvareno" width={width(actual)} className="bg-blue-600" />
+      <Bar label="Ostvareno" width={width(actual)} className="bg-tokta-700" />
     </div>
   );
 }

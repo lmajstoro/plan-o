@@ -42,7 +42,7 @@ export function NotesEditor({ value, onChange }: Props) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-tokta-500 focus-within:ring-2 focus-within:ring-tokta-100">
       <textarea
         className="min-h-[72px] w-full resize-y border-0 bg-transparent px-3 py-2 text-sm text-slate-900 outline-none"
         value={parsed.text}
@@ -82,7 +82,7 @@ export function NotesEditor({ value, onChange }: Props) {
         ) : (
           <p className="text-xs text-slate-500">Možeš dodati todo listu koju kasnije označavaš klikom.</p>
         )}
-        <button type="button" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-800" onClick={addTodo}>
+        <button type="button" className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-tokta-700 hover:text-tokta-800" onClick={addTodo}>
           <PlusIcon className="h-3.5 w-3.5" />
           Dodaj stavku
         </button>

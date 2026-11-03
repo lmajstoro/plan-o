@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { ConfirmDialog } from "../ui/Modal";
 import { BottomSheet, ChoiceGrid, OrderChoiceList, OrderLabel, TaskChoiceList } from "./EntryPickers";
-import { formatHour } from "../../lib/dates";
-import { DAY_END, DAY_START, hourColumns } from "../../lib/gantt";
+import { formatDuration, formatHour } from "../../lib/dates";
+import { DAY_END, DAY_START, MIN_DURATION, slots } from "../../lib/gantt";
 import { taskLabel } from "../../lib/workOrders";
 import type { EmployeeDay } from "../../lib/useEmployeeDay";
 import type { Assignment } from "../../types";
@@ -17,7 +17,7 @@ const STEP_TITLES: Record<Step, string> = {
   start: "Kada si počeo raditi?",
   order: "Na kojem nalogu si radio?",
   task: "Što si radio?",
-  hours: "Koliko sati?",
+  hours: "Koliko dugo?",
   review: "Upisani sati",
 };
 
@@ -47,9 +47,10 @@ export function StepEntrySheet({ day, state, onClose }: { day: EmployeeDay; stat
     ? day.actuals.filter((row) => row.startHour > entry.startHour).reduce((sum, row) => sum + row.durationHours, 0)
     : 0;
   const maxHours = entryStart == null ? DAY_END - DAY_START : DAY_END - entryStart - laterHours;
-  const maxDayStart = state.kind === "dayStart" ? DAY_END - day.workedHours : DAY_END - 1;
-  const startOptions = hourColumns().filter((hour) => hour <= maxDayStart);
-  const hourOptions = Array.from({ length: Math.max(0, moreHours ? maxHours : Math.min(QUICK_HOURS, maxHours)) }, (_, i) => i + 1);
+  const maxDayStart = state.kind === "dayStart" ? DAY_END - day.workedHours : DAY_END - MIN_DURATION;
+  const startOptions = slots(DAY_START, maxDayStart);
+  const hourCap = moreHours ? maxHours : Math.min(QUICK_HOURS, maxHours);
+  const hourOptions = slots(MIN_DURATION, Math.max(MIN_DURATION, hourCap)).filter((value) => value <= hourCap + 1e-9);
   const order = day.orderById(workOrderId);
   const task = day.taskById(taskId);
   const tasks = workOrderId ? day.tasksFor(workOrderId) : [];
@@ -146,7 +147,7 @@ export function StepEntrySheet({ day, state, onClose }: { day: EmployeeDay; stat
       </SummaryRow>
       {step === "review" ? (
         <SummaryRow label="Sati" onChange={() => change("hours")}>
-          {hours} h{range ? <span className="ml-2 text-sm font-normal text-slate-500">{range}</span> : null}
+          {hours == null ? "" : formatDuration(hours)}{range ? <span className="ml-2 text-sm font-normal text-slate-500">{range}</span> : null}
         </SummaryRow>
       ) : null}
     </div>
@@ -156,7 +157,7 @@ export function StepEntrySheet({ day, state, onClose }: { day: EmployeeDay; stat
   if (step === "hours" && !returnTo) {
     footer = (
       <button type="button" className="btn-primary h-14 w-full text-lg disabled:cursor-not-allowed disabled:opacity-40" disabled={!canSave} onClick={save}>
-        {hours ? `Spremi ${hours} h` : "Odaberi broj sati"}
+        {hours ? `Spremi ${formatDuration(hours)}` : "Odaberi trajanje"}
       </button>
     );
   } else if (step === "review") {
@@ -199,13 +200,13 @@ export function StepEntrySheet({ day, state, onClose }: { day: EmployeeDay; stat
       {step === "hours" ? (
         <div className="space-y-4">
           {!returnTo ? summaryRows : null}
-          {maxHours < 1 ? (
+          {maxHours < MIN_DURATION ? (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">Dan je popunjen do {formatHour(DAY_END)}.</p>
           ) : (
             <>
-              <ChoiceGrid values={hourOptions} selected={hours} onSelect={pickHours} render={(value) => `${value} h`} />
+              <ChoiceGrid values={hourOptions} selected={hours} onSelect={pickHours} render={(value) => formatDuration(value)} />
               {!moreHours && maxHours > QUICK_HOURS ? (
-                <button type="button" className="text-sm font-medium text-blue-700" onClick={() => setMoreHours(true)}>
+                <button type="button" className="text-sm font-medium text-tokta-700" onClick={() => setMoreHours(true)}>
                   Više od {QUICK_HOURS} h
                 </button>
               ) : null}
@@ -251,7 +252,7 @@ function SummaryRow({ label, onChange, children }: { label: string; onChange: ()
     <button type="button" onClick={onChange} className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-slate-50">
       <span className="w-14 shrink-0 text-sm text-slate-500">{label}</span>
       <span className="min-w-0 flex-1 text-base font-semibold text-slate-900">{children}</span>
-      <span className="shrink-0 text-sm font-medium text-blue-700">Promijeni</span>
+      <span className="shrink-0 text-sm font-medium text-tokta-700">Promijeni</span>
     </button>
   );
 }

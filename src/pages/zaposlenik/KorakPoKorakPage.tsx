@@ -52,7 +52,7 @@ export function KorakPoKorakPage() {
                 Početak rada <span className="text-base font-semibold tabular-nums text-slate-900">{formatHour(day.actuals[0].startHour)}</span>
               </span>
               {day.canEdit ? (
-                <button type="button" className="text-sm font-medium text-blue-700" onClick={() => open({ kind: "dayStart" })}>
+                <button type="button" className="text-sm font-medium text-tokta-700" onClick={() => open({ kind: "dayStart" })}>
                   Promijeni
                 </button>
               ) : null}
@@ -97,7 +97,7 @@ export function KorakPoKorakPage() {
               ) : (
                 <button
                   type="button"
-                  className="flex h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-300 text-base font-semibold text-blue-700 hover:bg-blue-50"
+                  className="flex h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-tokta-300 text-base font-semibold text-tokta-700 hover:bg-tokta-50"
                   onClick={() => open({ kind: "create" })}
                 >
                   <PlusIcon className="h-6 w-6" />

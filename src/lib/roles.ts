@@ -28,14 +28,15 @@ export function roleNames(roles: JobRole[], ids: string[]): string {
 
 export function roleUsage(
   roleId: string,
-  employees: Pick<Employee, "roleIds">[],
-  tasks: { role: string }[],
+  employees: Pick<Employee, "roleIds" | "taskIds">[],
+  tasks: { id: string; role: string }[],
 ): {
   employees: number;
   tasks: number;
 } {
+  const taskIds = new Set(tasks.filter((row) => row.role === roleId).map((row) => row.id));
   return {
-    employees: employees.filter((row) => row.roleIds.includes(roleId)).length,
-    tasks: tasks.filter((row) => row.role === roleId).length,
+    employees: employees.filter((row) => row.roleIds.includes(roleId) || (row.taskIds ?? []).some((id) => taskIds.has(id))).length,
+    tasks: taskIds.size,
   };
 }
