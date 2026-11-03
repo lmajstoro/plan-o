@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useDb } from "../../context/DbContext";
@@ -8,8 +8,6 @@ import { formatCroatianDate, formatDuration } from "../../lib/dates";
 import { SkillMarks } from "./SkillMarks";
 import { REST_DAY_MESSAGE } from "../../lib/employee";
 import { HOURS_TONE_TEXT, type EmployeeDay } from "../../lib/useEmployeeDay";
-
-const SWIPE_MIN = 48;
 
 type Props = {
   day: EmployeeDay;
@@ -24,58 +22,6 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
   const { user } = useAuth();
   const { update } = useDb();
   const { employee } = day;
-  const gesture = useRef<{ id: number; x: number; y: number; axis: "x" | "y" | null } | null>(null);
-  const swiped = useRef(false);
-  const dateShift = useRef<HTMLDivElement>(null);
-
-  function resetShift() {
-    if (dateShift.current) dateShift.current.style.transform = "";
-  }
-
-  function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse") return;
-    if ((event.target as HTMLElement).closest("[data-no-swipe]")) return;
-    swiped.current = false;
-    gesture.current = { id: event.pointerId, x: event.clientX, y: event.clientY, axis: null };
-  }
-
-  function onPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const current = gesture.current;
-    if (!current || current.id !== event.pointerId) return;
-    const dx = event.clientX - current.x;
-    const dy = event.clientY - current.y;
-    if (!current.axis && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
-      current.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-    }
-    if (current.axis !== "x" || !dateShift.current) return;
-    const blocked = dx < 0 ? !day.canGoForward : !day.canGoBack;
-    const limited = Math.max(-72, Math.min(72, dx)) * (blocked ? 0.25 : 1);
-    dateShift.current.style.transform = `translateX(${limited}px)`;
-  }
-
-  function finishSwipe(event: ReactPointerEvent<HTMLDivElement>) {
-    const current = gesture.current;
-    if (!current || current.id !== event.pointerId) return;
-    const dx = event.clientX - current.x;
-    const dy = event.clientY - current.y;
-    const horizontal = current.axis === "x" && Math.abs(dx) >= SWIPE_MIN && Math.abs(dx) > Math.abs(dy);
-    gesture.current = null;
-    resetShift();
-    if (!horizontal) return;
-    swiped.current = true;
-    if (dx < 0) {
-      if (day.canGoForward) day.go(1);
-    } else if (day.canGoBack) {
-      day.go(-1);
-    }
-  }
-
-  function onClickCapture(event: React.MouseEvent) {
-    if (!swiped.current) return;
-    swiped.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }
 
   useEffect(() => {
     if (!fillViewport) return;
@@ -127,17 +73,9 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
 
   return (
     <div
-      className={`flex w-full touch-pan-y flex-col bg-white ${
+      className={`flex w-full flex-col bg-white ${
         fillViewport ? "h-svh max-h-svh min-w-0 max-w-full overflow-hidden overscroll-none" : "min-h-dvh"
       }`}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={finishSwipe}
-      onPointerCancel={() => {
-        gesture.current = null;
-        resetShift();
-      }}
-      onClickCapture={onClickCapture}
     >
       <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200 bg-white/95 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-start justify-between gap-3 px-4 pb-2">
@@ -173,7 +111,7 @@ export function EmployeeShell({ day, fillViewport = false, footer, children }: P
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
-          <div ref={dateShift} className="min-w-0 flex-1 text-center">
+          <div className="min-w-0 flex-1 text-center">
             <div className="truncate text-base font-semibold text-slate-900">{formatCroatianDate(day.current)}</div>
             {day.isToday ? (
               <div className="text-xs font-medium text-slate-500">Danas</div>

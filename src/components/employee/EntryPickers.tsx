@@ -30,7 +30,7 @@ export function BottomSheet({
   }, [onClose]);
 
   return (
-    <div data-no-swipe className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden overscroll-none md:items-center md:p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden overscroll-none md:items-center md:p-4">
       <button type="button" className="absolute inset-0 bg-slate-900/40" aria-label="Zatvori" onClick={onClose} />
       <div
         role="dialog"
