@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDownIcon } from "../icons";
 import { formatHour } from "../../lib/dates";
 import { blockEnd } from "../../lib/gantt";
-import { employeeOrderNumber, taskLabel, workOrderColor } from "../../lib/workOrders";
+import { employeeOrderNumber, employeeOrderTitle, taskLabel, workOrderColor } from "../../lib/workOrders";
 import type { EmployeeDay } from "../../lib/useEmployeeDay";
 
 type Props = {
@@ -44,7 +44,7 @@ export function PlanPanel({ day, collapsible = false, className = "" }: Props) {
             {day.planned.map((row) => {
               const order = day.orderById(row.workOrderId);
               const task = day.taskById(row.taskId);
-              const label = order ? `${employeeOrderNumber(order)} ${order.name}` : "Nepoznat nalog";
+              const label = order ? `${employeeOrderNumber(order)} ${employeeOrderTitle(order)}` : "Nepoznat nalog";
               const taskText = taskLabel(task);
               return (
                 <li key={row.id} className="flex gap-2 text-sm">

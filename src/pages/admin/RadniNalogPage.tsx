@@ -12,7 +12,9 @@ import { compactNotes, notesHasContent } from "../../lib/notes";
 import { checklistSummary } from "../../lib/qualityChecklist";
 import { formatHours, hourDeltaLabel, workOrderOverview, type PersonHours, type RoleHours } from "../../lib/workOrderOverview";
 import {
+  employeeOrderTitle,
   erpTaken,
+  followDisplayName,
   normalizeErp,
   sortTemplates,
   templateName,
@@ -195,6 +197,14 @@ function Pregled({
           <div>
             <dt className="text-slate-500">ERP šifra</dt>
             <dd className="font-mono font-medium text-slate-900">{order.erpCode}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Kupac</dt>
+            <dd className="font-medium text-slate-900">{order.customer}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Ime za prikaz</dt>
+            <dd className="font-medium text-slate-900">{employeeOrderTitle(order)}</dd>
           </div>
           <div>
             <dt className="text-slate-500">Predložak</dt>
@@ -435,6 +445,8 @@ function SatiPoLjudima({ overview }: { overview: NonNullable<ReturnType<typeof w
 type InfoForm = {
   erpCode: string;
   name: string;
+  displayName: string;
+  customer: string;
   description: string;
   templateId: string;
   color: string;
@@ -446,6 +458,8 @@ function toInfoForm(order: WorkOrder): InfoForm {
   return {
     erpCode: order.erpCode,
     name: order.name,
+    displayName: order.displayName,
+    customer: order.customer,
     description: order.description,
     templateId: order.templateId,
     color: order.color,
@@ -460,7 +474,7 @@ function Informacije({ order }: { order: WorkOrder }) {
   const [form, setForm] = useState<InfoForm>(() => toInfoForm(order));
   const fields = useFieldErrors();
   const [saved, setSaved] = useState(false);
-  const snapshot = `${order.id}|${order.erpCode}|${order.name}|${order.description}|${order.templateId}|${order.color}|${order.status}|${order.archived}`;
+  const snapshot = `${order.id}|${order.erpCode}|${order.name}|${order.displayName}|${order.customer}|${order.description}|${order.templateId}|${order.color}|${order.status}|${order.archived}`;
 
   useEffect(() => {
     setForm(toInfoForm(order));
@@ -471,10 +485,13 @@ function Informacije({ order }: { order: WorkOrder }) {
     event.preventDefault();
     const erpCode = normalizeErp(form.erpCode);
     const name = form.name.trim();
+    const customer = form.customer.trim();
+    const displayName = form.displayName.trim() || followDisplayName("", "", name);
     const nextErrors: FieldErrors = {};
     if (!erpCode) nextErrors.erpCode = "Upiši ERP šifru.";
     else if (erpTaken(db.workOrders, erpCode, order.id)) nextErrors.erpCode = "Nalog s tom ERP šifrom već postoji, uključujući arhivirane.";
     if (!name) nextErrors.name = "Upiši naziv.";
+    if (!customer) nextErrors.customer = "Upiši kupca.";
     if (!form.templateId) nextErrors.templateId = "Odaberi predložak.";
     if (fields.reject(nextErrors)) {
       setSaved(false);
@@ -483,7 +500,9 @@ function Informacije({ order }: { order: WorkOrder }) {
     const description = compactNotes(form.description);
     update((current) => ({
       ...current,
-      workOrders: current.workOrders.map((row) => (row.id === order.id ? { ...row, ...form, name, erpCode, description } : row)),
+      workOrders: current.workOrders.map((row) =>
+        row.id === order.id ? { ...row, ...form, name, displayName, customer, erpCode, description } : row,
+      ),
     }));
     setSaved(true);
   }
@@ -545,16 +564,43 @@ function Informacije({ order }: { order: WorkOrder }) {
         </select>
         <p className="mt-1 text-xs text-slate-500">Trenutno: {templateName(templates, order.templateId)}. Zadaci se biraju u tabu Zadaci.</p>
       </Field>
+      <Field label="Kupac" error={fields.errors.customer}>
+        <input
+          className={inputClass(Boolean(fields.errors.customer))}
+          value={form.customer}
+          onChange={(event) => {
+            fields.clear("customer");
+            setForm({ ...form, customer: event.target.value });
+            setSaved(false);
+          }}
+        />
+      </Field>
       <Field label="Naziv" error={fields.errors.name}>
         <input
           className={inputClass(Boolean(fields.errors.name))}
           value={form.name}
           onChange={(event) => {
             fields.clear("name");
-            setForm({ ...form, name: event.target.value });
+            const name = event.target.value;
+            setForm((current) => ({
+              ...current,
+              name,
+              displayName: followDisplayName(current.name, current.displayName, name),
+            }));
             setSaved(false);
           }}
         />
+      </Field>
+      <Field label="Ime za prikaz">
+        <input
+          className="input"
+          value={form.displayName}
+          onChange={(event) => {
+            setForm({ ...form, displayName: event.target.value });
+            setSaved(false);
+          }}
+        />
+        <p className="mt-1.5 text-xs text-slate-500">Zaposlenik vidi prvi dio naziva i prvu zagradu. Možeš ga prepraviti.</p>
       </Field>
       <Field label={`Boja na planu${form.color ? ` · ${WORK_ORDER_COLOR_LABELS[form.color] ?? ""}` : ""}`}>
         <ColorDots

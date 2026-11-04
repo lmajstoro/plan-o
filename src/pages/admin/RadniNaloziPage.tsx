@@ -4,11 +4,11 @@ import { useDb } from "../../context/DbContext";
 import { newId } from "../../lib/gantt";
 import {
   erpTaken,
+  followDisplayName,
   normalizeErp,
   nextWorkOrderNumber,
   sortTemplates,
   sortWorkOrders,
-  templateName,
   workOrderCode,
   workOrderColor,
   WORK_ORDER_COLOR_LABELS,
@@ -35,6 +35,8 @@ type FormState = {
   year: number;
   erpCode: string;
   name: string;
+  displayName: string;
+  customer: string;
   description: string;
   templateId: string;
   color: string;
@@ -47,6 +49,8 @@ const emptyForm: FormState = {
   year: 0,
   erpCode: "",
   name: "",
+  displayName: "",
+  customer: "",
   description: "",
   templateId: "",
   color: WORK_ORDER_COLORS[0],
@@ -103,11 +107,14 @@ export function RadniNaloziPage() {
     event.preventDefault();
     const erpCode = normalizeErp(form.erpCode);
     const name = form.name.trim();
+    const customer = form.customer.trim();
+    const displayName = form.displayName.trim() || followDisplayName("", "", name);
     const nextErrors: FieldErrors = {};
     if (!form.templateId) nextErrors.templateId = "Odaberi predložak.";
     if (!erpCode) nextErrors.erpCode = "Upiši ERP šifru.";
     else if (erpTaken(db.workOrders, erpCode)) nextErrors.erpCode = "Nalog s tom ERP šifrom već postoji, uključujući arhivirane.";
     if (!name) nextErrors.name = "Upiši naziv.";
+    if (!customer) nextErrors.customer = "Upiši kupca.";
     const color = form.color || selectedTemplate?.color || "#334155";
     const description = compactNotes(form.description);
     const inheritedTaskIds = [...(selectedTemplate?.taskIds ?? [])];
@@ -123,6 +130,8 @@ export function RadniNaloziPage() {
           id: newId("wo"),
           ...form,
           name,
+          displayName,
+          customer,
           erpCode,
           description,
           color,
@@ -169,7 +178,7 @@ export function RadniNaloziPage() {
               <th className="px-4 py-3 font-medium">Radni nalog</th>
               <th className="px-4 py-3 font-medium">ERP šifra</th>
               <th className="px-4 py-3 font-medium">Naziv</th>
-              <th className="px-4 py-3 font-medium">Predložak</th>
+              <th className="px-4 py-3 font-medium">Kupac</th>
               <th className="px-4 py-3 font-medium">Napomene</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Zadaci</th>
@@ -198,7 +207,7 @@ export function RadniNaloziPage() {
                     {row.name}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-slate-600">{templateName(db.workOrderTemplates, row.templateId)}</td>
+                <td className="px-4 py-3 text-slate-700">{row.customer}</td>
                 <td className="max-w-sm px-4 py-3 text-slate-600">
                   <NotesView
                     compact
@@ -288,16 +297,43 @@ export function RadniNaloziPage() {
                 ))}
               </select>
             </Field>
+            <Field label="Kupac" error={fields.errors.customer}>
+              <input
+                className={inputClass(Boolean(fields.errors.customer))}
+                placeholder="npr. secon"
+                value={form.customer}
+                onChange={(e) => {
+                  fields.clear("customer");
+                  setForm({ ...form, customer: e.target.value });
+                }}
+              />
+            </Field>
             <Field label="Naziv" error={fields.errors.name}>
               <input
                 className={inputClass(Boolean(fields.errors.name))}
-                placeholder="npr. Flexi P8"
+                placeholder="MINILINE(K-1)(630EC 1PH-1)(Q5-25.1AXH-1)"
                 value={form.name}
                 onChange={(e) => {
                   fields.clear("name");
-                  setForm({ ...form, name: e.target.value });
+                  const name = e.target.value;
+                  setForm((current) => ({
+                    ...current,
+                    name,
+                    displayName: followDisplayName(current.name, current.displayName, name),
+                  }));
                 }}
               />
+            </Field>
+            <Field label="Ime za prikaz" error={fields.errors.displayName}>
+              <input
+                className={inputClass(Boolean(fields.errors.displayName))}
+                value={form.displayName}
+                onChange={(e) => {
+                  fields.clear("displayName");
+                  setForm({ ...form, displayName: e.target.value });
+                }}
+              />
+              <p className="mt-1.5 text-xs text-slate-500">Zaposlenik vidi prvi dio naziva i prvu zagradu. Možeš ga prepraviti.</p>
             </Field>
             <div>
               <span className="mb-1 block text-sm font-medium text-slate-700">Napomene</span>

@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { ChevronLeftIcon, CloseIcon } from "../icons";
 import { useLockPageScroll } from "../../lib/scrollLock";
-import { employeeOrderNumber, taskLabel, workOrderColor } from "../../lib/workOrders";
+import { employeeOrderNumber, employeeOrderTitle, taskLabel, workOrderColor } from "../../lib/workOrders";
 import type { EmployeeDay } from "../../lib/useEmployeeDay";
 import type { Task, WorkOrder } from "../../types";
 
@@ -70,7 +70,7 @@ export function OrderLabel({ order }: { order: WorkOrder | undefined }) {
   if (!order) return <span>Nepoznat nalog</span>;
   return (
     <>
-      <span className="tabular-nums">{employeeOrderNumber(order)}</span> {order.name}
+      <span className="tabular-nums">{employeeOrderNumber(order)}</span> {employeeOrderTitle(order)}
     </>
   );
 }
@@ -112,7 +112,7 @@ export function OrderChoiceList({
           >
             {employeeOrderNumber(order)}
           </span>
-          <span className="min-w-0 flex-1 text-base font-medium text-slate-900">{order.name}</span>
+          <span className="min-w-0 flex-1 text-base font-medium text-slate-900">{employeeOrderTitle(order)}</span>
         </button>
       </li>
     );

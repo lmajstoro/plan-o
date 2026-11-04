@@ -80,6 +80,26 @@ export function workOrderCode(order: OrderNumbering): string {
   return `RN-${employeeOrderNumber(order)}/${String(order.year % 100).padStart(2, "0")}`;
 }
 
+/** First segment plus the first parenthesis group. FX120(A1)(B2)(003) → FX120(A1). */
+export function suggestedDisplayName(name: string): string {
+  const trimmed = name.trim();
+  const open = trimmed.indexOf("(");
+  if (open === -1) return trimmed;
+  const close = trimmed.indexOf(")", open);
+  if (close === -1) return trimmed.slice(0, open).trimEnd();
+  return trimmed.slice(0, close + 1).trim();
+}
+
+export function followDisplayName(previousName: string, previousDisplay: string, nextName: string): string {
+  const previousSuggested = suggestedDisplayName(previousName);
+  const follow = previousDisplay.trim() === "" || previousDisplay === previousSuggested;
+  return follow ? suggestedDisplayName(nextName) : previousDisplay;
+}
+
+export function employeeOrderTitle(order: Pick<WorkOrder, "name" | "displayName">): string {
+  return order.displayName.trim() || suggestedDisplayName(order.name);
+}
+
 export function nextWorkOrderNumber(orders: OrderNumbering[], year: number): number {
   return Math.max(0, ...orders.filter((order) => order.year === year).map((order) => order.number)) + 1;
 }

@@ -97,6 +97,8 @@ export type WorkOrder = {
   year: number;
   erpCode: string;
   name: string;
+  displayName: string;
+  customer: string;
   description: string;
   color: string;
   templateId: string;
